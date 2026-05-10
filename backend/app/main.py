@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 import sentry_sdk
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -83,16 +83,30 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": str(exc.body)},
     )
 
-@app.get("/health")
+
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     try:
         async with engine.connect() as conn:
             result = await conn.execute(text("SELECT 1"))
             db_status = [row[0] for row in result]
-        return {"status": "ok", "app_name": settings.PROJECT_NAME, "env": settings.ENVIRONMENT, "db": db_status}
+
+        return {
+            "status": "ok",
+            "app_name": settings.PROJECT_NAME,
+            "env": settings.ENVIRONMENT,
+            "db": db_status
+        }
+
     except Exception as e:
         logger.error(f"Health check db query failed: {e}")
-        return {"status": "ok", "app_name": settings.PROJECT_NAME, "env": settings.ENVIRONMENT, "db": "error"}
+
+        return {
+            "status": "ok",
+            "app_name": settings.PROJECT_NAME,
+            "env": settings.ENVIRONMENT,
+            "db": "error"
+        }
 
 @app.get("/")
 def root():
