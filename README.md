@@ -299,6 +299,7 @@ All endpoints are under `/api/v1`. Interactive docs available at `/docs` (Swagge
 | Dashboard       | `/dashboard`          | Aggregated summary and analytics     |
 | Notifications   | `/notifications`      | User notification feed               |
 | Health Score    | `/health`             | Financial health score calculation   |
+| Autopilot       | `/autopilot`          | Automated financial planning engine  |
 
 ---
 
