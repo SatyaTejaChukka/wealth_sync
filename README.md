@@ -1,5 +1,7 @@
 # 💰 WealthSync — Personal Finance Platform
 
+![CI](https://github.com/SatyaTejaChukka/wealth_sync/actions/workflows/ci.yml/badge.svg)
+
 A comprehensive, full-stack personal finance management system built with **FastAPI** and **React**. Track income, expenses, bills, subscriptions, savings goals, and get an intelligent financial health score — all in a polished dark glassmorphism UI.
 
 ---
