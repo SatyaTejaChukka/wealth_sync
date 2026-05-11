@@ -1,10 +1,18 @@
+from pathlib import Path
 from typing import Any, List, Union
 import json
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-from pydantic import PostgresDsn, ValidationInfo, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import PostgresDsn, ValidationInfo, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=str(BACKEND_ENV_FILE),
+    )
+
     PROJECT_NAME: str = "WealthSync"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
@@ -54,8 +62,19 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def normalize_debug(cls, v: Any) -> bool | Any:
+        if isinstance(v, str):
+            normalized = v.strip().lower()
+            if normalized in {"release", "prod", "production", "0", "false", "no", "off"}:
+                return False
+            if normalized in {"debug", "dev", "development", "1", "true", "yes", "on"}:
+                return True
+        return v
+
     # Security
-    SECRET_KEY: str
+    SECRET_KEY: str | None = None
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     PASSWORD_MIN_LENGTH: int = 8
     RATE_LIMIT_LOGIN: str = "5/minute"
@@ -115,8 +134,16 @@ class Settings(BaseSettings):
             path=f"{data.get('POSTGRES_DB') or ''}",
         )
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    @model_validator(mode="after")
+    def ensure_secret_key(self):
+        if self.SECRET_KEY:
+            return self
+
+        if self.ENVIRONMENT == "production":
+            raise ValueError("SECRET_KEY is required in production")
+
+        # Stable local-only fallback so the app can boot without a .env file.
+        self.SECRET_KEY = "dev-only-secret-key-change-me"
+        return self
 
 settings = Settings()

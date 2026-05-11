@@ -1,6 +1,35 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle, X } from 'lucide-react';
 
+function formatMessage(message) {
+  if (typeof message === 'string') {
+    return message;
+  }
+
+  if (Array.isArray(message)) {
+    return message
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (item && typeof item === 'object') {
+          return item.msg || item.message || item.detail || JSON.stringify(item);
+        }
+
+        return String(item);
+      })
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  if (message && typeof message === 'object') {
+    return message.message || message.detail || JSON.stringify(message);
+  }
+
+  return message == null ? '' : String(message);
+}
+
 export function Alert({ type = 'info', title, message, onClose, className = '' }) {
   const styles = {
     success: {
@@ -42,7 +71,7 @@ export function Alert({ type = 'info', title, message, onClose, className = '' }
         <Icon className={`${style.iconColor} shrink-0 mt-0.5`} size={20} />
         <div className="flex-1">
           {title && <h4 className={`font-semibold ${style.titleColor} mb-1`}>{title}</h4>}
-          <p className={`text-sm ${style.textColor}`}>{message}</p>
+          <p className={`text-sm ${style.textColor}`}>{formatMessage(message)}</p>
         </div>
         {onClose && (
           <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">

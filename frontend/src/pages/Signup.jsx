@@ -5,7 +5,38 @@ import { useAuth } from '../lib/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
-import { TrendingUp, Mail, Lock, ArrowRight } from 'lucide-react';
+import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+
+const MIN_PASSWORD_LENGTH = 8;
+
+function formatApiError(detail, fallbackMessage) {
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (item && typeof item === 'object') {
+          return item.msg || item.message || item.detail || JSON.stringify(item);
+        }
+
+        return String(item);
+      })
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  if (detail && typeof detail === 'object') {
+    return detail.message || detail.detail || fallbackMessage;
+  }
+
+  return fallbackMessage;
+}
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -13,8 +44,14 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { login } = useAuth();
+  const hasConfirmPasswordValue = confirmPassword.length > 0;
+  const passwordsMatch = password === confirmPassword;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,8 +62,8 @@ export default function Signup() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
       return;
     }
 
@@ -37,7 +74,7 @@ export default function Signup() {
       await login(res.data.access_token, '/dashboard');
     } catch (err) {
       const detail = err?.response?.data?.detail;
-      setError(detail || 'Signup failed. Please try again.');
+      setError(formatApiError(detail, 'Signup failed. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -96,14 +133,30 @@ export default function Signup() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
                     placeholder="********"
                     required
-                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
                   />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
+                {isPasswordFocused && (
+                  <p className="mt-2 text-sm text-zinc-400">
+                    Password must be at least {MIN_PASSWORD_LENGTH} characters.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -114,14 +167,30 @@ export default function Signup() {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    onFocus={() => setIsConfirmPasswordFocused(true)}
+                    onBlur={() => setIsConfirmPasswordFocused(false)}
                     placeholder="********"
                     required
-                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
                   />
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setShowConfirmPassword((value) => !value)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
+                {isConfirmPasswordFocused && hasConfirmPasswordValue && (
+                  <p className={`mt-2 text-sm ${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {passwordsMatch ? 'Passwords match.' : 'Passwords do not match.'}
+                  </p>
+                )}
               </div>
 
               <Button

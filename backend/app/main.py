@@ -71,9 +71,14 @@ async def startup():
     logger.info("Starting up application...")
     # Create tables (dev-only unless explicitly enabled)
     if settings.AUTO_CREATE_TABLES:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables created/verified")
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables created/verified")
+        except Exception as exc:
+            if settings.ENVIRONMENT == "production":
+                raise
+            logger.warning("Skipping database initialization in development: %s", exc)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
