@@ -9,6 +9,7 @@ import sentry_sdk
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
+from app.core.errors import ErrorCode
 from app.core.logging_config import setup_logging
 from app.core.middleware import (
     SecurityHeadersMiddleware, 
@@ -85,7 +86,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.error(f"Validation error on {request.url}: {exc.errors()}")
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": str(exc.body)},
+        content={
+            "code": ErrorCode.VALIDATION_ERROR.value,
+            "detail": exc.errors(),
+            "body": str(exc.body),
+        },
     )
 
 
