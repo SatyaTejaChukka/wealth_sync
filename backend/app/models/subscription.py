@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Numeric, Integer, DateTime, Boolean, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -6,6 +15,14 @@ from app.core.database import Base
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_subscriptions_amount_non_negative"),
+        CheckConstraint(
+            "billing_cycle IN ('monthly', 'yearly')",
+            name="ck_subscriptions_billing_cycle_valid",
+        ),
+        CheckConstraint("usage_count >= 0", name="ck_subscriptions_usage_count_non_negative"),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     user_id = Column(String, index=True, nullable=False)

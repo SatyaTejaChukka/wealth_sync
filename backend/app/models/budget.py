@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, ForeignKey
+from sqlalchemy import CheckConstraint, Column, ForeignKey, Numeric, String
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from app.core.database import Base
@@ -16,6 +16,21 @@ class BudgetCategory(Base):
 
 class BudgetRule(Base):
     __tablename__ = "budget_rules"
+    __table_args__ = (
+        CheckConstraint("allocation_value >= 0", name="ck_budget_rules_allocation_value_non_negative"),
+        CheckConstraint(
+            "monthly_limit IS NULL OR monthly_limit >= 0",
+            name="ck_budget_rules_monthly_limit_non_negative",
+        ),
+        CheckConstraint(
+            "allocation_type IN ('FIXED', 'PERCENT')",
+            name="ck_budget_rules_allocation_type_valid",
+        ),
+        CheckConstraint(
+            "allocation_type != 'PERCENT' OR allocation_value <= 100",
+            name="ck_budget_rules_percent_max_100",
+        ),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     user_id = Column(String, index=True, nullable=False)

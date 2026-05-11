@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Numeric, Integer, DateTime, Boolean, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -6,6 +15,15 @@ from app.core.database import Base
 
 class SavingsGoal(Base):
     __tablename__ = "savings_goals"
+    __table_args__ = (
+        CheckConstraint("target_amount >= 0", name="ck_savings_goals_target_non_negative"),
+        CheckConstraint("current_amount >= 0", name="ck_savings_goals_current_non_negative"),
+        CheckConstraint(
+            "monthly_contribution >= 0",
+            name="ck_savings_goals_monthly_contribution_non_negative",
+        ),
+        CheckConstraint("priority >= 1 AND priority <= 10", name="ck_savings_goals_priority_range"),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     user_id = Column(String, index=True, nullable=False)

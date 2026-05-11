@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -6,6 +6,18 @@ from app.core.database import Base
 
 class Transaction(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_transactions_amount_non_negative"),
+        CheckConstraint("type IN ('INCOME', 'EXPENSE')", name="ck_transactions_type_valid"),
+        CheckConstraint(
+            "status IN ('pending', 'completed', 'cancelled')",
+            name="ck_transactions_status_valid",
+        ),
+        CheckConstraint(
+            "bill_id IS NULL OR subscription_id IS NULL",
+            name="ck_transactions_single_source_link",
+        ),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     user_id = Column(String, index=True, nullable=False)
