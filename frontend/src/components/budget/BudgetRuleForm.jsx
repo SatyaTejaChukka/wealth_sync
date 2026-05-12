@@ -6,7 +6,12 @@ import { categoryService } from '../../services/categories.js';
 import { Plus, Check } from 'lucide-react';
 import { useToast } from '../ui/Toast.jsx';
 
-export function BudgetRuleForm({ onSubmit, onCancel }) {
+export function BudgetRuleForm({
+  onSubmit,
+  onCancel,
+  initialData = null,
+  submitText = 'Save Rule'
+}) {
   const [formData, setFormData] = useState({
     category_id: '',
     allocation_type: 'FIXED', 
@@ -24,6 +29,26 @@ export function BudgetRuleForm({ onSubmit, onCancel }) {
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    if (!initialData) {
+      setFormData({
+        category_id: '',
+        allocation_type: 'FIXED',
+        allocation_value: '',
+        monthly_limit: ''
+      });
+      return;
+    }
+
+    setFormData({
+      category_id: initialData.category_id || '',
+      allocation_type: initialData.allocation_type || 'FIXED',
+      allocation_value:
+        initialData.allocation_value != null ? String(initialData.allocation_value) : '',
+      monthly_limit: initialData.monthly_limit != null ? String(initialData.monthly_limit) : ''
+    });
+  }, [initialData]);
+
   const loadCategories = async () => {
     try {
       const data = await categoryService.getAll();
@@ -36,16 +61,29 @@ export function BudgetRuleForm({ onSubmit, onCancel }) {
   };
 
   const handleCreateCategory = async () => {
-      if (!newCategoryName.trim()) return;
+      const normalizedName = newCategoryName.trim();
+      if (!normalizedName) return;
+      const duplicateExists = categories.some(
+        (category) => category?.name?.trim().toLowerCase() === normalizedName.toLowerCase()
+      );
+      if (duplicateExists) {
+          toast.warning(`Category "${normalizedName}" already exists.`);
+          return;
+      }
       try {
-          const newCat = await categoryService.create({ name: newCategoryName, color: '#8b5cf6' }); // Default color
-          setCategories([...categories, newCat]);
-          setFormData({ ...formData, category_id: newCat.id });
+          const newCat = await categoryService.create({ name: normalizedName, color: '#8b5cf6' }); // Default color
+          setCategories((prev) => [...prev, newCat]);
+          setFormData((prev) => ({ ...prev, category_id: newCat.id }));
           setNewCategoryName('');
           setIsCreatingCategory(false);
           toast.success('Category created');
-      } catch {
-          toast.error('Failed to create category');
+      } catch (error) {
+          const detail = error?.response?.data?.detail;
+          const message =
+            typeof detail === 'string' && detail.trim()
+              ? detail
+              : 'Failed to create category';
+          toast.error(message);
       }
   };
 
@@ -150,7 +188,7 @@ export function BudgetRuleForm({ onSubmit, onCancel }) {
           Cancel
         </Button>
         <Button type="submit" variant="gradient">
-          Save Rule
+          {submitText}
         </Button>
       </div>
     </form>
