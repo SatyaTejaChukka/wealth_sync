@@ -2,6 +2,7 @@ import calendar
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from sqlalchemy import case, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -50,29 +51,78 @@ class FinancialTriageService:
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         thirty_days_ago = now - timedelta(days=30)
 
-        transactions_result = await db.execute(
-            select(Transaction).filter(Transaction.user_id == user_id)
+        total_res = await db.execute(
+            select(
+                func.coalesce(
+                    func.sum(
+                        case((Transaction.type == "INCOME", Transaction.amount), else_=0)
+                    ),
+                    0,
+                ).label("total_income"),
+                func.coalesce(
+                    func.sum(
+                        case((Transaction.type == "EXPENSE", Transaction.amount), else_=0)
+                    ),
+                    0,
+                ).label("total_expenses"),
+            ).filter(Transaction.user_id == user_id)
         )
-        transactions = transactions_result.scalars().all()
+        totals_row = total_res.one()
+        total_income = cls._to_decimal(totals_row.total_income)
+        total_expenses = cls._to_decimal(totals_row.total_expenses)
 
-        monthly_transactions = [t for t in transactions if t.occurred_at and t.occurred_at >= month_start]
-        monthly_income = sum(
-            (cls._to_decimal(t.amount) for t in monthly_transactions if t.type == "INCOME"),
-            Decimal("0"),
+        monthly_res = await db.execute(
+            select(
+                func.coalesce(
+                    func.sum(
+                        case((Transaction.type == "INCOME", Transaction.amount), else_=0)
+                    ),
+                    0,
+                ).label("monthly_income"),
+                func.coalesce(
+                    func.sum(
+                        case((Transaction.type == "EXPENSE", Transaction.amount), else_=0)
+                    ),
+                    0,
+                ).label("monthly_expenses"),
+            ).filter(
+                Transaction.user_id == user_id,
+                Transaction.occurred_at >= month_start,
+            )
         )
-        monthly_expenses = sum(
-            (cls._to_decimal(t.amount) for t in monthly_transactions if t.type == "EXPENSE"),
-            Decimal("0"),
-        )
+        monthly_row = monthly_res.one()
+        monthly_income = cls._to_decimal(monthly_row.monthly_income)
+        monthly_expenses = cls._to_decimal(monthly_row.monthly_expenses)
 
-        total_income = sum(
-            (cls._to_decimal(t.amount) for t in transactions if t.type == "INCOME"),
-            Decimal("0"),
+        pending_res = await db.execute(
+            select(
+                func.count(Transaction.id).label("pending_count"),
+                func.coalesce(func.sum(Transaction.amount), 0).label("pending_total"),
+            ).filter(
+                Transaction.user_id == user_id,
+                Transaction.type == "EXPENSE",
+                Transaction.status == "pending",
+            )
         )
-        total_expenses = sum(
-            (cls._to_decimal(t.amount) for t in transactions if t.type == "EXPENSE"),
-            Decimal("0"),
+        pending_row = pending_res.one()
+        pending_transaction_count = int(pending_row.pending_count or 0)
+        pending_transaction_total = cls._to_decimal(pending_row.pending_total)
+
+        uncategorized_res = await db.execute(
+            select(
+                func.count(Transaction.id).label("uncategorized_count"),
+                func.coalesce(func.sum(Transaction.amount), 0).label("uncategorized_total"),
+            ).filter(
+                Transaction.user_id == user_id,
+                Transaction.type == "EXPENSE",
+                Transaction.category_id.is_(None),
+                Transaction.occurred_at >= thirty_days_ago,
+            )
         )
+        uncategorized_row = uncategorized_res.one()
+        uncategorized_expense_count = int(uncategorized_row.uncategorized_count or 0)
+        uncategorized_expense_total = cls._to_decimal(uncategorized_row.uncategorized_total)
+
         total_balance = total_income - total_expenses
 
         if monthly_income > 0:
@@ -91,23 +141,6 @@ class FinancialTriageService:
         else:
             liquidity_buffer_days = 365
 
-        pending_expenses = [
-            t for t in transactions if t.type == "EXPENSE" and (t.status or "").lower() == "pending"
-        ]
-        pending_transaction_count = len(pending_expenses)
-        pending_transaction_total = sum((cls._to_decimal(t.amount) for t in pending_expenses), Decimal("0"))
-
-        uncategorized_expenses = [
-            t
-            for t in transactions
-            if t.type == "EXPENSE" and t.category_id is None and t.occurred_at and t.occurred_at >= thirty_days_ago
-        ]
-        uncategorized_expense_count = len(uncategorized_expenses)
-        uncategorized_expense_total = sum(
-            (cls._to_decimal(t.amount) for t in uncategorized_expenses),
-            Decimal("0"),
-        )
-
         category_result = await db.execute(
             select(BudgetCategory).filter(BudgetCategory.user_id == user_id)
         )
@@ -117,14 +150,21 @@ class FinancialTriageService:
         rule_result = await db.execute(select(BudgetRule).filter(BudgetRule.user_id == user_id))
         rules = rule_result.scalars().all()
 
-        monthly_category_spend: dict[str, Decimal] = {}
-        for transaction in monthly_transactions:
-            if transaction.type != "EXPENSE" or transaction.category_id is None:
-                continue
-            monthly_category_spend[transaction.category_id] = (
-                monthly_category_spend.get(transaction.category_id, Decimal("0"))
-                + cls._to_decimal(transaction.amount)
-            )
+        monthly_category_spend_res = await db.execute(
+            select(
+                Transaction.category_id,
+                func.coalesce(func.sum(Transaction.amount), 0).label("spent"),
+            ).filter(
+                Transaction.user_id == user_id,
+                Transaction.type == "EXPENSE",
+                Transaction.category_id.is_not(None),
+                Transaction.occurred_at >= month_start,
+            ).group_by(Transaction.category_id)
+        )
+        monthly_category_spend: dict[str, Decimal] = {
+            row.category_id: cls._to_decimal(row.spent)
+            for row in monthly_category_spend_res
+        }
 
         over_budget_rules: list[dict] = []
         for rule in rules:

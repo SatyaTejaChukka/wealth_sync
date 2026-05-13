@@ -1,8 +1,8 @@
 from typing import Any, List, Annotated
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, case, extract
+from sqlalchemy import case, func, or_
 from datetime import datetime, timedelta
 
 from app.api import deps
@@ -45,35 +45,79 @@ async def get_dashboard_summary(
     """
     now = datetime.utcnow()
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
+
+    effective_tx_filter = or_(Transaction.status == "completed", Transaction.status.is_(None))
+
+    if now.month == 1:
+        start_of_prev_month = now.replace(
+            year=now.year - 1,
+            month=12,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+    else:
+        start_of_prev_month = now.replace(
+            month=now.month - 1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+
+    def _to_decimal(value: Decimal | float | int | None) -> Decimal:
+        if isinstance(value, Decimal):
+            return value
+        return Decimal(str(value or 0))
+
+    async def _sum_income_expenses(
+        *,
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> tuple[Decimal, Decimal]:
+        query = select(
+            func.coalesce(
+                func.sum(
+                    case((Transaction.type == "INCOME", Transaction.amount), else_=0)
+                ),
+                0,
+            ).label("income"),
+            func.coalesce(
+                func.sum(
+                    case((Transaction.type == "EXPENSE", Transaction.amount), else_=0)
+                ),
+                0,
+            ).label("expense"),
+        ).filter(
+            Transaction.user_id == current_user.id,
+            effective_tx_filter,
+        )
+        if start:
+            query = query.filter(Transaction.occurred_at >= start)
+        if end:
+            query = query.filter(Transaction.occurred_at < end)
+        res = await db.execute(query)
+        row = res.one()
+        return _to_decimal(row.income), _to_decimal(row.expense)
+
     # 1. Total Balance & Savings
-    query_all = select(Transaction).filter(Transaction.user_id == current_user.id)
-    result_all = await db.execute(query_all)
-    all_transactions = result_all.scalars().all()
-    
-    total_income = sum(t.amount for t in all_transactions if t.type == 'INCOME')
-    total_expenses = sum(t.amount for t in all_transactions if t.type == 'EXPENSE')
+    total_income, total_expenses = await _sum_income_expenses(end=now)
     total_balance = total_income - total_expenses
-    
+
     # Calculate total savings from goals
     savings_query = select(func.sum(SavingsGoal.current_amount)).filter(SavingsGoal.user_id == current_user.id)
     savings_res = await db.execute(savings_query)
     total_savings = savings_res.scalar() or Decimal(0)
 
     # 2. Monthly Stats
-    monthly_trans = [t for t in all_transactions if t.occurred_at >= start_of_month]
-    monthly_income = sum(t.amount for t in monthly_trans if t.type == 'INCOME')
-    monthly_expenses = sum(t.amount for t in monthly_trans if t.type == 'EXPENSE')
-
-    # Previous Month Stats
-    if now.month == 1:
-        start_of_prev_month = now.replace(year=now.year-1, month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
-    else:
-        start_of_prev_month = now.replace(month=now.month-1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    prev_month_trans = [t for t in all_transactions if t.occurred_at >= start_of_prev_month and t.occurred_at < start_of_month]
-    prev_income = sum(t.amount for t in prev_month_trans if t.type == 'INCOME')
-    prev_expenses = sum(t.amount for t in prev_month_trans if t.type == 'EXPENSE')
+    monthly_income, monthly_expenses = await _sum_income_expenses(start=start_of_month, end=now)
+    prev_income, prev_expenses = await _sum_income_expenses(
+        start=start_of_prev_month,
+        end=start_of_month,
+    )
 
     def calc_change(current, previous):
         if previous == 0:
@@ -84,12 +128,9 @@ async def get_dashboard_summary(
     expenses_change = calc_change(monthly_expenses, prev_expenses)
 
     # Balance Trend
-    prev_balance_res = await db.execute(select(Transaction).filter(Transaction.user_id == current_user.id, Transaction.occurred_at < start_of_month))
-    prev_balance_trans = prev_balance_res.scalars().all()
-    prev_balance_income = sum(t.amount for t in prev_balance_trans if t.type == 'INCOME')
-    prev_balance_expenses = sum(t.amount for t in prev_balance_trans if t.type == 'EXPENSE')
+    prev_balance_income, prev_balance_expenses = await _sum_income_expenses(end=start_of_month)
     prev_total_balance = prev_balance_income - prev_balance_expenses
-    
+
     balance_change = calc_change(total_balance, prev_total_balance)
 
     # Fetch all categories for mapping
@@ -100,7 +141,11 @@ async def get_dashboard_summary(
     # 4. Recent Transactions
     recent_transactions_query = (
         select(Transaction)
-        .filter(Transaction.user_id == current_user.id)
+        .filter(
+            Transaction.user_id == current_user.id,
+            effective_tx_filter,
+            Transaction.occurred_at <= now,
+        )
         .order_by(Transaction.occurred_at.desc())
         .limit(5)
     )
@@ -122,7 +167,7 @@ async def get_dashboard_summary(
     # 5. Spending Chart
     chart_data = []
     days = []
-    
+
     if chart_range == 'week':
         # Last 7 days
         for i in range(6, -1, -1):
@@ -134,36 +179,62 @@ async def get_dashboard_summary(
         while curr <= now:
             days.append(curr.date())
             curr += timedelta(days=1)
-            
-    for day in days:
-        day_expenses = sum(
-            t.amount 
-            for t in all_transactions 
-            if t.type == 'EXPENSE' and t.occurred_at.date() == day
+
+    chart_start = days[0]
+    chart_expense_res = await db.execute(
+        select(
+            func.date(Transaction.occurred_at).label("txn_day"),
+            func.coalesce(func.sum(Transaction.amount), 0).label("amount"),
         )
-        
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == "EXPENSE",
+            effective_tx_filter,
+            Transaction.occurred_at >= datetime.combine(chart_start, datetime.min.time()),
+            Transaction.occurred_at <= now,
+        )
+        .group_by(func.date(Transaction.occurred_at))
+    )
+    chart_expense_map = {
+        str(row.txn_day): float(_to_decimal(row.amount))
+        for row in chart_expense_res
+    }
+
+    for day in days:
+        day_expenses = chart_expense_map.get(day.isoformat(), 0.0)
+
         if chart_range == 'week':
             label = day.strftime("%a")
         else:
             label = day.strftime("%b %d")
-            
+
         chart_data.append({
             "name": label,
-            "amount": float(day_expenses)
+            "amount": day_expenses,
         })
 
     # 6. Category Chart (Expenses by Category for this month)
     category_chart = []
-    cat_map = {}
-    for t in monthly_trans:
-        if t.type == 'EXPENSE':
-            cat_id = str(t.category_id) if t.category_id else "Uncategorized"
-            cat_map[cat_id] = cat_map.get(cat_id, 0) + t.amount
+    category_res = await db.execute(
+        select(
+            Transaction.category_id,
+            func.coalesce(func.sum(Transaction.amount), 0).label("amount"),
+        )
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == "EXPENSE",
+            Transaction.occurred_at >= start_of_month,
+            Transaction.occurred_at <= now,
+            effective_tx_filter,
+        )
+        .group_by(Transaction.category_id)
+    )
 
-    for cat_id, amount in cat_map.items():
+    for row in category_res:
+        cat_id = str(row.category_id) if row.category_id else "Uncategorized"
         category_chart.append({
-            "name": cat_name_map.get(cat_id, "Uncategorized"), 
-            "value": float(amount)
+            "name": cat_name_map.get(cat_id, "Uncategorized"),
+            "value": float(_to_decimal(row.amount)),
         })
     
     # Sort categories by value desc for insights
@@ -178,10 +249,9 @@ async def get_dashboard_summary(
         top_categories=category_chart 
     )
 
-    # 7. Autopilot / Safe-to-Spend Stats + Salary Rule Engine
-    safe_to_spend_stats = await AutopilotService.calculate_safe_to_spend(db, current_user.id)
-    salary_rule_engine = await AutopilotService.calculate_salary_rule_split(db, current_user.id)
-    safe_to_spend_stats["salary_rule_engine"] = salary_rule_engine
+    # 7. Unified planning overview for safe-to-spend + rule engine
+    planning_overview = await AutopilotService.calculate_comprehensive_overview(db, current_user.id)
+    safe_to_spend_stats = planning_overview["safe_to_spend_stats"]
 
     return {
         "total_balance": total_balance,
