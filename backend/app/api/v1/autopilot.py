@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api import deps
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.errors import ErrorCode, error_payload
 from app.models.user import User
 from app.services.autopilot import AutopilotService
 
@@ -41,8 +42,13 @@ class SalaryRuleEngineResponse(BaseModel):
     allocation: dict
     buckets: dict
     totals: dict
+    actuals: dict
+    confidence: dict
+    status: dict
+    money_flow: dict
     status_message: str
     warnings: list[str]
+    warning_details: list[dict]
 
 
 class PaymentOrderListResponse(BaseModel):
@@ -60,6 +66,10 @@ class PaymentApproveRequest(BaseModel):
 
 class PaymentCancelRequest(BaseModel):
     reason: str | None = None
+
+
+class PaymentHistoryResponse(BaseModel):
+    items: list[dict]
 
 
 @router.get("/safe-to-spend-daily", response_model=DailySafeToSpendResponse)
@@ -135,12 +145,21 @@ async def approve_payment_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(deps.get_current_user)],
 ):
-    order = await AutopilotService.approve_payment_order(
-        db,
-        current_user.id,
-        payment_id,
-        execute_now=bool(payload.execute_now),
-    )
+    try:
+        order = await AutopilotService.approve_payment_order(
+            db,
+            current_user.id,
+            payment_id,
+            execute_now=bool(payload.execute_now),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=error_payload(
+                ErrorCode.INVALID_STATE_TRANSITION,
+                str(exc),
+            ),
+        )
     if not order:
         raise HTTPException(status_code=404, detail="Payment order not found")
     return {"item": order}
@@ -151,12 +170,23 @@ async def execute_payment_order(
     payment_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(deps.get_current_user)],
+    idempotency_key: str | None = Query(default=None, min_length=8, max_length=128),
 ):
-    order = await AutopilotService.execute_payment_order(
-        db,
-        current_user.id,
-        payment_id,
-    )
+    try:
+        order = await AutopilotService.execute_payment_order(
+            db,
+            current_user.id,
+            payment_id,
+            idempotency_key=idempotency_key,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=error_payload(
+                ErrorCode.INVALID_STATE_TRANSITION,
+                str(exc),
+            ),
+        )
     if not order:
         raise HTTPException(status_code=404, detail="Payment order not found")
     return {"item": order}
@@ -169,12 +199,21 @@ async def cancel_payment_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(deps.get_current_user)],
 ):
-    order = await AutopilotService.cancel_payment_order(
-        db,
-        current_user.id,
-        payment_id,
-        reason=payload.reason,
-    )
+    try:
+        order = await AutopilotService.cancel_payment_order(
+            db,
+            current_user.id,
+            payment_id,
+            reason=payload.reason,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=error_payload(
+                ErrorCode.INVALID_STATE_TRANSITION,
+                str(exc),
+            ),
+        )
     if not order:
         raise HTTPException(status_code=404, detail="Payment order not found")
     return {"item": order}
@@ -194,7 +233,12 @@ async def execute_due_payments(
     for order in orders:
         if order["due_on"] > today:
             continue
-        result = await AutopilotService.execute_payment_order(db, current_user.id, order["id"])
+        result = await AutopilotService.execute_payment_order(
+            db,
+            current_user.id,
+            order["id"],
+            idempotency_key=f"autopilot-user-due-{order['id']}-{today}",
+        )
         if not result:
             continue
         if result["status"] == "succeeded":
@@ -202,6 +246,27 @@ async def execute_due_payments(
         elif result["status"] == "failed":
             failed += 1
     return {"executed": executed, "failed": failed}
+
+
+@router.get("/payments/{payment_id}/history", response_model=PaymentHistoryResponse)
+async def get_payment_history(
+    payment_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+    limit: int = Query(default=50, ge=1, le=200),
+):
+    items = await AutopilotService.list_payment_state_history(
+        db,
+        current_user.id,
+        payment_id,
+        limit=limit,
+    )
+    if not items:
+        # Ensure missing order stays a 404 for clients.
+        order = await AutopilotService.get_payment_order_by_id(db, current_user.id, payment_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Payment order not found")
+    return {"items": items}
 
 
 @router.get("/salary-rule-engine", response_model=SalaryRuleEngineResponse)
@@ -213,9 +278,10 @@ async def get_salary_rule_engine(
 ):
     """
     Auto-split salary by priority rules:
-    1. Commitments first (bills/subscriptions)
-    2. Goals by priority
-    3. Reserve free-money floor
+    1. Hard commitments first (bills/subscriptions)
+    2. Protect the free-money floor
+    3. Allocate planned expenses
+    4. Fund goals by priority
     """
     return await AutopilotService.calculate_salary_rule_split(
         db,

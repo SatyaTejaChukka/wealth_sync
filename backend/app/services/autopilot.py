@@ -1,14 +1,19 @@
 import calendar
 import json
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List
 
+from sqlalchemy import inspect, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.config import settings
-from app.models.autopilot_payment import AutopilotPayment
+from app.core.request_context import get_request_id
+from app.domain.enums import AutopilotPaymentStatus
+from app.models.autopilot_payment import AutopilotPayment, AutopilotPaymentStateHistory
 from app.models.bill import Bill
 from app.models.budget import BudgetCategory, BudgetRule
 from app.models.income import IncomeSource
@@ -16,9 +21,33 @@ from app.models.notification import Notification
 from app.models.savings import SavingsGoal, SavingsLog
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
+from app.services.financial_planning import FinancialPlanningService
+
+
+logger = logging.getLogger(__name__)
 
 
 class AutopilotService:
+    ALLOWED_STATE_TRANSITIONS: dict[str, set[str]] = {
+        AutopilotPaymentStatus.approval_required.value: {
+            AutopilotPaymentStatus.approved.value,
+            AutopilotPaymentStatus.cancelled.value,
+        },
+        AutopilotPaymentStatus.approved.value: {
+            AutopilotPaymentStatus.processing.value,
+            AutopilotPaymentStatus.cancelled.value,
+        },
+        AutopilotPaymentStatus.processing.value: {
+            AutopilotPaymentStatus.succeeded.value,
+            AutopilotPaymentStatus.failed.value,
+        },
+        AutopilotPaymentStatus.failed.value: {
+            AutopilotPaymentStatus.processing.value,
+            AutopilotPaymentStatus.cancelled.value,
+        },
+        AutopilotPaymentStatus.succeeded.value: set(),
+        AutopilotPaymentStatus.cancelled.value: set(),
+    }
     @staticmethod
     def _to_decimal(value: Decimal | float | int | None) -> Decimal:
         if value is None:
@@ -26,6 +55,11 @@ class AutopilotService:
         if isinstance(value, Decimal):
             return value
         return Decimal(str(value))
+
+    @staticmethod
+    def _effective_transaction_filter():
+        # Treat null status as legacy completed rows for backward compatibility.
+        return or_(Transaction.status == "completed", Transaction.status.is_(None))
 
     @staticmethod
     def _month_safe_day(year: int, month: int, day: int) -> int:
@@ -91,6 +125,40 @@ class AutopilotService:
         return json.dumps(meta or {})
 
     @staticmethod
+    async def _autopilot_tables_available(session: AsyncSession) -> bool:
+        connection = await session.connection()
+
+        def check_tables(sync_connection) -> bool:
+            inspector = inspect(sync_connection)
+
+            def has_required_schema(table_name: str, required_columns: set[str]) -> bool:
+                if not inspector.has_table(table_name):
+                    return False
+
+                existing_columns = {
+                    column["name"] for column in inspector.get_columns(table_name)
+                }
+                missing_columns = sorted(required_columns - existing_columns)
+                if missing_columns:
+                    logger.warning(
+                        "Autopilot schema mismatch for %s; missing columns: %s",
+                        table_name,
+                        ", ".join(missing_columns),
+                    )
+                    return False
+                return True
+
+            return has_required_schema(
+                "autopilot_payments",
+                set(AutopilotPayment.__table__.columns.keys()),
+            ) and has_required_schema(
+                "autopilot_payment_state_history",
+                set(AutopilotPaymentStateHistory.__table__.columns.keys()),
+            )
+
+        return await connection.run_sync(check_tables)
+
+    @staticmethod
     def _serialize_payment_order(order: AutopilotPayment) -> Dict[str, Any]:
         return {
             "id": order.id,
@@ -107,6 +175,7 @@ class AutopilotService:
             "provider_reference": order.provider_reference,
             "provider_action_url": order.provider_action_url,
             "failure_reason": order.failure_reason,
+            "execution_idempotency_key": order.execution_idempotency_key,
             "approved_at": order.approved_at.isoformat() if order.approved_at else None,
             "executed_at": order.executed_at.isoformat() if order.executed_at else None,
             "cancelled_at": order.cancelled_at.isoformat() if order.cancelled_at else None,
@@ -116,6 +185,60 @@ class AutopilotService:
             "created_at": order.created_at.isoformat() if order.created_at else None,
             "updated_at": order.updated_at.isoformat() if order.updated_at else None,
         }
+
+    @classmethod
+    def _is_valid_transition(cls, current_status: str, target_status: str) -> bool:
+        if current_status == target_status:
+            return True
+        return target_status in cls.ALLOWED_STATE_TRANSITIONS.get(current_status, set())
+
+    @classmethod
+    def _transition_state(
+        cls,
+        session: AsyncSession,
+        order: AutopilotPayment,
+        *,
+        to_status: str,
+        event_type: str,
+        reason: str | None = None,
+        actor_user_id: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> None:
+        from_status = order.status
+        if not cls._is_valid_transition(from_status, to_status):
+            raise ValueError(
+                f"Invalid autopilot state transition: {from_status} -> {to_status}"
+            )
+
+        now = datetime.utcnow()
+        order.status = to_status
+        if to_status == AutopilotPaymentStatus.approved.value:
+            order.approved_at = now
+            order.failure_reason = None
+        elif to_status == AutopilotPaymentStatus.processing.value:
+            order.failure_reason = None
+        elif to_status == AutopilotPaymentStatus.succeeded.value:
+            order.executed_at = now
+            order.failure_reason = None
+        elif to_status == AutopilotPaymentStatus.failed.value:
+            order.failure_reason = reason or order.failure_reason
+        elif to_status == AutopilotPaymentStatus.cancelled.value:
+            order.cancelled_at = now
+            order.failure_reason = reason or order.failure_reason
+
+        session.add(order)
+        session.add(
+            AutopilotPaymentStateHistory(
+                payment_id=order.id,
+                from_status=from_status,
+                to_status=to_status,
+                event_type=event_type,
+                reason=reason,
+                actor_user_id=actor_user_id,
+                trace_id=get_request_id(),
+                idempotency_key=idempotency_key,
+            )
+        )
 
     @staticmethod
     async def _create_notification(
@@ -156,10 +279,12 @@ class AutopilotService:
         now: datetime,
     ) -> Decimal:
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        effective_tx_filter = cls._effective_transaction_filter()
         tx_res = await session.execute(
             select(Transaction).filter(
                 Transaction.user_id == user_id,
                 Transaction.type == "INCOME",
+                effective_tx_filter,
                 Transaction.occurred_at >= start_of_month,
                 Transaction.occurred_at <= now,
             )
@@ -176,6 +301,13 @@ class AutopilotService:
         *,
         commit: bool = True,
     ) -> List[Dict[str, Any]]:
+        if not await cls._autopilot_tables_available(session):
+            logger.warning(
+                "Autopilot tables are unavailable; skipping payment order preparation for user_id=%s",
+                user_id,
+            )
+            return []
+
         now = datetime.utcnow()
         today = now.date()
         horizon = today + timedelta(days=max(0, min(int(days_ahead), 90)))
@@ -343,6 +475,13 @@ class AutopilotService:
         status: str | None = None,
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
+        if not await cls._autopilot_tables_available(session):
+            logger.warning(
+                "Autopilot tables are unavailable; returning no payment orders for user_id=%s",
+                user_id,
+            )
+            return []
+
         safe_limit = max(1, min(int(limit), 200))
         query = select(AutopilotPayment).filter(AutopilotPayment.user_id == user_id)
         if status:
@@ -361,14 +500,61 @@ class AutopilotService:
         session: AsyncSession,
         user_id: str,
         payment_id: str,
+        *,
+        for_update: bool = False,
     ) -> AutopilotPayment | None:
-        res = await session.execute(
-            select(AutopilotPayment).filter(
-                AutopilotPayment.id == payment_id,
-                AutopilotPayment.user_id == user_id,
+        if not await cls._autopilot_tables_available(session):
+            logger.warning(
+                "Autopilot tables are unavailable; payment lookup skipped for user_id=%s payment_id=%s",
+                user_id,
+                payment_id,
             )
+            return None
+
+        query = select(AutopilotPayment).filter(
+            AutopilotPayment.id == payment_id,
+            AutopilotPayment.user_id == user_id,
         )
+        if for_update:
+            query = query.with_for_update()
+        res = await session.execute(query)
         return res.scalars().first()
+
+    @classmethod
+    async def list_payment_state_history(
+        cls,
+        session: AsyncSession,
+        user_id: str,
+        payment_id: str,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        order = await cls.get_payment_order_by_id(session, user_id, payment_id)
+        if not order:
+            return []
+
+        safe_limit = max(1, min(int(limit), 200))
+        history_res = await session.execute(
+            select(AutopilotPaymentStateHistory)
+            .filter(AutopilotPaymentStateHistory.payment_id == payment_id)
+            .order_by(AutopilotPaymentStateHistory.created_at.desc())
+            .limit(safe_limit)
+        )
+        history = history_res.scalars().all()
+        return [
+            {
+                "id": item.id,
+                "payment_id": item.payment_id,
+                "from_status": item.from_status,
+                "to_status": item.to_status,
+                "event_type": item.event_type,
+                "reason": item.reason,
+                "trace_id": item.trace_id,
+                "actor_user_id": item.actor_user_id,
+                "idempotency_key": item.idempotency_key,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+            }
+            for item in history
+        ]
 
     @classmethod
     async def approve_payment_order(
@@ -379,17 +565,29 @@ class AutopilotService:
         *,
         execute_now: bool = True,
     ) -> Dict[str, Any] | None:
-        order = await cls.get_payment_order_by_id(session, user_id, payment_id)
+        order = await cls.get_payment_order_by_id(
+            session,
+            user_id,
+            payment_id,
+            for_update=True,
+        )
         if not order:
             return None
 
-        if order.status in {"cancelled", "succeeded"}:
+        if order.status in {
+            AutopilotPaymentStatus.cancelled.value,
+            AutopilotPaymentStatus.succeeded.value,
+        }:
             return cls._serialize_payment_order(order)
 
-        order.status = "approved"
-        order.approved_at = datetime.utcnow()
-        order.failure_reason = None
-        session.add(order)
+        if order.status != AutopilotPaymentStatus.approved.value:
+            cls._transition_state(
+                session,
+                order,
+                to_status=AutopilotPaymentStatus.approved.value,
+                event_type="payment_approved",
+                actor_user_id=user_id,
+            )
 
         await cls._create_notification(
             session=session,
@@ -403,10 +601,19 @@ class AutopilotService:
             related_id=order.id,
         )
 
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            logger.warning("Duplicate approval transition for payment_id=%s", payment_id)
 
         if execute_now and settings.PAYMENTS_AUTO_EXECUTE_ON_APPROVAL:
-            return await cls.execute_payment_order(session, user_id, payment_id)
+            return await cls.execute_payment_order(
+                session,
+                user_id,
+                payment_id,
+                idempotency_key=f"autopilot-approve-{payment_id}",
+            )
 
         await session.refresh(order)
         return cls._serialize_payment_order(order)
@@ -420,27 +627,44 @@ class AutopilotService:
         *,
         reason: str | None = None,
     ) -> Dict[str, Any] | None:
-        order = await cls.get_payment_order_by_id(session, user_id, payment_id)
+        order = await cls.get_payment_order_by_id(
+            session,
+            user_id,
+            payment_id,
+            for_update=True,
+        )
         if not order:
             return None
 
-        if order.status == "succeeded":
+        if order.status == AutopilotPaymentStatus.succeeded.value:
             return cls._serialize_payment_order(order)
 
-        order.status = "cancelled"
-        order.cancelled_at = datetime.utcnow()
-        order.failure_reason = reason or order.failure_reason
-        session.add(order)
-        await session.commit()
+        if order.status != AutopilotPaymentStatus.cancelled.value:
+            cls._transition_state(
+                session,
+                order,
+                to_status=AutopilotPaymentStatus.cancelled.value,
+                event_type="payment_cancelled",
+                reason=reason,
+                actor_user_id=user_id,
+            )
+            await session.commit()
+
         await session.refresh(order)
         return cls._serialize_payment_order(order)
 
     @classmethod
     async def execute_due_approved_payments(cls, session: AsyncSession) -> Dict[str, int]:
+        if not await cls._autopilot_tables_available(session):
+            logger.warning(
+                "Autopilot tables are unavailable; skipping due payment execution sweep"
+            )
+            return {"executed": 0, "failed": 0}
+
         today = datetime.utcnow().date()
         pending_res = await session.execute(
             select(AutopilotPayment).filter(
-                AutopilotPayment.status == "approved",
+                AutopilotPayment.status == AutopilotPaymentStatus.approved.value,
                 AutopilotPayment.due_on <= today,
             )
         )
@@ -449,7 +673,14 @@ class AutopilotService:
         failed_count = 0
 
         for order in orders:
-            result = await cls._execute_order(session, order)
+            result = await cls.execute_payment_order(
+                session,
+                user_id=order.user_id,
+                payment_id=order.id,
+                idempotency_key=f"autopilot-due-{order.id}-{today.isoformat()}",
+            )
+            if not result:
+                continue
             if result["status"] == "succeeded":
                 success_count += 1
             elif result["status"] == "failed":
@@ -463,179 +694,281 @@ class AutopilotService:
         session: AsyncSession,
         user_id: str,
         payment_id: str,
+        *,
+        idempotency_key: str | None = None,
     ) -> Dict[str, Any] | None:
-        order = await cls.get_payment_order_by_id(session, user_id, payment_id)
+        order = await cls.get_payment_order_by_id(
+            session,
+            user_id,
+            payment_id,
+            for_update=True,
+        )
         if not order:
             return None
-        return await cls._execute_order(session, order)
+        execution_key = (idempotency_key or f"autopilot-exec-{payment_id}").strip()
+        if not execution_key:
+            raise ValueError("Idempotency key cannot be empty.")
+
+        if (
+            order.execution_idempotency_key == execution_key
+            and order.status
+            in {
+                AutopilotPaymentStatus.processing.value,
+                AutopilotPaymentStatus.succeeded.value,
+                AutopilotPaymentStatus.failed.value,
+                AutopilotPaymentStatus.cancelled.value,
+            }
+        ):
+            return cls._serialize_payment_order(order)
+
+        if order.status in {
+            AutopilotPaymentStatus.succeeded.value,
+            AutopilotPaymentStatus.cancelled.value,
+        }:
+            return cls._serialize_payment_order(order)
+
+        if order.status not in {
+            AutopilotPaymentStatus.approved.value,
+            AutopilotPaymentStatus.failed.value,
+            AutopilotPaymentStatus.processing.value,
+        }:
+            raise ValueError(
+                (
+                    "Payment must be approved before execution. "
+                    f"Current status: {order.status}."
+                )
+            )
+
+        if (
+            order.status == AutopilotPaymentStatus.processing.value
+            and order.execution_idempotency_key
+            and order.execution_idempotency_key != execution_key
+        ):
+            return cls._serialize_payment_order(order)
+
+        order.execution_idempotency_key = execution_key
+        session.add(order)
+        return await cls._execute_order(
+            session,
+            order,
+            idempotency_key=execution_key,
+        )
 
     @classmethod
     async def _execute_order(
         cls,
         session: AsyncSession,
         order: AutopilotPayment,
+        *,
+        idempotency_key: str,
     ) -> Dict[str, Any]:
-        if order.status in {"succeeded", "cancelled"}:
+        if order.status in {
+            AutopilotPaymentStatus.succeeded.value,
+            AutopilotPaymentStatus.cancelled.value,
+        }:
             return cls._serialize_payment_order(order)
 
-        if order.status not in {"approved", "processing"}:
-            order.status = "failed"
-            order.failure_reason = "Payment must be approved before execution."
-            session.add(order)
-            await session.commit()
-            await session.refresh(order)
-            return cls._serialize_payment_order(order)
-
-        order.status = "processing"
-        session.add(order)
-        await session.commit()
-
-        provider = (order.provider or "internal_ledger").strip().lower()
-        if provider != "internal_ledger":
-            order.status = "failed"
-            order.failure_reason = (
-                "External provider execution is not configured. "
-                "Set PAYMENTS_PROVIDER=internal_ledger or integrate provider credentials."
-            )
-            session.add(order)
-            await session.commit()
-            await session.refresh(order)
-            return cls._serialize_payment_order(order)
-
-        now = datetime.utcnow()
-        amount_decimal = cls._to_decimal(order.amount)
-
-        if order.source_type == "BILL":
-            bill_res = await session.execute(
-                select(Bill).filter(Bill.id == order.source_id, Bill.user_id == order.user_id)
-            )
-            bill = bill_res.scalars().first()
-            if not bill:
-                order.status = "failed"
-                order.failure_reason = "Linked bill not found."
-                session.add(order)
-                await session.commit()
-                await session.refresh(order)
-                return cls._serialize_payment_order(order)
-
-            transaction = Transaction(
-                user_id=order.user_id,
-                category_id=order.category_id or bill.category_id,
-                amount=amount_decimal,
-                type="EXPENSE",
-                description=f"Autopilot Payment: {order.title}",
-                occurred_at=now,
-                status="completed",
-                bill_id=bill.id,
-            )
-            bill.last_paid_at = now
-            session.add(transaction)
-            session.add(bill)
-            await session.flush()
-            order.transaction_id = transaction.id
-
-        elif order.source_type == "SUBSCRIPTION":
-            sub_res = await session.execute(
-                select(Subscription).filter(
-                    Subscription.id == order.source_id,
-                    Subscription.user_id == order.user_id,
+        try:
+            if order.status != AutopilotPaymentStatus.processing.value:
+                cls._transition_state(
+                    session,
+                    order,
+                    to_status=AutopilotPaymentStatus.processing.value,
+                    event_type="execution_started",
+                    actor_user_id=order.user_id,
+                    idempotency_key=idempotency_key,
                 )
-            )
-            subscription = sub_res.scalars().first()
-            if not subscription:
-                order.status = "failed"
-                order.failure_reason = "Linked subscription not found."
-                session.add(order)
-                await session.commit()
-                await session.refresh(order)
-                return cls._serialize_payment_order(order)
 
-            transaction = Transaction(
-                user_id=order.user_id,
-                category_id=order.category_id or subscription.category_id,
-                amount=amount_decimal,
-                type="EXPENSE",
-                description=f"Autopilot Payment: {order.title}",
-                occurred_at=now,
-                status="completed",
-                subscription_id=subscription.id,
-            )
-            cycle_days = 30 if (subscription.billing_cycle or "monthly") == "monthly" else 365
-            base_date = subscription.next_billing_date or now
-            if base_date < now:
-                base_date = now
-            subscription.next_billing_date = base_date + timedelta(days=cycle_days)
-            session.add(transaction)
-            session.add(subscription)
-            await session.flush()
-            order.transaction_id = transaction.id
-
-        elif order.source_type == "GOAL":
-            goal_res = await session.execute(
-                select(SavingsGoal).filter(
-                    SavingsGoal.id == order.source_id,
-                    SavingsGoal.user_id == order.user_id,
+            provider = (order.provider or "internal_ledger").strip().lower()
+            if provider != "internal_ledger":
+                cls._transition_state(
+                    session,
+                    order,
+                    to_status=AutopilotPaymentStatus.failed.value,
+                    event_type="execution_failed",
+                    reason=(
+                        "External provider execution is not configured. "
+                        "Set PAYMENTS_PROVIDER=internal_ledger or integrate provider credentials."
+                    ),
+                    actor_user_id=order.user_id,
+                    idempotency_key=idempotency_key,
                 )
-            )
-            goal = goal_res.scalars().first()
-            if not goal:
-                order.status = "failed"
-                order.failure_reason = "Linked savings goal not found."
-                session.add(order)
                 await session.commit()
                 await session.refresh(order)
                 return cls._serialize_payment_order(order)
 
-            goal.current_amount = cls._to_decimal(goal.current_amount) + amount_decimal
-            if cls._to_decimal(goal.current_amount) >= cls._to_decimal(goal.target_amount):
-                goal.is_completed = True
+            now = datetime.utcnow()
+            amount_decimal = cls._to_decimal(order.amount)
 
-            session.add(
-                SavingsLog(
-                    goal_id=goal.id,
+            if order.source_type == "BILL":
+                bill_res = await session.execute(
+                    select(Bill).filter(Bill.id == order.source_id, Bill.user_id == order.user_id)
+                )
+                bill = bill_res.scalars().first()
+                if not bill:
+                    cls._transition_state(
+                        session,
+                        order,
+                        to_status=AutopilotPaymentStatus.failed.value,
+                        event_type="execution_failed",
+                        reason="Linked bill not found.",
+                        actor_user_id=order.user_id,
+                        idempotency_key=idempotency_key,
+                    )
+                    await session.commit()
+                    await session.refresh(order)
+                    return cls._serialize_payment_order(order)
+
+                transaction = Transaction(
+                    user_id=order.user_id,
+                    category_id=order.category_id or bill.category_id,
                     amount=amount_decimal,
-                    note="Autopilot contribution",
+                    type="EXPENSE",
+                    description=f"Autopilot Payment: {order.title}",
+                    occurred_at=now,
+                    status="completed",
+                    bill_id=bill.id,
                 )
+                bill.last_paid_at = now
+                session.add(transaction)
+                session.add(bill)
+                await session.flush()
+                order.transaction_id = transaction.id
+
+            elif order.source_type == "SUBSCRIPTION":
+                sub_res = await session.execute(
+                    select(Subscription).filter(
+                        Subscription.id == order.source_id,
+                        Subscription.user_id == order.user_id,
+                    )
+                )
+                subscription = sub_res.scalars().first()
+                if not subscription:
+                    cls._transition_state(
+                        session,
+                        order,
+                        to_status=AutopilotPaymentStatus.failed.value,
+                        event_type="execution_failed",
+                        reason="Linked subscription not found.",
+                        actor_user_id=order.user_id,
+                        idempotency_key=idempotency_key,
+                    )
+                    await session.commit()
+                    await session.refresh(order)
+                    return cls._serialize_payment_order(order)
+
+                transaction = Transaction(
+                    user_id=order.user_id,
+                    category_id=order.category_id or subscription.category_id,
+                    amount=amount_decimal,
+                    type="EXPENSE",
+                    description=f"Autopilot Payment: {order.title}",
+                    occurred_at=now,
+                    status="completed",
+                    subscription_id=subscription.id,
+                )
+                cycle_days = 30 if (subscription.billing_cycle or "monthly") == "monthly" else 365
+                base_date = subscription.next_billing_date or now
+                if base_date < now:
+                    base_date = now
+                subscription.next_billing_date = base_date + timedelta(days=cycle_days)
+                session.add(transaction)
+                session.add(subscription)
+                await session.flush()
+                order.transaction_id = transaction.id
+
+            elif order.source_type == "GOAL":
+                goal_res = await session.execute(
+                    select(SavingsGoal).filter(
+                        SavingsGoal.id == order.source_id,
+                        SavingsGoal.user_id == order.user_id,
+                    )
+                )
+                goal = goal_res.scalars().first()
+                if not goal:
+                    cls._transition_state(
+                        session,
+                        order,
+                        to_status=AutopilotPaymentStatus.failed.value,
+                        event_type="execution_failed",
+                        reason="Linked savings goal not found.",
+                        actor_user_id=order.user_id,
+                        idempotency_key=idempotency_key,
+                    )
+                    await session.commit()
+                    await session.refresh(order)
+                    return cls._serialize_payment_order(order)
+
+                goal.current_amount = cls._to_decimal(goal.current_amount) + amount_decimal
+                if cls._to_decimal(goal.current_amount) >= cls._to_decimal(goal.target_amount):
+                    goal.is_completed = True
+
+                session.add(
+                    SavingsLog(
+                        goal_id=goal.id,
+                        amount=amount_decimal,
+                        note="Autopilot contribution",
+                    )
+                )
+
+                transaction = Transaction(
+                    user_id=order.user_id,
+                    category_id=order.category_id,
+                    amount=amount_decimal,
+                    type="EXPENSE",
+                    description=f"Autopilot Goal Contribution: {goal.name}",
+                    occurred_at=now,
+                    status="completed",
+                )
+                session.add(goal)
+                session.add(transaction)
+                await session.flush()
+                order.transaction_id = transaction.id
+            else:
+                cls._transition_state(
+                    session,
+                    order,
+                    to_status=AutopilotPaymentStatus.failed.value,
+                    event_type="execution_failed",
+                    reason=f"Unsupported payment source type: {order.source_type}",
+                    actor_user_id=order.user_id,
+                    idempotency_key=idempotency_key,
+                )
+                await session.commit()
+                await session.refresh(order)
+                return cls._serialize_payment_order(order)
+
+            order.provider_reference = order.provider_reference or f"internal:{order.id}"
+            cls._transition_state(
+                session,
+                order,
+                to_status=AutopilotPaymentStatus.succeeded.value,
+                event_type="execution_succeeded",
+                actor_user_id=order.user_id,
+                idempotency_key=idempotency_key,
             )
 
-            transaction = Transaction(
+            await cls._create_notification(
+                session=session,
                 user_id=order.user_id,
-                category_id=order.category_id,
-                amount=amount_decimal,
-                type="EXPENSE",
-                description=f"Autopilot Goal Contribution: {goal.name}",
-                occurred_at=now,
-                status="completed",
+                title=f"Payment completed: {order.title}",
+                message=f"INR {cls._to_money(amount_decimal):.2f} paid successfully.",
+                notification_type="payment_success",
+                action_url="/dashboard/transactions",
+                related_id=order.transaction_id or order.id,
             )
-            session.add(goal)
-            session.add(transaction)
-            await session.flush()
-            order.transaction_id = transaction.id
-        else:
-            order.status = "failed"
-            order.failure_reason = f"Unsupported payment source type: {order.source_type}"
-            session.add(order)
             await session.commit()
-            await session.refresh(order)
-            return cls._serialize_payment_order(order)
+        except IntegrityError:
+            await session.rollback()
+            logger.warning(
+                "Duplicate idempotent execution ignored for payment_id=%s key=%s",
+                order.id,
+                idempotency_key,
+            )
+        except Exception:
+            await session.rollback()
+            raise
 
-        order.status = "succeeded"
-        order.executed_at = now
-        order.provider_reference = order.provider_reference or f"internal:{order.id}"
-        order.failure_reason = None
-        session.add(order)
-
-        await cls._create_notification(
-            session=session,
-            user_id=order.user_id,
-            title=f"Payment completed: {order.title}",
-            message=f"INR {cls._to_money(amount_decimal):.2f} paid successfully.",
-            notification_type="payment_success",
-            action_url="/dashboard/transactions",
-            related_id=order.transaction_id or order.id,
-        )
-
-        await session.commit()
         await session.refresh(order)
         return cls._serialize_payment_order(order)
 
@@ -679,6 +1012,20 @@ class AutopilotService:
 
         return allocations, total_allocated
 
+    @staticmethod
+    async def calculate_comprehensive_overview(
+        session: AsyncSession,
+        user_id: str,
+        salary_override: float | None = None,
+        free_money_min_percent: float = 20.0,
+    ) -> Dict[str, Any]:
+        return await FinancialPlanningService.calculate_comprehensive_overview(
+            session,
+            user_id,
+            salary_override=salary_override,
+            free_money_min_percent=free_money_min_percent,
+        )
+
     @classmethod
     async def calculate_salary_rule_split(
         cls,
@@ -687,348 +1034,18 @@ class AutopilotService:
         salary_override: float | None = None,
         free_money_min_percent: float = 20.0,
     ) -> Dict[str, Any]:
-        now = datetime.utcnow()
-        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        floor_percent = max(0.0, min(float(free_money_min_percent), 80.0))
-
-        income_res = await session.execute(select(IncomeSource).filter(IncomeSource.user_id == user_id))
-        income_sources = income_res.scalars().all()
-
-        estimated_salary_from_sources = sum(
-            (
-                cls._to_decimal(income.amount) * cls._monthly_multiplier(income.frequency)
-                for income in income_sources
-                if bool(income.active)
-            ),
-            Decimal("0"),
+        overview = await cls.calculate_comprehensive_overview(
+            session,
+            user_id,
+            salary_override=salary_override,
+            free_money_min_percent=free_money_min_percent,
         )
-
-        monthly_income_from_transactions = await cls._current_month_income_from_transactions(
-            session, user_id, now
-        )
-
-        if salary_override is None:
-            if monthly_income_from_transactions > 0:
-                salary_considered = max(Decimal("0"), monthly_income_from_transactions)
-                salary_source = "income_transactions"
-            else:
-                salary_considered = max(Decimal("0"), estimated_salary_from_sources)
-                salary_source = "income_sources"
-        else:
-            salary_considered = max(Decimal("0"), cls._to_decimal(salary_override))
-            salary_source = "salary_override"
-
-        bills_res = await session.execute(select(Bill).filter(Bill.user_id == user_id))
-        bills = bills_res.scalars().all()
-
-        commitments_items: List[Dict[str, Any]] = []
-        commitments_total = Decimal("0")
-
-        for bill in bills:
-            is_paid_this_month = bool(bill.last_paid_at and bill.last_paid_at >= start_of_month)
-            if is_paid_this_month:
-                continue
-
-            amount = max(
-                Decimal("0"),
-                cls._to_decimal(bill.amount_estimated)
-                * cls._monthly_multiplier(getattr(bill, "frequency", "monthly")),
-            )
-            commitments_total += amount
-            commitments_items.append(
-                {
-                    "type": "BILL",
-                    "name": bill.name,
-                    "amount": cls._to_money(amount),
-                    "priority": 100,
-                    "metadata": {
-                        "due_day": bill.due_day,
-                        "autopay_enabled": bool(bill.autopay_enabled),
-                    },
-                }
-            )
-
-        subs_res = await session.execute(
-            select(Subscription).filter(Subscription.user_id == user_id, Subscription.is_active == True)
-        )
-        subscriptions = subs_res.scalars().all()
-
-        for subscription in subscriptions:
-            amount = max(
-                Decimal("0"),
-                cls._to_decimal(subscription.amount)
-                * cls._monthly_multiplier(subscription.billing_cycle or "monthly"),
-            )
-            commitments_total += amount
-            commitments_items.append(
-                {
-                    "type": "SUBSCRIPTION",
-                    "name": subscription.name,
-                    "amount": cls._to_money(amount),
-                    "priority": 90,
-                    "metadata": {
-                        "billing_cycle": subscription.billing_cycle,
-                    },
-                }
-            )
-
-        goals_res = await session.execute(
-            select(SavingsGoal).filter(SavingsGoal.user_id == user_id, SavingsGoal.is_completed == False)
-        )
-        goals = goals_res.scalars().all()
-
-        budget_categories_res = await session.execute(
-            select(BudgetCategory).filter(BudgetCategory.user_id == user_id)
-        )
-        budget_categories = budget_categories_res.scalars().all()
-        category_name_map = {category.id: category.name for category in budget_categories}
-
-        budget_rules_res = await session.execute(
-            select(BudgetRule).filter(BudgetRule.user_id == user_id)
-        )
-        budget_rules = budget_rules_res.scalars().all()
-
-        planned_expense_items: List[Dict[str, Any]] = []
-        planned_expense_requested_total = Decimal("0")
-        for rule in budget_rules:
-            monthly_limit = cls._to_decimal(rule.monthly_limit)
-            if monthly_limit <= 0:
-                continue
-            planned_expense_requested_total += monthly_limit
-            planned_expense_items.append(
-                {
-                    "rule_id": rule.id,
-                    "category_id": rule.category_id,
-                    "category_name": category_name_map.get(rule.category_id, "Uncategorized"),
-                    "requested": cls._to_money(monthly_limit),
-                }
-            )
-
-        free_money_floor = salary_considered * (Decimal(str(floor_percent)) / Decimal("100"))
-        remaining_after_commitments = salary_considered - commitments_total
-
-        goal_requested_total = sum(
-            (max(Decimal("0"), cls._to_decimal(goal.monthly_contribution)) for goal in goals),
-            Decimal("0"),
-        )
-
-        if remaining_after_commitments <= 0:
-            goal_allocations: List[Dict[str, Any]] = [
-                {
-                    "goal_id": goal.id,
-                    "goal_name": goal.name,
-                    "priority": int(goal.priority or 0),
-                    "requested": cls._to_money(max(Decimal("0"), cls._to_decimal(goal.monthly_contribution))),
-                    "allocated": 0.0,
-                    "shortfall": cls._to_money(max(Decimal("0"), cls._to_decimal(goal.monthly_contribution))),
-                    "is_fully_funded": False,
-                }
-                for goal in goals
-            ]
-            allocated_to_goals = Decimal("0")
-            planned_expense_allocated = Decimal("0")
-            planned_expense_shortfall = planned_expense_requested_total
-            free_money = Decimal("0")
-            free_money_floor_met = False
-        else:
-            allocatable_after_floor = max(Decimal("0"), remaining_after_commitments - free_money_floor)
-            planned_expense_allocated = min(planned_expense_requested_total, allocatable_after_floor)
-            planned_expense_shortfall = max(Decimal("0"), planned_expense_requested_total - planned_expense_allocated)
-
-            for item in planned_expense_items:
-                requested_amount = cls._to_decimal(item["requested"])
-                if requested_amount <= 0 or planned_expense_allocated <= 0:
-                    item["allocated"] = 0.0
-                    item["shortfall"] = cls._to_money(requested_amount)
-                    continue
-                allocated_amount = min(requested_amount, planned_expense_allocated)
-                planned_expense_allocated -= allocated_amount
-                item["allocated"] = cls._to_money(allocated_amount)
-                item["shortfall"] = cls._to_money(requested_amount - allocated_amount)
-
-            # planned_expense_allocated was decremented while distributing per-rule; recompute aggregate.
-            planned_expense_allocated = sum(
-                (cls._to_decimal(item.get("allocated", 0)) for item in planned_expense_items),
-                Decimal("0"),
-            )
-
-            goals_budget_cap = max(
-                Decimal("0"),
-                remaining_after_commitments - free_money_floor - planned_expense_allocated,
-            )
-            budget_for_goals = min(goal_requested_total, goals_budget_cap)
-            goal_allocations, allocated_to_goals = cls._allocate_goals_by_priority(goals, budget_for_goals)
-            free_money = max(
-                Decimal("0"),
-                remaining_after_commitments - planned_expense_allocated - allocated_to_goals,
-            )
-            free_money_floor_met = free_money >= free_money_floor or remaining_after_commitments <= free_money_floor
-
-        goal_shortfall = max(Decimal("0"), goal_requested_total - allocated_to_goals)
-        commitment_coverage_ok = salary_considered >= commitments_total
-
-        if not commitment_coverage_ok:
-            status_message = "Salary does not fully cover commitments. Autopilot should require manual approval."
-        elif planned_expense_shortfall > 0:
-            status_message = "Commitments are covered. Planned expenses are partially funded."
-        elif goal_shortfall > 0:
-            status_message = "Commitments are covered. Goals are partially funded by priority."
-        elif free_money_floor_met:
-            status_message = "Commitments and goals are funded. Free-money floor is protected."
-        else:
-            status_message = "Commitments and goals are funded, but free-money floor is below target."
-
-        warnings: List[str] = []
-        if not commitment_coverage_ok:
-            deficit = commitments_total - salary_considered
-            warnings.append(f"Commitment deficit: {cls._to_money(deficit)}")
-        if goal_shortfall > 0:
-            warnings.append(f"Goal shortfall: {cls._to_money(goal_shortfall)}")
-        if planned_expense_shortfall > 0:
-            warnings.append(f"Planned expense shortfall: {cls._to_money(planned_expense_shortfall)}")
-        if not free_money_floor_met:
-            warnings.append("Free-money floor not fully met.")
-
-        return {
-            "salary_considered": cls._to_money(salary_considered),
-            "salary_source": salary_source,
-            "salary_candidates": {
-                "from_income_transactions": cls._to_money(monthly_income_from_transactions),
-                "from_income_sources": cls._to_money(estimated_salary_from_sources),
-            },
-            "rules_config": {
-                "commitments_first": True,
-                "planned_expenses_after_commitments": True,
-                "goal_strategy": "priority_desc",
-                "free_money_min_percent": floor_percent,
-            },
-            "allocation": {
-                "commitments": cls._to_money(max(Decimal("0"), commitments_total)),
-                "planned_expenses": cls._to_money(max(Decimal("0"), planned_expense_allocated)),
-                "goals": cls._to_money(max(Decimal("0"), allocated_to_goals)),
-                "free_money": cls._to_money(max(Decimal("0"), free_money)),
-                "free_money_floor_target": cls._to_money(max(Decimal("0"), free_money_floor)),
-                "free_money_floor_met": free_money_floor_met,
-            },
-            "buckets": {
-                "commitments": commitments_items,
-                "planned_expenses": planned_expense_items,
-                "goals": goal_allocations,
-            },
-            "totals": {
-                "planned_expenses_requested": cls._to_money(planned_expense_requested_total),
-                "planned_expenses_allocated": cls._to_money(planned_expense_allocated),
-                "planned_expenses_shortfall": cls._to_money(planned_expense_shortfall),
-                "goal_requested": cls._to_money(goal_requested_total),
-                "goal_allocated": cls._to_money(allocated_to_goals),
-                "goal_shortfall": cls._to_money(goal_shortfall),
-                "commitment_coverage_ratio": (
-                    cls._to_money(salary_considered / commitments_total)
-                    if commitments_total > 0
-                    else 0.0
-                ),
-            },
-            "status_message": status_message,
-            "warnings": warnings,
-        }
+        return overview["salary_rule_engine"]
 
     @staticmethod
     async def calculate_safe_to_spend(session: AsyncSession, user_id: str) -> Dict[str, Any]:
-        now = datetime.utcnow()
-        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        income_res = await session.execute(select(IncomeSource).filter(IncomeSource.user_id == user_id))
-        income_sources = income_res.scalars().all()
-        monthly_income_from_sources = sum(
-            (
-                AutopilotService._to_decimal(income.amount)
-                * AutopilotService._monthly_multiplier(income.frequency)
-                for income in income_sources
-                if bool(income.active)
-            ),
-            Decimal("0"),
-        )
-
-        monthly_income_from_transactions = await AutopilotService._current_month_income_from_transactions(
-            session, user_id, now
-        )
-
-        if monthly_income_from_transactions > 0:
-            monthly_income = monthly_income_from_transactions
-            income_basis = "income_transactions"
-        else:
-            monthly_income = monthly_income_from_sources
-            income_basis = "income_sources"
-
-        bills_res = await session.execute(select(Bill).filter(Bill.user_id == user_id))
-        bills = bills_res.scalars().all()
-        unpaid_bills_amount = Decimal("0")
-        for bill in bills:
-            is_paid_this_month = bool(bill.last_paid_at and bill.last_paid_at >= start_of_month)
-            if not is_paid_this_month:
-                unpaid_bills_amount += (
-                    AutopilotService._to_decimal(bill.amount_estimated)
-                    * AutopilotService._monthly_multiplier(getattr(bill, "frequency", "monthly"))
-                )
-
-        subs_res = await session.execute(
-            select(Subscription).filter(Subscription.user_id == user_id, Subscription.is_active == True)
-        )
-        subscriptions = subs_res.scalars().all()
-        subscriptions_amount = sum(
-            (
-                AutopilotService._to_decimal(sub.amount)
-                * AutopilotService._monthly_multiplier(sub.billing_cycle)
-                for sub in subscriptions
-            ),
-            Decimal("0"),
-        )
-
-        goals_res = await session.execute(
-            select(SavingsGoal).filter(SavingsGoal.user_id == user_id, SavingsGoal.is_completed == False)
-        )
-        goals = goals_res.scalars().all()
-        goals_amount = sum(
-            (AutopilotService._to_decimal(goal.monthly_contribution) for goal in goals),
-            Decimal("0"),
-        )
-
-        total_commitments = unpaid_bills_amount + subscriptions_amount + goals_amount
-
-        trans_res = await session.execute(
-            select(Transaction).filter(
-                Transaction.user_id == user_id,
-                Transaction.type == "EXPENSE",
-                Transaction.occurred_at >= start_of_month,
-            )
-        )
-        transactions = trans_res.scalars().all()
-        spent_this_month = sum((AutopilotService._to_decimal(t.amount) for t in transactions), Decimal("0"))
-
-        monthly_free_budget = monthly_income - total_commitments
-        if monthly_free_budget < 0:
-            monthly_free_budget = Decimal("0")
-
-        safe_to_spend_remaining = monthly_free_budget - spent_this_month
-        if safe_to_spend_remaining < 0:
-            safe_to_spend_remaining = Decimal("0")
-
-        return {
-            "total_income": float(monthly_income),
-            "total_committed": float(total_commitments),
-            "total_spent_month": float(spent_this_month),
-            "upcoming_commitments": float(total_commitments),
-            "monthly_free_budget": float(monthly_free_budget),
-            "safe_to_spend": float(safe_to_spend_remaining),
-            "income_basis": income_basis,
-            "breakdown": {
-                "unpaid_bills": float(unpaid_bills_amount),
-                "subscriptions": float(subscriptions_amount),
-                "savings_goals": float(goals_amount),
-                "income_from_transactions": float(monthly_income_from_transactions),
-                "income_from_sources": float(monthly_income_from_sources),
-            },
-        }
+        overview = await AutopilotService.calculate_comprehensive_overview(session, user_id)
+        return overview["safe_to_spend_stats"]
 
     @staticmethod
     async def check_due_bills_for_autopay(session: AsyncSession) -> List[str]:
@@ -1072,11 +1089,14 @@ class AutopilotService:
             status_message = "Easy does it. You are close to the edge."
 
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        effective_tx_filter = AutopilotService._effective_transaction_filter()
         month_txn_res = await session.execute(
             select(Transaction).filter(
                 Transaction.user_id == user_id,
                 Transaction.type == "EXPENSE",
+                effective_tx_filter,
                 Transaction.occurred_at >= start_of_month,
+                Transaction.occurred_at <= now,
             )
         )
         month_transactions = month_txn_res.scalars().all()
@@ -1087,7 +1107,9 @@ class AutopilotService:
             select(Transaction).filter(
                 Transaction.user_id == user_id,
                 Transaction.type == "EXPENSE",
+                effective_tx_filter,
                 Transaction.occurred_at >= start_of_today,
+                Transaction.occurred_at <= now,
             )
         )
         today_transactions = today_txn_res.scalars().all()
@@ -1127,14 +1149,23 @@ class AutopilotService:
         days_future = max(1, min(days_future, 365))
         start_date = now - timedelta(days=days_past)
         end_date = now + timedelta(days=days_future)
-
-        # Keep timeline in sync with real autopilot payment pipeline.
-        await AutopilotService.prepare_payment_orders(
-            session,
-            user_id,
-            days_ahead=days_future,
-            commit=True,
+        autopilot_tables_available = await AutopilotService._autopilot_tables_available(
+            session
         )
+
+        if autopilot_tables_available:
+            # Keep timeline in sync with real autopilot payment pipeline.
+            await AutopilotService.prepare_payment_orders(
+                session,
+                user_id,
+                days_ahead=days_future,
+                commit=True,
+            )
+        else:
+            logger.warning(
+                "Autopilot tables are unavailable; timeline will render without payment order links for user_id=%s",
+                user_id,
+            )
 
         events: List[Dict[str, Any]] = []
 
@@ -1144,14 +1175,16 @@ class AutopilotService:
         categories = categories_res.scalars().all()
         category_name_map = {str(category.id): category.name for category in categories}
 
-        payment_orders_res = await session.execute(
-            select(AutopilotPayment).filter(
-                AutopilotPayment.user_id == user_id,
-                AutopilotPayment.due_on >= start_date.date(),
-                AutopilotPayment.due_on <= end_date.date(),
+        payment_orders: List[AutopilotPayment] = []
+        if autopilot_tables_available:
+            payment_orders_res = await session.execute(
+                select(AutopilotPayment).filter(
+                    AutopilotPayment.user_id == user_id,
+                    AutopilotPayment.due_on >= start_date.date(),
+                    AutopilotPayment.due_on <= end_date.date(),
+                )
             )
-        )
-        payment_orders = payment_orders_res.scalars().all()
+            payment_orders = payment_orders_res.scalars().all()
         payment_order_map = {
             (order.source_type, order.source_id, order.due_on): order for order in payment_orders
         }
@@ -1159,6 +1192,7 @@ class AutopilotService:
         tx_res = await session.execute(
             select(Transaction).filter(
                 Transaction.user_id == user_id,
+                AutopilotService._effective_transaction_filter(),
                 Transaction.occurred_at >= start_date,
                 Transaction.occurred_at <= now,
             )
