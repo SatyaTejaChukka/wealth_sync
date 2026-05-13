@@ -35,7 +35,7 @@ export function ActionCenter({ actions = [], onAction }) {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 p-4 sm:p-6">
         {!hasActions ? (
           <div className="rounded-xl border border-dashed border-zinc-800 bg-black/20 p-8 text-center">
             <CircleCheckBig size={28} className="mx-auto text-emerald-400 mb-2" />
@@ -48,9 +48,9 @@ export function ActionCenter({ actions = [], onAction }) {
             return (
               <div
                 key={action.id}
-                className="rounded-xl border border-white/5 bg-black/20 p-4 hover:border-white/15 transition-colors"
+                className="rounded-xl border border-white/5 bg-black/20 p-3 sm:p-4 hover:border-white/15 transition-colors"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full border ${style.badge}`}>
@@ -62,14 +62,14 @@ export function ActionCenter({ actions = [], onAction }) {
                     <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{action.detail}</p>
                   </div>
                   {action.impact_amount && (
-                    <div className="text-right shrink-0">
+                    <div className="text-left sm:text-right shrink-0">
                       <p className="text-xs text-zinc-500">Impact</p>
                       <p className="text-sm font-semibold text-white">{formatCurrency(action.impact_amount)}</p>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-3">
+                <div className="mt-3 pt-3 border-t border-white/5 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <div className="text-xs text-zinc-500 flex items-center gap-1.5">
                     <CalendarDays size={12} />
                     {action.due_date ? formatDate(action.due_date) : 'No fixed due date'}
@@ -77,11 +77,12 @@ export function ActionCenter({ actions = [], onAction }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs border-zinc-700 hover:border-zinc-500"
+                    className="h-8 w-full sm:w-auto text-xs border-zinc-700 hover:border-zinc-500"
+                    icon={<ArrowRight size={13} />}
+                    iconPosition="right"
                     onClick={() => onAction?.(action)}
                   >
                     {action.action_label}
-                    <ArrowRight size={13} className="ml-1.5" />
                   </Button>
                 </div>
               </div>
