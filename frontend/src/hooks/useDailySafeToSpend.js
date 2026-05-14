@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from 'react';
 
-import api from '../lib/api.js';
+import { autopilotService } from '../services/autopilot.js';
 
 const CACHE_KEY = 'daily-safe-to-spend-cache';
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -65,11 +65,11 @@ export function useDailySafeToSpend() {
 
     try {
       setLoading(true);
-      const response = await api.get('/autopilot/safe-to-spend-daily');
-      setData(response.data);
+      const payload = await autopilotService.getDailySafeToSpend();
+      setData(payload);
       setError(null);
-      writeCache(response.data);
-      return response.data;
+      writeCache(payload);
+      return payload;
     } catch (err) {
       setError(err?.message || 'Failed to fetch safe-to-spend data');
       throw err;
