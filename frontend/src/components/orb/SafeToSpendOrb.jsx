@@ -4,6 +4,12 @@ import { useDailySafeToSpend } from '../../hooks/useDailySafeToSpend.js';
 import { useDeviceShake } from '../../hooks/useDeviceShake.js';
 import { useFinanceFeedback } from '../../hooks/useFinanceFeedback.js';
 import { formatCurrency } from '../../lib/format.js';
+import {
+  calculateMiniOrbScale,
+  calculateOrbSize,
+  calculateSafeBudgetSignal,
+  clampNumber,
+} from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 import { Card } from '../ui/Card.jsx';
 import { Modal } from '../ui/Modal.jsx';
@@ -38,10 +44,6 @@ const ORBIT_POSITIONS = [
   { left: '22%', top: '78%' },
 ];
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
 export function SafeToSpendOrb() {
   const { data, loading, error, refetch } = useDailySafeToSpend();
   const { feedback } = useFinanceFeedback();
@@ -53,13 +55,14 @@ export function SafeToSpendOrb() {
   const [isMobile, setIsMobile] = useState(false);
   const touchStartYRef = useRef(null);
 
-  const orbState = data?.color_state || 'mindful';
+  const breakdown = data?.breakdown || {};
+  const safeSignal = useMemo(() => calculateSafeBudgetSignal(data || {}), [data]);
+  const orbState = safeSignal.orbState || data?.color_state || 'mindful';
   const colorConfig = ORB_COLORS[orbState] || ORB_COLORS.mindful;
 
-  const percentage = Number(data?.percentage || 0);
+  const percentage = safeSignal.runwayPercentage;
   const maxOrbSize = isMobile ? 140 : 200;
-  const orbSize = clamp(120 + percentage * 0.8, 120, maxOrbSize);
-  const breakdown = data?.breakdown || {};
+  const orbSize = calculateOrbSize(safeSignal.score, { min: 120, max: maxOrbSize });
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
@@ -80,7 +83,8 @@ export function SafeToSpendOrb() {
     const committed = Number(breakdown.monthly_committed || 0);
     const spent = Number(breakdown.spent_this_month || 0);
     const free = Number(breakdown.remaining_budget || data?.monthly_safe_total || 0);
-    const maxValue = Math.max(committed, spent, free, 1);
+    const totalValue = Math.max(0, committed) + Math.max(0, spent) + Math.max(0, free);
+    const reference = Number(safeSignal.values.monthlySafeTotal || data?.monthly_safe_total || 0);
 
     return [
       {
@@ -107,9 +111,20 @@ export function SafeToSpendOrb() {
     ].map((item, index) => ({
       ...item,
       index,
-      sizeScale: clamp(0.74 + (item.value / maxValue) * 0.38, 0.74, 1.16),
+      sizeScale: calculateMiniOrbScale(item.value, {
+        total: totalValue,
+        reference,
+        min: 0.74,
+        max: 1.16,
+      }),
     }));
-  }, [breakdown.monthly_committed, breakdown.remaining_budget, breakdown.spent_this_month, data?.monthly_safe_total]);
+  }, [
+    breakdown.monthly_committed,
+    breakdown.remaining_budget,
+    breakdown.spent_this_month,
+    data?.monthly_safe_total,
+    safeSignal.values.monthlySafeTotal,
+  ]);
 
   useEffect(() => {
     let animationFrame;
@@ -119,7 +134,7 @@ export function SafeToSpendOrb() {
     const delta = primaryAmount - from;
 
     const animate = (timestamp) => {
-      const progress = clamp((timestamp - start) / duration, 0, 1);
+      const progress = clampNumber((timestamp - start) / duration, 0, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplayAmount(from + delta * eased);
       if (progress < 1) {
@@ -164,9 +179,19 @@ export function SafeToSpendOrb() {
     }
   };
 
+  const statusText = useMemo(() => {
+    if (safeSignal.ratios.dailySpend > 1.1) {
+      return 'Today is running hot. Slow spending to protect your runway.';
+    }
+    if (safeSignal.ratios.pacing >= 1.1 && safeSignal.score >= 0.67) {
+      return 'You are ahead of pace. Spend with confidence.';
+    }
+    return data?.status_message || colorConfig.status;
+  }, [colorConfig.status, data?.status_message, safeSignal.ratios.dailySpend, safeSignal.ratios.pacing, safeSignal.score]);
+
   if (loading && !data) {
     return (
-      <Card className="bg-zinc-900/40 border-white/5 min-h-[420px] flex items-center justify-center">
+      <Card className="bg-zinc-900/40 border-white/5 min-h-90 sm:min-h-105 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-16 h-16 rounded-full border-2 border-zinc-800 border-t-emerald-400 animate-spin" />
           <p className="text-zinc-400 text-sm">Preparing your safe-to-spend orb...</p>
@@ -177,7 +202,7 @@ export function SafeToSpendOrb() {
 
   if (error || !data) {
     return (
-      <Card className="bg-zinc-900/40 border-white/5 min-h-[420px] flex items-center justify-center">
+      <Card className="bg-zinc-900/40 border-white/5 min-h-90 sm:min-h-105 flex items-center justify-center">
         <div className="text-center">
           <p className="text-zinc-400 text-sm mb-3">Could not load safe-to-spend data.</p>
           <button
@@ -192,13 +217,11 @@ export function SafeToSpendOrb() {
     );
   }
 
-  const statusText = data.status_message || colorConfig.status;
-
   return (
     <>
-      <Card className="bg-zinc-900/40 border-white/5 min-h-[420px] overflow-hidden">
-        <div className="p-6 h-full flex flex-col items-center justify-between gap-4">
-          <div className="w-full flex items-center justify-between text-xs text-zinc-400">
+      <Card className="bg-zinc-900/40 border-white/5 min-h-90 sm:min-h-105 overflow-hidden">
+        <div className="p-4 sm:p-6 h-full flex flex-col items-center justify-between gap-4">
+          <div className="w-full flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
             <span>Safe-to-Spend Orb</span>
             <div className="flex items-center gap-2">
               <button
@@ -245,7 +268,7 @@ export function SafeToSpendOrb() {
 
             {miniOrbs.map((miniOrb, idx) => {
               const position = ORBIT_POSITIONS[idx];
-              const bubbleSize = clamp(42 * miniOrb.sizeScale, 34, 58);
+              const bubbleSize = clampNumber(42 * miniOrb.sizeScale, 34, 58);
               return (
                 <button
                   key={miniOrb.id}
@@ -302,8 +325,17 @@ export function SafeToSpendOrb() {
             >
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">{viewMode === 'daily' ? 'Today' : 'This month'}</p>
               <p className="text-4xl leading-none font-bold text-white mt-2 tabular-nums">
-                {formatCurrency(displayAmount).replace('.00', '')}
+                {(() => {
+                  const { symbol, amount } = splitCurrency(formatCurrency(displayAmount).replace('.00', ''));
+                  return (
+                    <>
+                      <span className="text-[0.55em] font-medium text-white/30 mr-0.5 select-none">{symbol}</span>
+                      {amount}
+                    </>
+                  );
+                })()}
               </p>
+
               <p className="mt-2 text-[10px] text-zinc-300">Tap for details</p>
             </button>
           </div>
