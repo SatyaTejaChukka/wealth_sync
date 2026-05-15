@@ -5,7 +5,7 @@ import Signup from './pages/Signup.jsx';
 import MainLayout from './layouts/MainLayout.jsx';
 import Dashboard from './pages/dashboard/Dashboard.jsx';
 import Transactions from './pages/dashboard/Transactions.jsx';
-import Analytics from './pages/dashboard/Analytics.jsx';
+import AnalyticsPage from './pages/dashboard/Analytics.jsx';
 import Budget from './pages/dashboard/Budget.jsx';
 import Goals from './pages/dashboard/Goals.jsx';
 import Bills from './pages/dashboard/Bills.jsx';
@@ -80,7 +80,7 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="transactions" element={<Transactions />} />
-        <Route path="analytics" element={<Analytics />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="budget" element={<Budget />} />
         <Route path="goals" element={<Goals />} />
         <Route path="bills" element={<Bills />} />
