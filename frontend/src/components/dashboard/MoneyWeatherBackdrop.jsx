@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 
+import { useMediaQuery } from '../../hooks/useMediaQuery.js';
+import { calculateSafeBudgetSignal } from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 
 const WEATHER_STATE = {
@@ -27,25 +29,14 @@ const WEATHER_STATE = {
 };
 
 function resolveWeatherState(stats) {
-  const monthlyFree = Number(stats?.monthly_free_budget || 0);
-  const safeRemaining = Number(stats?.safe_to_spend || 0);
-  if (monthlyFree <= 0) {
-    return 'balanced';
-  }
-  const ratio = safeRemaining / monthlyFree;
-  if (ratio > 0.5) {
-    return 'calm';
-  }
-  if (ratio > 0.2) {
-    return 'balanced';
-  }
-  return 'cautious';
+  return calculateSafeBudgetSignal(stats || {}).weatherState;
 }
 
 export function MoneyWeatherBackdrop({ stats }) {
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const stateKey = useMemo(() => resolveWeatherState(stats), [stats]);
   const palette = WEATHER_STATE[stateKey];
-  const particleCount = 16;
+  const particleCount = isMobile ? 8 : 16;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
@@ -67,9 +58,11 @@ export function MoneyWeatherBackdrop({ stats }) {
         )}
       />
 
-      <div className="absolute right-4 top-6 rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-zinc-400 backdrop-blur-md">
-        Money Weather: {palette.title}
-      </div>
+      {!isMobile ? (
+        <div className="absolute right-3 top-4 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[9px] uppercase tracking-[0.22em] text-zinc-400 backdrop-blur-md md:right-4 md:top-6 md:px-3 md:text-[10px]">
+          Money Weather: {palette.title}
+        </div>
+      ) : null}
 
       {Array.from({ length: particleCount }).map((_, index) => {
         const delay = (index % 8) * 0.45;
