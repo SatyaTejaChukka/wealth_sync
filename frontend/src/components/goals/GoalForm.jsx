@@ -2,14 +2,36 @@ import React, { useState } from 'react';
 import { Input } from '../ui/Input.jsx';
 import { Button } from '../ui/Button.jsx';
 
-export function GoalForm({ onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    target_amount: '',
-    current_amount: '0',
-    target_date: '',
-    monthly_contribution: ''
-  });
+function toDateInput(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+
+function buildFormData(initialData) {
+  if (!initialData) {
+    return {
+      name: '',
+      target_amount: '',
+      current_amount: '0',
+      target_date: '',
+      monthly_contribution: ''
+    };
+  }
+
+  return {
+    name: initialData.name || '',
+    target_amount: initialData.target_amount != null ? String(initialData.target_amount) : '',
+    current_amount: initialData.current_amount != null ? String(initialData.current_amount) : '0',
+    target_date: toDateInput(initialData.target_date),
+    monthly_contribution:
+      initialData.monthly_contribution != null ? String(initialData.monthly_contribution) : ''
+  };
+}
+
+export function GoalForm({ onSubmit, onCancel, initialData = null, submitText = 'Create Goal' }) {
+  const [formData, setFormData] = useState(() => buildFormData(initialData));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -83,7 +105,7 @@ export function GoalForm({ onSubmit, onCancel }) {
           Cancel
         </Button>
         <Button type="submit" variant="gradient">
-          Create Goal
+          {submitText}
         </Button>
       </div>
     </form>
