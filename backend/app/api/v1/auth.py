@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 from app.api import deps
 from app.core import security
 from app.core.config import settings
+from app.core.errors import ErrorCode, error_payload
 from app.core.middleware import limiter
 from app.core.database import get_db
 from app.models.user import User
@@ -54,12 +55,15 @@ async def create_user(
             ),
             "token_type": "bearer",
         }
-    except Exception as e:
+    except Exception:
         logger.exception("Error creating user")
         await db.rollback()
         raise HTTPException(
             status_code=500,
-            detail=f"Error creating user: {str(e)}"
+            detail=error_payload(
+                ErrorCode.INTERNAL_ERROR,
+                "Failed to create user.",
+            ),
         )
 
 @router.post("/login", response_model=Token)

@@ -7,6 +7,7 @@ from uuid import uuid4
 from datetime import datetime
 
 from app.api import deps
+from app.api.validators import ensure_category_owned
 from app.core.database import get_db
 from app.models.user import User
 from app.models.bill import Bill
@@ -23,6 +24,12 @@ async def create_bill(
     """
     Create a new bill.
     """
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=bill_in.category_id,
+    )
+
     bill = Bill(
         id=str(uuid4()),
         user_id=current_user.id,
@@ -71,6 +78,12 @@ async def update_bill(
         raise HTTPException(status_code=404, detail="Bill not found")
 
     update_data = bill_in.model_dump(exclude_unset=True)
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=update_data.get("category_id", bill.category_id),
+    )
+
     for field, value in update_data.items():
         setattr(bill, field, value)
 

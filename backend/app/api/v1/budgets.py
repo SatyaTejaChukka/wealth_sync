@@ -8,8 +8,9 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
+from app.api.validators import ensure_category_owned
 from app.core.database import get_db
-from app.models.budget import BudgetCategory, BudgetRule
+from app.models.budget import BudgetRule
 from app.models.income import IncomeSource
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -26,10 +27,11 @@ async def create_budget_rule(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Any:
-    # Check if category exists and belongs to user
-    cat = await db.execute(select(BudgetCategory).filter(BudgetCategory.id == rule_in.category_id, BudgetCategory.user_id == current_user.id))
-    if not cat.scalars().first():
-        raise HTTPException(status_code=404, detail="Category not found")
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=rule_in.category_id,
+    )
 
     rule = BudgetRule(
         id=str(uuid4()),
@@ -70,8 +72,15 @@ async def update_budget_rule(
     rule = result.scalars().first()
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    
-    for k, v in rule_in.model_dump(exclude_unset=True).items():
+
+    update_data = rule_in.model_dump(exclude_unset=True)
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=update_data.get("category_id", rule.category_id),
+    )
+
+    for k, v in update_data.items():
         setattr(rule, k, v)
     
     db.add(rule)
@@ -124,6 +133,11 @@ async def get_budget_summary(
     now = datetime.utcnow()
     target_month = month or now.month
     target_year = year or now.year
+    month_start = datetime(target_year, target_month, 1)
+    if target_month == 12:
+        month_end = datetime(target_year + 1, 1, 1)
+    else:
+        month_end = datetime(target_year, target_month + 1, 1)
 
     # Fetch all necessary data
     # 1. Incomes
@@ -141,7 +155,13 @@ async def get_budget_summary(
     # This requires start/end date calculation
     # For now, let's fetch all (simple) or improve query.
     
-    transactions_res = await db.execute(select(Transaction).filter(Transaction.user_id == current_user.id))
+    transactions_res = await db.execute(
+        select(Transaction).filter(
+            Transaction.user_id == current_user.id,
+            Transaction.occurred_at >= month_start,
+            Transaction.occurred_at < month_end,
+        )
+    )
     transactions = transactions_res.scalars().all()
     
     # Calculate

@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from uuid import uuid4
 
 from app.api import deps
+from app.api.validators import ensure_category_owned
 from app.core.database import get_db
 from app.models.user import User
 from app.models.subscription import Subscription
@@ -19,6 +20,12 @@ async def create_subscription(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Any:
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=sub_in.category_id,
+    )
+
     sub = Subscription(
         id=str(uuid4()),
         user_id=current_user.id,
@@ -56,8 +63,15 @@ async def update_subscription(
     sub = result.scalars().first()
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    
-    for k, v in sub_in.model_dump(exclude_unset=True).items():
+
+    update_data = sub_in.model_dump(exclude_unset=True)
+    await ensure_category_owned(
+        db,
+        user_id=current_user.id,
+        category_id=update_data.get("category_id", sub.category_id),
+    )
+
+    for k, v in update_data.items():
         setattr(sub, k, v)
         
     db.add(sub)

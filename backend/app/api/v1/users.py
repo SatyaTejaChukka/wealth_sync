@@ -2,6 +2,7 @@ from typing import Any, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from uuid import uuid4
 
 from app.api import deps
 from app.core.database import get_db
@@ -10,6 +11,27 @@ from app.models.user import User
 from app.schemas.user import UserUpdate, PasswordChange, UserResponse
 
 router = APIRouter()
+
+
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+}
+
+
+def _matches_signature(content: bytes, content_type: str) -> bool:
+    if content_type in {"image/jpeg", "image/jpg"}:
+        return content.startswith(b"\xff\xd8\xff")
+    if content_type == "image/png":
+        return content.startswith(b"\x89PNG\r\n\x1a\n")
+    if content_type == "image/gif":
+        return content.startswith(b"GIF87a") or content.startswith(b"GIF89a")
+    if content_type == "image/webp":
+        return content.startswith(b"RIFF") and content[8:12] == b"WEBP"
+    return False
 
 @router.get("/me", response_model=UserResponse)
 async def read_user_me(
@@ -58,8 +80,7 @@ async def upload_avatar(
     Upload user avatar.
     """
     # Validate file type
-    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
-    if file.content_type not in allowed_types:
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.",
@@ -72,11 +93,16 @@ async def upload_avatar(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File too large. Maximum size is 5MB.",
         )
-    
-    # Generate filename and save
-    import os
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"{current_user.id}.{ext}"
+
+    if not _matches_signature(contents, file.content_type):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file content does not match declared image type.",
+        )
+
+    # Generate trusted filename and save
+    ext = ALLOWED_IMAGE_TYPES[file.content_type]
+    filename = f"{current_user.id}_{uuid4().hex}.{ext}"
     filepath = f"app/static/avatars/{filename}"
     
     # Save file

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any, List, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,17 +7,21 @@ from uuid import uuid4
 
 from app.api import deps
 from app.core.database import get_db
+from app.domain.enums import RecurringFrequency
 from app.models.user import User
 from app.models.income import IncomeSource
 from app.schemas.income import IncomeSourceCreate, IncomeSourceUpdate, IncomeSourceResponse
 
 router = APIRouter()
 
-SUPPORTED_FREQUENCIES = {"monthly", "weekly", "biweekly", "yearly", "daily"}
+SUPPORTED_FREQUENCIES = {frequency.value for frequency in RecurringFrequency}
 
 
-def _normalize_frequency(value: str | None) -> str:
-    normalized = (value or "").strip().lower()
+def _normalize_frequency(value: str | RecurringFrequency | None) -> str:
+    if isinstance(value, RecurringFrequency):
+        normalized = value.value
+    else:
+        normalized = (value or "").strip().lower()
     if normalized not in SUPPORTED_FREQUENCIES:
         raise HTTPException(
             status_code=422,
@@ -50,7 +55,7 @@ def _validate_income_payload(
     payday: str | None,
     active: bool,
 ) -> None:
-    if amount is None or float(amount) <= 0:
+    if amount is None or Decimal(str(amount)) <= 0:
         raise HTTPException(status_code=422, detail="Income amount must be greater than zero.")
 
     if active and frequency == "monthly":
