@@ -17,6 +17,11 @@ export const budgetService = {
     return response.data;
   },
 
+  updateRule: async (id, data) => {
+    const response = await api.put(`/budgets/rules/${id}`, data);
+    return response.data;
+  },
+
   deleteRule: async (id) => {
     const response = await api.delete(`/budgets/rules/${id}`);
     return response.data;

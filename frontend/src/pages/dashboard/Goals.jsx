@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { goalService } from '../../services/goals.js';
-import { Plus, Target, Trash2, Calendar } from 'lucide-react';
+import { Plus, Target, Trash2, Calendar, Eye, Edit } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal.jsx';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
 import { GoalForm } from '../../components/goals/GoalForm.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
 
@@ -22,10 +23,19 @@ function ProgressBar({ current, target }) {
     );
 }
 
+function formatGoalCurrency(value) {
+    const amount = Number(value);
+    const safe = Number.isFinite(amount) ? amount : 0;
+    return `$${safe.toFixed(0)}`;
+}
+
 export default function Goals() {
   const [goals, setGoals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [pendingDeleteGoal, setPendingDeleteGoal] = useState(null);
+  const [deletingGoalId, setDeletingGoalId] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const toast = useToast();
 
@@ -44,17 +54,22 @@ export default function Goals() {
 	  fetchGoals();
   }, [refreshTrigger]);
 
-  const handleDelete = async (id) => {
-	  if(confirm('Delete this goal?')) {
-		  setGoals((prev) => prev.filter((g) => g.id !== id));
-		  try {
-			  await goalService.delete(id);
-			  toast.success('Goal deleted');
-		  } catch (err) {
-			  console.error('Failed to delete goal', err);
-			  toast.error('Failed to delete goal');
-			  setRefreshTrigger(p => p+1);
-		  }
+  const handleDeleteGoal = async (goal) => {
+    if (!goal?.id) {
+      return;
+    }
+
+    setDeletingGoalId(goal.id);
+	  setGoals((prev) => prev.filter((g) => g.id !== goal.id));
+	  try {
+		  await goalService.delete(goal.id);
+		  toast.success('Goal deleted');
+	  } catch (err) {
+		  console.error('Failed to delete goal', err);
+		  toast.error('Failed to delete goal');
+		  setRefreshTrigger(p => p+1);
+    } finally {
+      setDeletingGoalId(null);
 	  }
   };
 
@@ -103,11 +118,30 @@ export default function Goals() {
 	  try {
 		  await goalService.create(data);
 		  setIsModalOpen(false);
+		  setEditingGoal(null);
 		  setRefreshTrigger(p => p+1);
 		  toast.success('Goal created successfully');
 	  } catch {
 		  toast.error('Failed to create goal');
 	  }
+  };
+
+  const handleUpdate = async (data) => {
+    if (!editingGoal?.id) return;
+
+    try {
+      const updated = await goalService.update(editingGoal.id, data);
+      setGoals((prev) => prev.map((goal) => (goal.id === updated.id ? updated : goal)));
+      if (viewingGoal?.id === updated.id) {
+        setViewingGoal(updated);
+      }
+      setIsModalOpen(false);
+      setEditingGoal(null);
+      toast.success('Goal updated successfully');
+    } catch (err) {
+      console.error('Failed to update goal', err);
+      toast.error('Failed to update goal');
+    }
   };
 
   return (
@@ -117,13 +151,16 @@ export default function Goals() {
 		  <h1 className="text-3xl font-bold text-white tracking-tight">Savings Goals</h1>
 		  <p className="text-zinc-400 mt-1">Visualize and track your financial targets.</p>
 		</div>
-		<button 
-			onClick={() => setIsModalOpen(true)}
-			className="px-4 py-2 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-500/20 text-sm flex items-center gap-2"
+		<Button
+			onClick={() => {
+        setEditingGoal(null);
+        setIsModalOpen(true);
+      }}
+			variant="gradient"
+			icon={<Plus size={18} />}
 		>
-		  <Plus size={18} />
 		  Add Goal
-		</button>
+		</Button>
 	  </div>
 
 	  {/* Goals Grid */}
@@ -143,31 +180,63 @@ export default function Goals() {
 		  </Card>
 	  ) : (
 		  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-			  {goals.map(goal => (
+			  {goals.map(goal => {
+                const committedMonthly = Number(goal.monthly_contribution ?? goal.monthlyContribution ?? 0);
+                const safeCommittedMonthly = Number.isFinite(committedMonthly) ? committedMonthly : 0;
+
+                return (
 				  <Card 
                     key={goal.id} 
                     className="group bg-zinc-900/40 border-white/5 hover:border-violet-500/20 transition-all cursor-pointer"
-                    onClick={() => setViewingGoal(goal)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setEditingGoal(goal);
+                      setIsModalOpen(true);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setEditingGoal(goal);
+                        setIsModalOpen(true);
+                      }
+                    }}
                   >
 					  <CardHeader className="flex flex-row items-center justify-between pb-2">
 						 <CardTitle className="text-lg">{goal.name}</CardTitle>
-						 <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" 
-                            onClick={(e) => {
-                                e.stopPropagation(); // Prevent opening details
-                                handleDelete(goal.id);
-                            }}
-                         >
+                             <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-zinc-600 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingGoal(goal);
+                                }}
+                              >
+                                <Eye size={16} />
+                              </Button>
+                              <Button 
+                             variant="ghost" 
+                             size="icon" 
+                             className="h-8 w-8 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                             onClick={(e) => {
+                                 e.stopPropagation(); // Prevent opening details
+                                 setPendingDeleteGoal(goal);
+                             }}
+                          >
 							 <Trash2 size={16} />
 						 </Button>
+                             </div>
 					  </CardHeader>
 					  <CardContent className="space-y-4">
 						  <div className="flex items-end justify-between">
 							  <div>
 								  <p className="text-2xl font-bold text-white">${parseFloat(goal.current_amount).toFixed(0)}</p>
 								  <p className="text-xs text-zinc-500">of ${parseFloat(goal.target_amount).toFixed(0)}</p>
+                                  <p className="text-[11px] text-indigo-300 mt-1">
+                                      Committed: {formatGoalCurrency(safeCommittedMonthly)} / month
+                                  </p>
 							  </div>
 							  <div className="text-right"> 
 								  <span className="text-sm font-bold text-violet-400">
@@ -186,32 +255,58 @@ export default function Goals() {
 							  </div>
                              ) : <div />}
                              
-                             <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 text-xs border-zinc-700 hover:bg-zinc-800"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setAddingFundsTo(goal);
-                                }}
-                             >
-                                 <Plus size={12} className="mr-1" /> Add Funds
-                             </Button>
+                             <div className="flex items-center gap-2">
+                               <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  className="h-8 text-xs text-zinc-300 hover:bg-zinc-800/80 font-bold"
+                                  icon={<Eye size={12} />}
+                                  iconPosition="left"
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      setViewingGoal(goal);
+                                  }}
+                               >
+                                  Details
+                               </Button>
+                               <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-8 text-xs border-zinc-700 hover:bg-zinc-800 font-bold"
+                                  icon={<Plus size={12} />}
+                                  iconPosition="left"
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAddingFundsTo(goal);
+                                  }}
+                               >
+                                   Add Funds
+                               </Button>
+                             </div>
                           </div>
 					  </CardContent>
 				  </Card>
-			  ))}
+			  );
+            })}
 		  </div>
 	  )}
 
-	  <Modal 
+      <Modal 
 		 isOpen={isModalOpen} 
-		 onClose={() => setIsModalOpen(false)}
-		 title="Create New Goal"
+		 onClose={() => {
+        setIsModalOpen(false);
+        setEditingGoal(null);
+      }}
+		 title={editingGoal ? "Edit Goal" : "Create New Goal"}
 	   >
 		   <GoalForm 
-			 onSubmit={handleCreate} 
-			 onCancel={() => setIsModalOpen(false)} 
+        initialData={editingGoal}
+			 onSubmit={editingGoal ? handleUpdate : handleCreate}
+        submitText={editingGoal ? 'Update Goal' : 'Create Goal'}
+			 onCancel={() => {
+          setIsModalOpen(false);
+          setEditingGoal(null);
+        }}
 		   />
 	   </Modal>
 
@@ -269,6 +364,13 @@ export default function Goals() {
                         target={parseFloat(viewingGoal.target_amount)} 
                    />
 
+                   <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3 flex items-center justify-between">
+                       <span className="text-sm text-zinc-400">Committed per month</span>
+                       <span className="text-base font-semibold text-indigo-300 tabular-nums">
+                           {formatGoalCurrency(Number(viewingGoal.monthly_contribution ?? viewingGoal.monthlyContribution ?? 0))}
+                       </span>
+                   </div>
+
                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
                        <h4 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-2">
                            <Calendar size={14} /> History
@@ -301,20 +403,58 @@ export default function Goals() {
 
                    <div className="flex gap-3">
                         <Button 
-                            className="w-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
+                            variant="outline"
+                            className="w-full border-zinc-700 hover:bg-zinc-800"
+                            onClick={() => {
+                                setEditingGoal(viewingGoal);
+                                setIsModalOpen(true);
+                            }}
+                        >
+                            <Edit size={16} className="mr-2" />
+                            Edit Goal
+                        </Button>
+                        <Button 
+                            variant="gradient"
+                            icon={<Plus size={16} />}
+                            className="w-full"
                             onClick={() => {
                                 setAddingFundsTo(viewingGoal);
                                 // Don't close details, stack modals? or switch?
                                 // For simplicity, keep Details open. The Add Funds modal is separate.
                             }}
                         >
-                            <Plus size={16} className="mr-2" />
                             Add Funds
                         </Button>
                    </div>
                </div>
            )}
        </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteGoal)}
+        title="Delete Goal"
+        description={
+          pendingDeleteGoal
+            ? `Delete "${pendingDeleteGoal.name}"? This will remove the goal and its history from your dashboard.`
+            : ''
+        }
+        confirmText="Delete Goal"
+        cancelText="Cancel"
+        variant="destructive"
+        isConfirming={Boolean(pendingDeleteGoal && deletingGoalId === pendingDeleteGoal.id)}
+        onCancel={() => {
+          if (pendingDeleteGoal && deletingGoalId === pendingDeleteGoal.id) {
+            return;
+          }
+          setPendingDeleteGoal(null);
+        }}
+        onConfirm={async () => {
+          const goal = pendingDeleteGoal;
+          if (!goal) return;
+          await handleDeleteGoal(goal);
+          setPendingDeleteGoal(null);
+        }}
+      />
 	</div>
   );
 }

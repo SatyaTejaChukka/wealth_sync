@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   CreditCard,
   FileText,
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { useTimelineEvents } from '../../hooks/useTimelineEvents.js';
 import { useFinanceFeedback } from '../../hooks/useFinanceFeedback.js';
 import { useToast } from '../ui/Toast.jsx';
+import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { formatCurrency } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
 import { autopilotService } from '../../services/autopilot.js';
@@ -38,6 +39,24 @@ const CONFIDENCE_STYLES = {
     halo: 'shadow-[0_0_26px_rgba(244,63,94,0.22)]',
   },
 };
+
+function getErrorMessage(error, fallback = 'Unable to load timeline right now.') {
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+  if (detail && typeof detail === 'object' && typeof detail.message === 'string' && detail.message.trim()) {
+    return detail.message;
+  }
+  const message = error?.response?.data?.message;
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
+}
 
 function groupEventsByDate(events) {
   const grouped = {};
@@ -91,12 +110,20 @@ function buildDateRange(startDate, endDate) {
 }
 
 export function TimelineView() {
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const [daysPast, setDaysPast] = useState(7);
   const [daysFuture, setDaysFuture] = useState(30);
   const [replayIndexOverride, setReplayIndexOverride] = useState(null);
   const [approvingOrderIds, setApprovingOrderIds] = useState({});
   const { feedback } = useFinanceFeedback();
   const toast = useToast();
+
+  useEffect(() => {
+    if (isMobile) {
+      setDaysPast((prev) => Math.min(prev, 7));
+      setDaysFuture((prev) => (prev > 30 ? 30 : prev));
+    }
+  }, [isMobile]);
 
   const { data, loading, error, refetch } = useTimelineEvents(daysPast, daysFuture);
 
@@ -141,11 +168,7 @@ export function TimelineView() {
       toast.success(`${eventTitle} approved and payment execution started.`, 'Payment Approval');
       await refetch();
     } catch (err) {
-      const detail =
-        err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        'Unable to approve payment right now.';
-      toast.error(detail, 'Approval Failed');
+      toast.error(getErrorMessage(err, 'Unable to approve payment right now.'), 'Approval Failed');
     } finally {
       setApprovingOrderIds((prev) => {
         const next = { ...prev };
@@ -158,7 +181,7 @@ export function TimelineView() {
   if (loading) {
     return (
       <Card className="bg-zinc-900/40 border-white/5">
-        <CardContent className="p-8 flex items-center justify-center min-h-[400px]">
+        <CardContent className="p-8 flex items-center justify-center min-h-100">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-zinc-800 border-t-violet-600 animate-spin" />
             <p className="text-zinc-400 text-sm">Loading your financial timeline...</p>
@@ -171,15 +194,34 @@ export function TimelineView() {
   if (error || !data) {
     return (
       <Card className="bg-zinc-900/40 border-white/5">
-        <CardContent className="p-8 flex items-center justify-center min-h-[400px]">
-          <p className="text-zinc-500">Unable to load timeline</p>
+        <CardContent className="p-8 flex items-center justify-center min-h-100">
+          <div className="flex max-w-md flex-col items-center gap-4 text-center">
+            <div className="rounded-full border border-rose-400/20 bg-rose-500/10 p-3 text-rose-300">
+              <RefreshCw className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-zinc-100">Unable to load timeline</p>
+              <p className="text-sm text-zinc-400">{getErrorMessage(error)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                feedback('tap');
+                refetch();
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-100 transition-colors hover:bg-white/10"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry timeline
+            </button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-zinc-900/40 border-white/5">
+      <Card className="bg-zinc-900/40 border-white/5">
       <CardHeader>
         <CardTitle>Financial Timeline</CardTitle>
         <p className="text-sm text-zinc-400">Your money calendar - past, present, and future</p>
@@ -191,11 +233,11 @@ export function TimelineView() {
       </CardHeader>
 
       <CardContent>
-        <div className="mb-6 rounded-xl border border-white/10 bg-black/25 p-4 backdrop-blur-xl">
+        <div className="mb-5 rounded-xl border border-white/10 bg-black/25 p-3.5 backdrop-blur-xl md:mb-6 md:p-4">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <p className="text-xs uppercase tracking-[0.22em] text-zinc-400">Time-Scrub Money Replay</p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
                 <button
                   type="button"
                   onClick={() => {
@@ -257,9 +299,9 @@ export function TimelineView() {
                   }}
                   className="w-full accent-violet-500"
                 />
-                <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                <div className="flex flex-col gap-1 text-[11px] text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
                   <span>{formatTimelineDate(timelineDates[0])}</span>
-                  <span className="text-zinc-300">
+                  <span className="text-zinc-300 sm:text-center">
                     Focus: {replayDate ? formatTimelineDate(replayDate) : '-'} ({replayNetDelta >= 0 ? '+' : '-'}
                     {formatCurrency(Math.abs(replayNetDelta))})
                   </span>
@@ -272,10 +314,10 @@ export function TimelineView() {
           </div>
         </div>
 
-        <div className="relative">
+        <div className={cn('relative', !isMobile && 'max-h-[600px] overflow-y-auto pr-1 custom-scrollbar')}>
           <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-linear-to-b from-zinc-700 via-violet-500/50 to-zinc-700" />
 
-          <div className="space-y-8">
+          <div className={cn('space-y-6 md:space-y-8', isMobile && 'pr-0.5')}>
             {timelineDates.map((date) => {
               const dateObj = new Date(`${date}T00:00:00`);
               const dayDiff = Math.round((dateObj - todayDate) / DAY_MS);
@@ -323,7 +365,7 @@ function TimelineDate({
   return (
     <div
       className={cn(
-        'relative pl-16 transition-all duration-500',
+        'relative pl-12 sm:pl-16 transition-all duration-500',
         isCompleted && 'opacity-60',
         isFutureFar && 'opacity-80',
         isReplayFocus && 'timeline-date-focus'
@@ -332,7 +374,7 @@ function TimelineDate({
         transform: `translateX(${depthOffset}px) scale(${depthScale})`,
       }}
     >
-      <div className="absolute left-3 -translate-x-1/2 top-2">
+      <div className="absolute left-2.5 sm:left-3 -translate-x-1/2 top-2">
         <div
           className={cn(
             'w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all',
@@ -424,7 +466,7 @@ function TimelineEvent({
         transform: `scale(${eventDepthScale})`,
       }}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <span className={cn('shrink-0 rounded-md p-2 border border-white/10', config.bg)}>
             <Icon size={16} className={config.textColor} />
@@ -466,9 +508,9 @@ function TimelineEvent({
               <div className="mt-3 border-t border-white/5 pt-2 space-y-1">
                 <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Prepared commitments</p>
                 {autoPrepared.slice(0, 4).map((payment, idx) => (
-                  <div key={`${payment.name}-${idx}`} className="text-xs text-zinc-400 flex items-center justify-between">
-                    <span>- {payment.name}</span>
-                    <span>-{formatCurrency(payment.amount)}</span>
+                  <div key={`${payment.name}-${idx}`} className="text-xs text-zinc-400 flex items-center justify-between gap-2">
+                    <span className="truncate">- {payment.name}</span>
+                    <span className="shrink-0">-{formatCurrency(payment.amount)}</span>
                   </div>
                 ))}
                 {Number.isFinite(event.details?.remaining_after) ? (
@@ -513,7 +555,7 @@ function TimelineEvent({
           </div>
         </div>
 
-        <div className="text-right shrink-0">
+        <div className="text-left sm:text-right shrink-0 pl-11 sm:pl-0">
           <p
             className={cn(
               'font-bold tabular-nums text-lg',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TransactionTable } from '../../components/transactions/TransactionTable.jsx';
 import { TransactionForm } from '../../components/transactions/TransactionForm.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
+import { Button } from '../../components/ui/Button.jsx';
 import { Plus } from 'lucide-react';
 import { transactionService } from '../../services/transactions.js';
 import { useToast } from '../../components/ui/Toast.jsx';
@@ -31,13 +32,13 @@ export default function Transactions() {
           <h1 className="text-3xl font-bold text-white tracking-tight">Transactions</h1>
           <p className="text-zinc-400 mt-1">Manage and view your transaction history.</p>
         </div>
-        <button 
+        <Button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-500/20 text-sm flex items-center gap-2"
+            variant="gradient"
+            icon={<Plus size={18} />}
         >
-          <Plus size={18} />
           Add Transaction
-        </button>
+        </Button>
       </div>
 
       {/* Main Content */}

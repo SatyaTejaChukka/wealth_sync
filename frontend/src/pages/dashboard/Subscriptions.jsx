@@ -3,7 +3,9 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Select } from '../../components/ui/Select.jsx';
-import { Plus, Edit, Trash2, Calendar, CheckCircle } from 'lucide-react';
+import { Switch } from '../../components/ui/Switch.jsx';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
+import { Plus, Trash2, Calendar, CheckCircle } from 'lucide-react';
 import { subscriptionService } from '../../services/subscriptions.js';
 import { categoryService } from '../../services/categories.js';
 import { cn } from '../../lib/utils';
@@ -15,10 +17,14 @@ export default function Subscriptions() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSub, setEditingSub] = useState(null);
+  const [togglingSubscriptionId, setTogglingSubscriptionId] = useState(null);
+  const [loggingUsageSubscriptionId, setLoggingUsageSubscriptionId] = useState(null);
+  const [pendingDeleteSubscriptionId, setPendingDeleteSubscriptionId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
     billing_cycle: 'monthly',
+    is_active: true,
     category_id: ''
   });
   const toast = useToast();
@@ -55,6 +61,7 @@ export default function Subscriptions() {
         name: formData.name,
         amount: parseFloat(formData.amount),
         billing_cycle: formData.billing_cycle,
+        is_active: formData.is_active,
         category_id: formData.category_id || null
       };
       
@@ -66,7 +73,7 @@ export default function Subscriptions() {
       
       setShowModal(false);
       setEditingSub(null);
-      setFormData({ name: '', amount: '', billing_cycle: 'monthly', category_id: '' });
+      setFormData({ name: '', amount: '', billing_cycle: 'monthly', is_active: true, category_id: '' });
       loadSubscriptions();
       toast.success(editingSub ? 'Subscription updated' : 'Subscription added');
     } catch (err) {
@@ -81,24 +88,65 @@ export default function Subscriptions() {
       name: sub.name,
       amount: sub.amount.toString(),
       billing_cycle: sub.billing_cycle,
+      is_active: Boolean(sub.is_active),
       category_id: sub.category_id || ''
     });
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this subscription?')) {
-      setSubscriptions((prev) => prev.filter((s) => s.id !== id));
-      try {
-        await subscriptionService.delete(id);
-        toast.success('Subscription deleted');
-      } catch (err) {
-        console.error('Failed to delete subscription', err);
-        toast.error('Failed to delete subscription. Reverting...');
-        loadSubscriptions();
-      }
+  const handleToggleActive = async (sub) => {
+    if (!sub?.id) {
+      return;
+    }
+
+    setTogglingSubscriptionId(sub.id);
+    try {
+      const updated = await subscriptionService.update(sub.id, {
+        is_active: !sub.is_active,
+      });
+      setSubscriptions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      toast.success(updated.is_active ? 'Subscription activated' : 'Subscription paused');
+    } catch (err) {
+      console.error('Failed to toggle subscription status', err);
+      toast.error('Failed to update subscription status');
+    } finally {
+      setTogglingSubscriptionId(null);
     }
   };
+
+  const handleLogUsage = async (sub) => {
+    if (!sub?.id) {
+      return;
+    }
+
+    setLoggingUsageSubscriptionId(sub.id);
+    try {
+      const updated = await subscriptionService.logUsage(sub.id);
+      setSubscriptions((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      toast.success(`Usage logged for ${updated.name}`);
+    } catch (err) {
+      console.error('Failed to log subscription usage', err);
+      toast.error('Failed to log usage');
+    } finally {
+      setLoggingUsageSubscriptionId(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await subscriptionService.delete(id);
+      toast.success('Subscription deleted');
+    } catch (err) {
+      console.error('Failed to delete subscription', err);
+      toast.error('Failed to delete subscription. Reverting...');
+      loadSubscriptions();
+    }
+  };
+
+  const pendingDeleteSubscription = pendingDeleteSubscriptionId
+    ? subscriptions.find((sub) => sub.id === pendingDeleteSubscriptionId)
+    : null;
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -110,12 +158,13 @@ export default function Subscriptions() {
         <Button
           onClick={() => {
             setEditingSub(null);
-            setFormData({ name: '', amount: '', billing_cycle: 'monthly', category_id: '' });
+            setFormData({ name: '', amount: '', billing_cycle: 'monthly', is_active: true, category_id: '' });
             setShowModal(true);
           }}
-          className="bg-linear-to-r from-violet-600 to-indigo-600 w-full sm:w-auto"
+          variant="gradient"
+          icon={<Plus size={18} />}
+          className="w-full sm:w-auto"
         >
-          <Plus size={18} className="mr-2" />
           Add Subscription
         </Button>
       </div>
@@ -128,7 +177,19 @@ export default function Subscriptions() {
           <div className="p-8 text-center text-zinc-500">No subscriptions found. Add your first subscription!</div>
         ) : (
           subscriptions.map((sub) => (
-            <div key={sub.id} className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-md space-y-3">
+            <div
+              key={sub.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleEdit(sub)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleEdit(sub);
+                }
+              }}
+              className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-md space-y-3 cursor-pointer"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-medium text-white">{sub.name}</h3>
@@ -167,21 +228,53 @@ export default function Subscriptions() {
                     Next: {new Date(sub.next_billing_date).toLocaleDateString()}
                   </span>
                 )}
+                <span className="text-zinc-500">
+                  Usage: {sub.usage_count ?? 0}
+                </span>
+                <span className="text-zinc-500">
+                  {sub.usage_count > 0
+                    ? `$${(Number(sub.amount) / Number(sub.usage_count)).toFixed(2)} per use`
+                    : 'No usage logged'}
+                </span>
               </div>
-              <div className="flex items-center gap-2 pt-1 border-t border-white/5 justify-end">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-zinc-500 hover:text-white"
-                  onClick={() => handleEdit(sub)}
+              <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/5">
+                <div
+                  className="flex items-center gap-2"
+                  onClick={(event) => event.stopPropagation()}
                 >
-                  <Edit size={16} />
+                  <Switch
+                    checked={Boolean(sub.is_active)}
+                    onCheckedChange={() => void handleToggleActive(sub)}
+                    disabled={togglingSubscriptionId === sub.id}
+                  />
+                  <span className="text-xs text-zinc-400">
+                    {sub.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-bold"
+                  isLoading={loggingUsageSubscriptionId === sub.id}
+                  icon={<CheckCircle size={14} />}
+                  iconPosition="left"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleLogUsage(sub);
+                  }}
+                >
+                  Log Usage
                 </Button>
+              </div>
+              <div className="flex items-center gap-2 justify-end">
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                  onClick={() => handleDelete(sub.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setPendingDeleteSubscriptionId(sub.id);
+                  }}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -202,18 +295,31 @@ export default function Subscriptions() {
                 <th className="h-12 px-6 font-medium">Billing Cycle</th>
                 <th className="h-12 px-6 font-medium">Category</th>
                 <th className="h-12 px-6 font-medium">Next Billing</th>
+                <th className="h-12 px-6 font-medium">Usage</th>
                 <th className="h-12 px-6 font-medium">Status</th>
                 <th className="h-12 px-6 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
-                <tr><td colSpan="7" className="p-8 text-center text-zinc-500">Loading subscriptions...</td></tr>
+                <tr><td colSpan="8" className="p-8 text-center text-zinc-500">Loading subscriptions...</td></tr>
               ) : subscriptions.length === 0 ? (
-                <tr><td colSpan="7" className="p-8 text-center text-zinc-500">No subscriptions found. Add your first subscription!</td></tr>
+                <tr><td colSpan="8" className="p-8 text-center text-zinc-500">No subscriptions found. Add your first subscription!</td></tr>
               ) : (
                 subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-white/5 transition-colors">
+                  <tr
+                    key={sub.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleEdit(sub)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleEdit(sub);
+                      }
+                    }}
+                    className="hover:bg-white/5 transition-colors cursor-pointer"
+                  >
                     <td className="p-6 font-medium text-white">{sub.name}</td>
                     <td className="p-6 text-white font-bold">${parseFloat(sub.amount).toFixed(2)}</td>
                     <td className="p-6">
@@ -247,31 +353,58 @@ export default function Subscriptions() {
                       )}
                     </td>
                     <td className="p-6">
-                      {sub.is_active ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle size={12} />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
-                          Inactive
-                        </span>
-                      )}
+                      <div className="text-zinc-300 font-medium">{sub.usage_count ?? 0} uses</div>
+                      <div className="text-xs text-zinc-500 mt-1">
+                        {sub.usage_count > 0
+                          ? `$${(Number(sub.amount) / Number(sub.usage_count)).toFixed(2)} per use`
+                          : 'No usage logged'}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div
+                        className="flex items-center gap-3"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <Switch
+                          checked={Boolean(sub.is_active)}
+                          onCheckedChange={() => void handleToggleActive(sub)}
+                          disabled={togglingSubscriptionId === sub.id}
+                        />
+                        {sub.is_active ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle size={12} />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-6 text-right whitespace-nowrap">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-zinc-500 hover:text-white mr-2"
-                        onClick={() => handleEdit(sub)}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 border-zinc-700 text-zinc-200 hover:bg-zinc-800 mr-2 font-bold"
+                        isLoading={loggingUsageSubscriptionId === sub.id}
+                        icon={<CheckCircle size={14} />}
+                        iconPosition="left"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void handleLogUsage(sub);
+                        }}
                       >
-                        <Edit size={16} />
+                        Log Usage
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                        onClick={() => handleDelete(sub.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPendingDeleteSubscriptionId(sub.id);
+                        }}
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -341,6 +474,17 @@ export default function Subscriptions() {
             />
           </div>
 
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-zinc-300">Active Subscription</p>
+              <p className="text-xs text-zinc-500">Inactive subscriptions stay in history but won&apos;t be treated as currently active.</p>
+            </div>
+            <Switch
+              checked={Boolean(formData.is_active)}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            />
+          </div>
+
           <div className="flex gap-3 pt-4">
             <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
               {editingSub ? 'Update' : 'Create'} Subscription
@@ -359,6 +503,26 @@ export default function Subscriptions() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteSubscriptionId)}
+        title="Delete Subscription"
+        description={
+          pendingDeleteSubscription
+            ? `Delete "${pendingDeleteSubscription.name}"? This cannot be undone.`
+            : 'Delete this subscription? This cannot be undone.'
+        }
+        confirmText="Delete Subscription"
+        cancelText="Cancel"
+        variant="destructive"
+        onCancel={() => setPendingDeleteSubscriptionId(null)}
+        onConfirm={async () => {
+          const id = pendingDeleteSubscriptionId;
+          if (!id) return;
+          setPendingDeleteSubscriptionId(null);
+          await handleDelete(id);
+        }}
+      />
     </div>
   );
 }

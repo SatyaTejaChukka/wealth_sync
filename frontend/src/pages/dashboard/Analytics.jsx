@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SpendingChart } from '../../components/dashboard/SpendingChart.jsx';
+import { SalaryRuleEnginePanel } from '../../components/dashboard/SalaryRuleEnginePanel.jsx';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card.jsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { dashboardService } from '../../services/dashboard.js';
@@ -54,6 +55,8 @@ export default function Analytics() {
             range={chartRange}
             onRangeChange={setChartRange}
         />
+
+        <SalaryRuleEnginePanel engine={data.safe_to_spend_stats?.salary_rule_engine} />
 
         <Card className="h-[350px] sm:h-[400px] bg-zinc-900/40 border-white/5">
             <CardHeader>

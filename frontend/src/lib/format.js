@@ -20,6 +20,14 @@ export function formatCurrency(value, { compact = false } = {}) {
   return formatter.format(Number.isFinite(numeric) ? numeric : 0);
 }
 
+export function splitCurrency(formattedValue) {
+  if (typeof formattedValue !== 'string') return { symbol: '', amount: formattedValue };
+  // Matches any non-digit/space/dot/comma/minus characters at the start of the string
+  const match = formattedValue.match(/^([^\d\s,.-]*)(.*)$/);
+  return match ? { symbol: match[1], amount: match[2] } : { symbol: '', amount: formattedValue };
+}
+
+
 export function formatPercent(value, digits = 1) {
   const numeric = Number(value || 0);
   if (!Number.isFinite(numeric)) {

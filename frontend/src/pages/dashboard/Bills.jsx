@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from '../../lib/utils';
+
 import { Button } from '../../components/ui/Button.jsx';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Select } from '../../components/ui/Select.jsx';
-import { Plus, Edit, Trash2, CheckCircle, CircleX, Calendar } from 'lucide-react';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
+import { Plus, Trash2, CheckCircle, CircleX, Calendar } from 'lucide-react';
 import { billService } from '../../services/bills.js';
 import { categoryService } from '../../services/categories.js';
 import { useToast } from '../../components/ui/Toast.jsx';
@@ -14,6 +17,7 @@ export default function Bills() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
+  const [pendingDeleteBillId, setPendingDeleteBillId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
@@ -89,7 +93,7 @@ export default function Bills() {
   };
 
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this bill?')) {
+    // Confirmed via the in-app dialog.
       // Optimistic update — remove from UI immediately
       setBills((prev) => prev.filter((bill) => bill.id !== id));
       try {
@@ -100,7 +104,7 @@ export default function Bills() {
         toast.error('Failed to delete bill. Reverting...');
         loadBills();
       }
-    }
+    //
   };
   const handleTogglePaid = async (bill) => {
     const currentlyPaid = Boolean(bill.last_paid_at);
@@ -129,6 +133,10 @@ export default function Bills() {
     }
   };
 
+  const pendingDeleteBill = pendingDeleteBillId
+    ? bills.find((bill) => bill.id === pendingDeleteBillId)
+    : null;
+
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -142,9 +150,10 @@ export default function Bills() {
             setFormData({ name: '', amount: '', due_day: '', category_id: '', autopay_enabled: false });
             setShowModal(true);
           }}
-          className="bg-linear-to-r from-violet-600 to-indigo-600 w-full sm:w-auto"
+          variant="gradient"
+          icon={<Plus size={18} />}
+          className="w-full sm:w-auto"
         >
-          <Plus size={18} className="mr-2" />
           Add Bill
         </Button>
       </div>
@@ -157,7 +166,19 @@ export default function Bills() {
           <div className="p-8 text-center text-zinc-500">No bills found. Add your first bill!</div>
         ) : (
           bills.map((bill) => (
-            <div key={bill.id} className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-md space-y-3">
+            <div
+              key={bill.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleEdit(bill)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleEdit(bill);
+                }
+              }}
+              className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-md space-y-3 cursor-pointer"
+            >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-medium text-white">{bill.name}</h3>
@@ -188,33 +209,29 @@ export default function Bills() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-8 px-3 flex-1 ${
+                  className={cn(
+                    "h-8 px-3 flex-1 font-bold",
                     bill.last_paid_at
                       ? 'text-emerald-400 hover:bg-emerald-500/10'
                       : 'text-rose-400 hover:bg-rose-500/10'
-                  }`}
-                  onClick={() => handleTogglePaid(bill)}
-                >
-                  {bill.last_paid_at ? (
-                    <CheckCircle size={14} className="mr-1" />
-                  ) : (
-                    <CircleX size={14} className="mr-1" />
                   )}
+                  icon={bill.last_paid_at ? <CheckCircle size={14} /> : <CircleX size={14} />}
+                  iconPosition="left"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleTogglePaid(bill);
+                  }}
+                >
                   {bill.last_paid_at ? 'Paid' : 'Unpaid'}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-zinc-500 hover:text-white"
-                  onClick={() => handleEdit(bill)}
-                >
-                  <Edit size={16} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                  onClick={() => handleDelete(bill.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setPendingDeleteBillId(bill.id);
+                  }}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -246,7 +263,19 @@ export default function Bills() {
                 <tr><td colSpan="7" className="p-8 text-center text-zinc-500">No bills found. Add your first bill!</td></tr>
               ) : (
                 bills.map((bill) => (
-                  <tr key={bill.id} className="hover:bg-white/5 transition-colors">
+                  <tr
+                    key={bill.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleEdit(bill)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleEdit(bill);
+                      }
+                    }}
+                    className="hover:bg-white/5 transition-colors cursor-pointer"
+                  >
                     <td className="p-6 font-medium text-white">{bill.name}</td>
                     <td className="p-6 text-white font-bold">${parseFloat(bill.amount_estimated).toFixed(2)}</td>
                     <td className="p-6 text-zinc-300">
@@ -284,33 +313,29 @@ export default function Bills() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-8 px-3 mr-2 ${
+                        className={cn(
+                          "h-8 px-3 mr-2 font-bold",
                           bill.last_paid_at
                             ? 'text-emerald-400 hover:bg-emerald-500/10'
                             : 'text-rose-400 hover:bg-rose-500/10'
-                        }`}
-                        onClick={() => handleTogglePaid(bill)}
-                      >
-                        {bill.last_paid_at ? (
-                          <CheckCircle size={14} className="mr-1" />
-                        ) : (
-                          <CircleX size={14} className="mr-1" />
                         )}
+                        icon={bill.last_paid_at ? <CheckCircle size={14} /> : <CircleX size={14} />}
+                        iconPosition="left"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleTogglePaid(bill);
+                        }}
+                      >
                         {bill.last_paid_at ? 'Paid' : 'Unpaid'}
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-zinc-500 hover:text-white mr-2"
-                        onClick={() => handleEdit(bill)}
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
                         className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                        onClick={() => handleDelete(bill.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPendingDeleteBillId(bill.id);
+                        }}
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -413,6 +438,26 @@ export default function Bills() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteBillId)}
+        title="Delete Bill"
+        description={
+          pendingDeleteBill
+            ? `Delete "${pendingDeleteBill.name}"? This cannot be undone.`
+            : 'Delete this bill? This cannot be undone.'
+        }
+        confirmText="Delete Bill"
+        cancelText="Cancel"
+        variant="destructive"
+        onCancel={() => setPendingDeleteBillId(null)}
+        onConfirm={async () => {
+          const id = pendingDeleteBillId;
+          if (!id) return;
+          setPendingDeleteBillId(null);
+          await handleDelete(id);
+        }}
+      />
     </div>
   );
 }

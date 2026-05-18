@@ -3,7 +3,7 @@ import api from '../lib/api';
 export const notificationService = {
   getNotifications: async (unreadOnly = false) => {
     const params = unreadOnly ? { unread_only: true } : {};
-    const response = await api.get('/notifications', { params });
+    const response = await api.get('/notifications/', { params });
     return response.data;
   },
 

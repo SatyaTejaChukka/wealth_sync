@@ -22,13 +22,16 @@ const Button = React.forwardRef(({
     link: "text-primary underline-offset-4 hover:underline",
     glass: "glass text-foreground hover:bg-white/10 hover:border-white/20 transition-all duration-300",
     gradient: "bg-linear-to-r from-violet-600 to-indigo-600 text-white shadow-lg hover:shadow-violet-500/25 hover:scale-[1.02] transition-all duration-300 border-0",
+    surface: "border border-white/10 bg-zinc-900/70 text-zinc-200 hover:bg-zinc-900 hover:border-white/20 transition-all duration-200",
+    light: "bg-white text-black shadow-lg shadow-white/10 hover:bg-zinc-200 transition-colors",
   }
 
   const sizes = {
-    default: "h-10 px-4 py-2",
-    sm: "h-8 rounded-md px-3 text-xs",
+    default: "h-11 px-4 py-2 sm:h-10",
+    sm: "h-10 rounded-md px-3 text-xs sm:h-8",
+    xs: "h-9 rounded-md px-2.5 text-[11px] sm:h-7",
     lg: "h-12 rounded-md px-8",
-    icon: "h-10 w-10",
+    icon: "h-11 w-11 sm:h-10 sm:w-10",
   }
 
   return (

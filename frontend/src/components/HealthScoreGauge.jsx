@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../lib/api';
+import { healthService } from '../services/health.js';
 
 export default function HealthScoreGauge() {
   const [scoreData, setScoreData] = useState(null);
@@ -11,8 +11,8 @@ export default function HealthScoreGauge() {
 
   const fetchHealthScore = async () => {
     try {
-      const response = await api.get('/health/score');
-      setScoreData(response.data);
+      const payload = await healthService.getScore();
+      setScoreData(payload);
     } catch (error) {
       console.error('Failed to fetch health score:', error);
       setScoreData(null);
