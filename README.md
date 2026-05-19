@@ -59,7 +59,7 @@ A comprehensive, full-stack personal finance management system built with **Fast
 ## 📁 Project Structure
 
 ```
-money_manage/
+wealth_sync/
 ├── backend/
 │   ├── app/
 │   │   ├── api/v1/          # 12 route modules (auth, bills, budgets, etc.)
@@ -100,8 +100,8 @@ money_manage/
 ### Quick Start (Docker)
 
 ```bash
-git clone https://github.com/SatyaTejaChukka/money_manage.git
-cd money_manage
+git clone https://github.com/SatyaTejaChukka/wealth_sync.git
+cd wealth_sync
 ```
 
 **Windows:**
@@ -267,7 +267,7 @@ Pre-built images are available on Docker Hub for quick self-hosted deployment:
 
 ```bash
 # Download the compose file
-curl -O https://raw.githubusercontent.com/SatyaTejaChukka/money_manage/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/SatyaTejaChukka/wealth_sync/main/docker-compose.hub.yml
 
 # Start the full stack
 docker-compose -f docker-compose.hub.yml up -d

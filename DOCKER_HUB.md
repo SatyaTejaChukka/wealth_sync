@@ -9,7 +9,7 @@ Run WealthSync instantly using pre-built Docker images.
 ### 1. Download the compose file
 
 ```bash
-curl -O https://raw.githubusercontent.com/SatyaTejaChukka/money_manage/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/SatyaTejaChukka/wealth_sync/main/docker-compose.hub.yml
 ```
 
 Or create a `docker-compose.yml` manually:

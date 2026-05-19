@@ -30,7 +30,7 @@ Deploy WealthSync with **Vercel** (frontend), **Render** (backend), and **Supaba
 ## Step 2 — Backend (Render)
 
 1. Log in to [Render](https://render.com) and click **New → Web Service**.
-2. Connect your `money_manage` GitHub repository.
+2. Connect your `wealth_sync` GitHub repository.
 3. Configure the service:
 
 | Setting            | Value                        |
@@ -71,7 +71,7 @@ Deploy WealthSync with **Vercel** (frontend), **Render** (backend), and **Supaba
 ## Step 3 — Frontend (Vercel)
 
 1. Log in to [Vercel](https://vercel.com) and click **Add New → Project**.
-2. Import your `money_manage` repository.
+2. Import your `wealth_sync` repository.
 3. Configure build settings:
 
 | Setting              | Value              |
@@ -134,7 +134,7 @@ If you prefer to self-host instead of using Render/Vercel, pre-built Docker imag
 
 ```bash
 # Download the compose file
-curl -O https://raw.githubusercontent.com/SatyaTejaChukka/money_manage/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/SatyaTejaChukka/wealth_sync/main/docker-compose.hub.yml
 
 # Start the full stack (PostgreSQL + Redis + Backend + Frontend)
 docker-compose -f docker-compose.hub.yml up -d

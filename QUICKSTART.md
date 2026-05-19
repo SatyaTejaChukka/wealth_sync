@@ -7,8 +7,8 @@ Get WealthSync running locally in under 5 minutes.
 ## Option 1 — Automated Setup (Windows)
 
 ```powershell
-git clone https://github.com/SatyaTejaChukka/money_manage.git
-cd money_manage
+git clone https://github.com/SatyaTejaChukka/wealth_sync.git
+cd wealth_sync
 .\setup.ps1
 ```
 
@@ -31,9 +31,9 @@ Once complete:
 
 ## Option 2 — Docker Compose (Linux / macOS)
 
-```bash
-git clone https://github.com/SatyaTejaChukka/money_manage.git
-cd money_manage
+git clone https://github.com/SatyaTejaChukka/wealth_sync.git
+cd wealth_sync
+cd wealth_sync
 
 # Start infrastructure
 docker-compose up -d --build
