@@ -27,7 +27,7 @@ const navigation = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export function Sidebar({ mobileOpen, setMobileOpen }) {
+export function Sidebar() {
   const { logout, user } = useAuth();
 
   const sidebarContent = (
@@ -51,7 +51,6 @@ export function Sidebar({ mobileOpen, setMobileOpen }) {
               key={item.name}
               to={item.href}
               end={item.href === '/dashboard'}
-              onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group relative overflow-hidden",
@@ -116,29 +115,8 @@ export function Sidebar({ mobileOpen, setMobileOpen }) {
   );
 
   return (
-    <>
-      {/* Mobile Sidebar */}
-      <div 
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-[#09090b]/95 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] md:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        {sidebarContent}
-      </div>
-
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 z-20">
-        {sidebarContent}
-      </div>
-
-      {/* Mobile Overlay */}
-      {mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden animate-fade-in"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-    </>
+    <div className="hidden md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 z-20">
+      {sidebarContent}
+    </div>
   );
 }
