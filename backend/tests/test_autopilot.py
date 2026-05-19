@@ -143,6 +143,99 @@ async def test_timeline_handles_due_day_31(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_timeline_falls_back_when_autopilot_tables_are_unavailable(
+    client: AsyncClient,
+    monkeypatch,
+):
+    from app.services.autopilot import AutopilotService
+
+    async def tables_unavailable(_session):
+        return False
+
+    monkeypatch.setattr(
+        AutopilotService,
+        "_autopilot_tables_available",
+        staticmethod(tables_unavailable),
+    )
+
+    token = await signup_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    income_res = await client.post(
+        "/api/v1/income/",
+        json={
+            "amount": 5000,
+            "frequency": "monthly",
+            "payday": "15th",
+            "active": True,
+        },
+        headers=headers,
+    )
+    assert income_res.status_code == 201
+
+    bill_res = await client.post(
+        "/api/v1/bills/",
+        json={
+            "name": "Phone Bill",
+            "amount_estimated": 120,
+            "due_day": 20,
+            "autopay_enabled": True,
+        },
+        headers=headers,
+    )
+    assert bill_res.status_code == 201
+
+    timeline_res = await client.get(
+        "/api/v1/autopilot/timeline",
+        params={"days_past": 7, "days_future": 30},
+        headers=headers,
+    )
+    assert timeline_res.status_code == 200
+
+    payload = timeline_res.json()
+    assert isinstance(payload["events"], list)
+    bill_events = [event for event in payload["events"] if event["type"] == "BILL_DUE"]
+    assert bill_events
+    assert bill_events[0]["details"]["payment_order_id"] is None
+    assert bill_events[0]["details"]["payment_status"] is None
+
+
+@pytest.mark.asyncio
+async def test_autopilot_table_check_rejects_partial_schema(monkeypatch):
+    from app.models.autopilot_payment import (
+        AutopilotPayment,
+        AutopilotPaymentStateHistory,
+    )
+    from app.services import autopilot as autopilot_module
+    from app.services.autopilot import AutopilotService
+
+    payment_columns = set(AutopilotPayment.__table__.columns.keys()) - {
+        "execution_idempotency_key"
+    }
+    history_columns = set(AutopilotPaymentStateHistory.__table__.columns.keys())
+
+    class FakeInspector:
+        def has_table(self, _table_name):
+            return True
+
+        def get_columns(self, table_name):
+            columns = payment_columns if table_name == "autopilot_payments" else history_columns
+            return [{"name": column_name} for column_name in columns]
+
+    class FakeConnection:
+        async def run_sync(self, fn):
+            return fn(object())
+
+    class FakeSession:
+        async def connection(self):
+            return FakeConnection()
+
+    monkeypatch.setattr(autopilot_module, "inspect", lambda _conn: FakeInspector())
+
+    assert await AutopilotService._autopilot_tables_available(FakeSession()) is False
+
+
+@pytest.mark.asyncio
 async def test_salary_rule_engine_priority_split(client: AsyncClient):
     token = await signup_token(client)
     headers = {"Authorization": f"Bearer {token}"}
@@ -209,6 +302,10 @@ async def test_salary_rule_engine_priority_split(client: AsyncClient):
     assert approx(payload["allocation"]["goals"], 5000)
     assert approx(payload["allocation"]["free_money"], 2000)
     assert payload["allocation"]["free_money_floor_met"] is True
+    assert payload["confidence"]["label"] in {"high", "medium", "low"}
+    assert payload["status"]["primary_constraint"] == "goals"
+    assert approx(payload["money_flow"]["remaining_safe_to_spend"], 2000)
+    assert isinstance(payload["warning_details"], list)
 
     goals = {item["goal_name"]: item for item in payload["buckets"]["goals"]}
     assert approx(goals["Emergency Fund"]["allocated"], 4000)
@@ -338,3 +435,67 @@ async def test_autopilot_payment_order_approval_and_execution(client: AsyncClien
     paid_bill = next((bill for bill in bills_res.json() if bill["id"] == bill_id), None)
     assert paid_bill is not None
     assert paid_bill["last_paid_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_autopilot_execution_idempotency_and_history(client: AsyncClient):
+    token = await signup_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    now = datetime.utcnow()
+    create_bill_res = await client.post(
+        "/api/v1/bills/",
+        json={
+            "name": "Water",
+            "amount_estimated": 600,
+            "due_day": now.day,
+            "autopay_enabled": True,
+        },
+        headers=headers,
+    )
+    assert create_bill_res.status_code == 201
+
+    prepare_res = await client.post(
+        "/api/v1/autopilot/payments/prepare",
+        params={"days_ahead": 1},
+        headers=headers,
+    )
+    assert prepare_res.status_code == 200
+    order = prepare_res.json()["items"][0]
+
+    approve_res = await client.post(
+        f"/api/v1/autopilot/payments/{order['id']}/approve",
+        json={"execute_now": False},
+        headers=headers,
+    )
+    assert approve_res.status_code == 200
+    assert approve_res.json()["item"]["status"] == "approved"
+
+    idempotency_key = "idem-water-order-001"
+    execute_once_res = await client.post(
+        f"/api/v1/autopilot/payments/{order['id']}/execute",
+        params={"idempotency_key": idempotency_key},
+        headers=headers,
+    )
+    assert execute_once_res.status_code == 200
+    execute_once_item = execute_once_res.json()["item"]
+    assert execute_once_item["status"] == "succeeded"
+    assert execute_once_item["transaction_id"] is not None
+
+    execute_twice_res = await client.post(
+        f"/api/v1/autopilot/payments/{order['id']}/execute",
+        params={"idempotency_key": idempotency_key},
+        headers=headers,
+    )
+    assert execute_twice_res.status_code == 200
+    execute_twice_item = execute_twice_res.json()["item"]
+    assert execute_twice_item["status"] == "succeeded"
+    assert execute_twice_item["transaction_id"] == execute_once_item["transaction_id"]
+
+    history_res = await client.get(
+        f"/api/v1/autopilot/payments/{order['id']}/history",
+        headers=headers,
+    )
+    assert history_res.status_code == 200
+    event_types = {event["event_type"] for event in history_res.json()["items"]}
+    assert {"payment_approved", "execution_started", "execution_succeeded"}.issubset(event_types)

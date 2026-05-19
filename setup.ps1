@@ -12,7 +12,7 @@ if (-not (Test-Path "backend\.env")) {
     Copy-Item "backend\.env.example" "backend\.env" -ErrorAction SilentlyContinue
     if (-not (Test-Path "backend\.env")) {
         # Fallback if example doesn't exist
-        Set-Content "backend\.env" "PROJECT_NAME=MoneyOS`nPOSTGRES_USER=postgres`nPOSTGRES_PASSWORD=postgres`nPOSTGRES_SERVER=db`nPOSTGRES_DB=money_manager`nDATABASE_URL=postgresql+asyncpg://postgres:postgres@db/money_manager`nBACKEND_CORS_ORIGINS=['http://localhost:3000','http://localhost:5173']"
+        Set-Content "backend\.env" "PROJECT_NAME=MoneyOS`nPOSTGRES_USER=postgres`nPOSTGRES_PASSWORD=postgres`nPOSTGRES_SERVER=db`nPOSTGRES_DB=wealth_sync`nDATABASE_URL=postgresql+asyncpg://postgres:postgres@db/wealth_sync`nBACKEND_CORS_ORIGINS=['http://localhost:3000','http://localhost:5173']"
     }
 }
 

@@ -32,6 +32,7 @@ async def test_transaction_status_filter(client: AsyncClient):
         headers=headers,
     )
     assert create_response.status_code == 201
+    assert create_response.json()["status"] == "completed"
 
     completed_res = await client.get(
         "/api/v1/transactions/",
@@ -40,6 +41,7 @@ async def test_transaction_status_filter(client: AsyncClient):
     )
     assert completed_res.status_code == 200
     assert len(completed_res.json()) == 1
+    assert completed_res.json()[0]["status"] == "completed"
 
     pending_res = await client.get(
         "/api/v1/transactions/",
