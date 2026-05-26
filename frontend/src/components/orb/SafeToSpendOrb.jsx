@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDailySafeToSpend } from '../../hooks/useDailySafeToSpend.js';
 import { useDeviceShake } from '../../hooks/useDeviceShake.js';
 import { useFinanceFeedback } from '../../hooks/useFinanceFeedback.js';
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, splitCurrency } from '../../lib/format.js';
 import {
   calculateMiniOrbScale,
   calculateOrbSize,

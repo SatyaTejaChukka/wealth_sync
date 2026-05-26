@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Gauge, ShieldAlert, Sparkles, TriangleAlert } from 'lucide-react';
 
 import { formatCurrency } from '../../lib/format.js';
@@ -58,6 +59,8 @@ function DetailTile({ label, value, toneClass, description }) {
 
 
 export const MoneyFlow = ({ stats }) => {
+  const navigate = useNavigate();
+
   if (!stats) {
     return null;
   }
@@ -122,7 +125,7 @@ export const MoneyFlow = ({ stats }) => {
               <p className="mt-1 text-lg font-semibold tabular-nums text-white">{formatCurrency(income)}</p>
             ) : (
               <button 
-                onClick={() => window.location.hash = '#/income'} // Assuming there's an income section
+                onClick={() => navigate('/dashboard/budget')}
                 className="mt-1 text-sm font-bold text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors"
               >
                 Add Income Source +

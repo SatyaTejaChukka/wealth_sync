@@ -53,7 +53,7 @@ const Button = React.forwardRef(({
       {!isLoading && icon && iconPosition === "left" && (
         <span className="mr-2 inline-flex items-center">{icon}</span>
       )}
-      <span className={cn(isLoading && "opacity-90")}>{children}</span>
+      <span className={cn("inline-flex items-center whitespace-nowrap", isLoading && "opacity-90")}>{children}</span>
       {!isLoading && icon && iconPosition === "right" && (
         <span className="ml-2 inline-flex items-center">{icon}</span>
       )}

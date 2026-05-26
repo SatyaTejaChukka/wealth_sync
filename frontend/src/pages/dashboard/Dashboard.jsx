@@ -28,6 +28,7 @@ import { Button } from '../../components/ui/Button.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { formatCurrency } from '../../lib/format.js';
+import { calculateSafeBudgetSignal } from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 import { dashboardService } from '../../services/dashboard.js';
 
@@ -189,6 +190,11 @@ export default function Dashboard() {
   const autopilotStatusText = autopilotReady
     ? 'Autopilot is calculating from your live income, commitments, and transactions.'
     : 'Add income, bills, subscriptions, or goals to start autopilot calculations.';
+
+  const weatherState = useMemo(() => {
+    if (!summary.safe_to_spend_stats) return null;
+    return calculateSafeBudgetSignal(summary.safe_to_spend_stats).weatherState;
+  }, [summary.safe_to_spend_stats]);
 
   const handleActionClick = useCallback(
     (action) => {
@@ -406,11 +412,22 @@ export default function Dashboard() {
           {/* ── Desktop Header ── */}
           <div id="desktop-header" className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                Welcome back,{' '}
+              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl flex flex-wrap items-center gap-3">
+                <span>Welcome back,{' '}</span>
                 <span className="bg-linear-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
                   {user?.full_name || user?.email?.split('@')[0] || 'User'}
                 </span>
+                {weatherState && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-zinc-900/60 px-2.5 py-1 text-xs font-semibold text-zinc-300">
+                    <span className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      weatherState === 'calm' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
+                      weatherState === 'balanced' ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
+                      'bg-rose-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                    )} />
+                    Weather: <span className="capitalize">{weatherState}</span>
+                  </span>
+                )}
               </h1>
               <p className="mt-1 max-w-2xl text-zinc-400">{autopilotStatusText}</p>
             </div>

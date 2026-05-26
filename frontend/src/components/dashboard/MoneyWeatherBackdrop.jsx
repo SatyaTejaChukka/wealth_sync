@@ -58,11 +58,7 @@ export function MoneyWeatherBackdrop({ stats }) {
         )}
       />
 
-      {!isMobile ? (
-        <div className="absolute right-3 top-4 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[9px] uppercase tracking-[0.22em] text-zinc-400 backdrop-blur-md md:right-4 md:top-6 md:px-3 md:text-[10px]">
-          Money Weather: {palette.title}
-        </div>
-      ) : null}
+
 
       {Array.from({ length: particleCount }).map((_, index) => {
         const delay = (index % 8) * 0.45;

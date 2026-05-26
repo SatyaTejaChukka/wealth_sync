@@ -7,28 +7,28 @@ import {
   CalendarClock,
   CircleCheckBig,
   Layers,
-  Sparkles,
+  TrendingUp,
   Wallet,
 } from 'lucide-react';
 
 const problemBlocks = [
   {
     icon: <AlertTriangle className="w-5 h-5" />,
-    title: 'Forgotten recurring payments',
+    title: 'Missed recurring payments',
     description:
-      'Bills, subscriptions, and EMIs can slip through when they are tracked across multiple apps and reminders.',
+      'Bills and subscriptions can slip through when tracked across multiple reminders and emails.',
   },
   {
     icon: <CalendarClock className="w-5 h-5" />,
     title: 'Unclear spendable balance',
     description:
-      'Account balance alone does not show what is already committed to mandatory payments and savings goals.',
+      'Your bank account balance doesn\'t show what is already committed to upcoming bills and savings goals.',
   },
   {
     icon: <Layers className="w-5 h-5" />,
-    title: 'Manual monthly planning',
+    title: 'Manual budget splitting',
     description:
-      'Without automation, salary split and monthly budget planning become repetitive and mentally draining.',
+      'Manually dividing salary every month into savings, bills, and flexible cash is tedious and error-prone.',
   },
 ];
 
@@ -36,30 +36,30 @@ const solutionBlocks = [
   {
     title: 'Safe-to-Spend Calculation',
     description:
-      'Separates committed money from free money so you always know what is safe to spend now.',
+      'Deducts upcoming bills, subscriptions, and goal savings from your current balance so you know what you can actually spend.',
   },
   {
-    title: 'Salary Rule Engine',
+    title: 'Salary Split Rules',
     description:
-      'Splits salary by priority into commitments, planned expenses, goals, and free money.',
+      'Calculates how to allocate monthly income into fixed commitments, planned category budgets, and savings goals by priority.',
   },
   {
-    title: 'Money Autopilot Timeline',
+    title: 'Cash Flow Timeline',
     description:
-      'Calendar-style view of past transactions, upcoming commitments, and projected balance events.',
+      'Displays a chronological view of past transactions and upcoming bills, subscriptions, and goal deposits.',
   },
   {
-    title: 'Stress Radar and Triage',
+    title: 'Prioritized Actions',
     description:
-      'Shows money pressure signals and highlights the highest-priority actions to reduce financial stress.',
+      'Highlights key steps like classifying unmapped transactions, deactivating unused subscriptions, or resolving budget overages.',
   },
 ];
 
 const outcomes = [
-  'Track income, expenses, bills, subscriptions, and goals in one system.',
-  'See committed amount and safe-to-spend amount from real transaction data.',
-  'Set category budgets and monitor usage with live progress updates.',
-  'Review timeline events to plan upcoming payments before due dates.',
+  'Consolidate bills, subscriptions, and savings targets in one place.',
+  'Calculate true safe-to-spend runway from live transaction data.',
+  'Set category budget limits and track monthly spending.',
+  'View upcoming payment timeline to prepare before due dates.',
 ];
 
 export default function Landing() {
@@ -70,8 +70,8 @@ export default function Landing() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-black/65 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-linear-to-br from-violet-500 to-indigo-500 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-linear-to-br from-violet-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/25">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg sm:text-xl font-bold">WealthSync</span>
           </div>
@@ -98,20 +98,19 @@ export default function Landing() {
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-violet-500/10 border border-violet-500/30 rounded-full text-violet-300 text-xs sm:text-sm font-medium">
               <Wallet className="w-4 h-4" />
-              Financial autopilot for low-stress money decisions
+              Manage committed money and track daily spending limits
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              Know your committed money.
+              Track committed money.
               <br />
               <span className="bg-linear-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
-                Spend the rest confidently.
+                Know what is safe to spend.
               </span>
             </h1>
 
             <p className="text-lg sm:text-xl text-zinc-300 mb-9 max-w-3xl leading-relaxed">
-              WealthSync uses your real income, transactions, bills, subscriptions, and goals to calculate
-              committed money, safe-to-spend money, and upcoming payment timelines.
+              WealthSync brings together your actual transactions, bills, subscriptions, and savings targets to compute your exact available cash flow and budget allocations.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -119,7 +118,7 @@ export default function Landing() {
                 onClick={() => navigate('/signup')}
                 className="bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-2xl shadow-violet-500/20 px-8 py-6 text-lg font-semibold rounded-xl group"
               >
-                Start autopilot
+                Get Started
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button
@@ -127,7 +126,7 @@ export default function Landing() {
                 onClick={() => navigate('/login')}
                 className="border-zinc-700 hover:bg-zinc-800 text-white px-8 py-6 text-lg rounded-xl"
               >
-                Open dashboard
+                Open Dashboard
               </Button>
             </div>
           </div>
@@ -151,9 +150,9 @@ export default function Landing() {
       <section className="py-16 sm:py-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3">How WealthSync works today</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-3">Feature Overview</h2>
             <p className="text-zinc-400 text-lg max-w-3xl">
-              Built around live user data and rule-based automation, not demo balances or static chart placeholders.
+              Factual, calculation-driven tools designed to help align income, expenses, and savings goals.
             </p>
           </div>
 
@@ -173,7 +172,7 @@ export default function Landing() {
 
       <section className="py-12 sm:py-16 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto rounded-3xl border border-white/10 bg-zinc-900/40 p-8 sm:p-10">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">What you can do now</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-6">Core Capabilities</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {outcomes.map((outcome) => (
               <div key={outcome} className="flex items-start gap-3">
@@ -187,15 +186,15 @@ export default function Landing() {
 
       <section className="py-16 sm:py-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Start with your real financial data</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Plan your cash flow with real data</h2>
           <p className="text-zinc-400 text-lg mb-8">
-            Add your salary, commitments, and transactions to activate your financial autopilot dashboard.
+            Configure your expected income, recurring bills, and savings goals to calculate your spending limits.
           </p>
           <Button
             onClick={() => navigate('/signup')}
             className="bg-white text-black hover:bg-zinc-200 shadow-2xl shadow-white/20 px-10 py-6 text-lg font-bold rounded-xl"
           >
-            Create free account
+            Create account
           </Button>
         </div>
       </section>
@@ -203,13 +202,13 @@ export default function Landing() {
       <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-linear-to-br from-violet-500 to-indigo-500 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-linear-to-br from-violet-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-violet-500/25">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold">WealthSync</span>
           </div>
           <p className="text-zinc-500 text-sm">
-            Copyright 2026 WealthSync. Built for financial clarity under pressure.
+            Copyright 2026 WealthSync.
           </p>
         </div>
       </footer>

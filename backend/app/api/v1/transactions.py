@@ -18,9 +18,78 @@ from app.domain.enums import TransactionStatus, TransactionType
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.bill import Bill
+from app.models.subscription import Subscription
 from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
 
 router = APIRouter()
+
+
+async def auto_link_bill_or_subscription(
+    db: AsyncSession,
+    user_id: str,
+    transaction: Transaction,
+    explicit_unlink: bool = False
+) -> None:
+    if explicit_unlink:
+        return
+    if transaction.type != TransactionType.EXPENSE.value or transaction.bill_id or transaction.subscription_id:
+        return
+
+    desc_lower = (transaction.description or "").strip().lower()
+    if not desc_lower:
+        return
+
+    # Fetch bills
+    bills_res = await db.execute(select(Bill).filter(Bill.user_id == user_id))
+    bills = bills_res.scalars().all()
+
+    # Fetch active subscriptions
+    subs_res = await db.execute(select(Subscription).filter(
+        Subscription.user_id == user_id,
+        Subscription.is_active == True
+    ))
+    subs = subs_res.scalars().all()
+
+    matched_bill = None
+    matched_sub = None
+
+    # 1. Try exact name match
+    for b in bills:
+        if b.name.strip().lower() == desc_lower:
+            matched_bill = b
+            break
+
+    if not matched_bill:
+        for s in subs:
+            if s.name.strip().lower() == desc_lower:
+                matched_sub = s
+                break
+
+    # 2. Try substring match
+    if not matched_bill and not matched_sub:
+        for b in bills:
+            b_name_lower = b.name.strip().lower()
+            if b_name_lower in desc_lower or desc_lower in b_name_lower:
+                if not b.category_id or b.category_id == transaction.category_id:
+                    matched_bill = b
+                    break
+
+        if not matched_bill:
+            for s in subs:
+                s_name_lower = s.name.strip().lower()
+                if s_name_lower in desc_lower or desc_lower in s_name_lower:
+                    if not s.category_id or s.category_id == transaction.category_id:
+                        matched_sub = s
+                        break
+
+    if matched_bill:
+        transaction.bill_id = matched_bill.id
+        if matched_bill.category_id and not transaction.category_id:
+            transaction.category_id = matched_bill.category_id
+    elif matched_sub:
+        transaction.subscription_id = matched_sub.id
+        if matched_sub.category_id and not transaction.category_id:
+            transaction.category_id = matched_sub.category_id
 
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 async def create_transaction(
@@ -57,6 +126,8 @@ async def create_transaction(
 
     if transaction.status == TransactionStatus.completed.value:
         ensure_not_future_timestamp(transaction.occurred_at, field_name="occurred_at")
+
+    await auto_link_bill_or_subscription(db, current_user.id, transaction, explicit_unlink=False)
 
     db.add(transaction)
     await db.commit()
@@ -135,8 +206,16 @@ async def update_transaction(
     if target_status == TransactionStatus.completed.value:
         ensure_not_future_timestamp(target_occurred_at, field_name="occurred_at")
 
+    explicit_unlink = False
+    if "bill_id" in update_data and update_data["bill_id"] is None:
+        explicit_unlink = True
+    if "subscription_id" in update_data and update_data["subscription_id"] is None:
+        explicit_unlink = True
+
     for field, value in update_data.items():
         setattr(transaction, field, value)
+
+    await auto_link_bill_or_subscription(db, current_user.id, transaction, explicit_unlink=explicit_unlink)
 
     db.add(transaction)
     await db.commit()
