@@ -2,6 +2,7 @@ import React from 'react';
 import { Gauge, ShieldAlert, Sparkles, TriangleAlert } from 'lucide-react';
 
 import { formatCurrency } from '../../lib/format.js';
+import { cn } from '../../lib/utils.js';
 
 const allocationTones = {
   hard_commitments: {
