@@ -13,7 +13,10 @@ import {
   TrendingUp,
   BarChart3,
   FileText,
-  Repeat
+  Repeat,
+  Landmark,
+  HandCoins,
+  Calendar
 } from 'lucide-react';
 
 const navigation = [
@@ -21,6 +24,9 @@ const navigation = [
   { name: 'Transactions', href: '/dashboard/transactions', icon: Receipt },
   { name: 'Bills', href: '/dashboard/bills', icon: FileText },
   { name: 'Subscriptions', href: '/dashboard/subscriptions', icon: Repeat },
+  { name: 'Loans & EMIs', href: '/dashboard/loans', icon: Landmark },
+  { name: 'Lent Tracker', href: '/dashboard/lent', icon: HandCoins },
+  { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   { name: 'Budget', href: '/dashboard/budget', icon: PieChart },
   { name: 'Goals', href: '/dashboard/goals', icon: Target },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },

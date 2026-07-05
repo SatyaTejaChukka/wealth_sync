@@ -10,7 +10,10 @@ import Budget from './pages/dashboard/Budget.jsx';
 import Goals from './pages/dashboard/Goals.jsx';
 import Bills from './pages/dashboard/Bills.jsx';
 import Subscriptions from './pages/dashboard/Subscriptions.jsx';
+import Loans from './pages/dashboard/Loans.jsx';
+import Lent from './pages/dashboard/Lent.jsx';
 import Settings from './pages/dashboard/Settings.jsx';
+import Calendar from './pages/dashboard/Calendar.jsx';
 import { useAuth } from './lib/auth.jsx';
 
 function RequireAuth({ children }) {
@@ -85,6 +88,9 @@ export default function App() {
         <Route path="goals" element={<Goals />} />
         <Route path="bills" element={<Bills />} />
         <Route path="subscriptions" element={<Subscriptions />} />
+        <Route path="loans" element={<Loans />} />
+        <Route path="lent" element={<Lent />} />
+        <Route path="calendar" element={<Calendar />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 

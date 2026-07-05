@@ -11,6 +11,8 @@ import {
   Target,
   X,
   Receipt,
+  Landmark,
+  HandCoins,
 } from 'lucide-react';
 
 import { useAuth } from '../../lib/auth.jsx';
@@ -26,6 +28,8 @@ const primaryItems = [
 const moreItems = [
   { label: 'Bills', href: '/dashboard/bills', icon: FileText },
   { label: 'Subscriptions', href: '/dashboard/subscriptions', icon: Repeat },
+  { label: 'Loans', href: '/dashboard/loans', icon: Landmark },
+  { label: 'Lent Tracker', href: '/dashboard/lent', icon: HandCoins },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
