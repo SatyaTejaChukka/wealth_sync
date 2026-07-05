@@ -2,27 +2,20 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
-  PiggyBank,
   Plus,
-  ShieldCheck,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
 
 import { ActionCenter } from '../../components/dashboard/ActionCenter.jsx';
-import { FinancialTriagePanel } from '../../components/dashboard/FinancialTriagePanel.jsx';
-import { InsightsPanel } from '../../components/dashboard/InsightsPanel.jsx';
-import { MoneyFlow } from '../../components/dashboard/MoneyFlow.jsx';
 import { MoneyWeatherBackdrop } from '../../components/dashboard/MoneyWeatherBackdrop.jsx';
 import { RecentActivity } from '../../components/dashboard/RecentActivity.jsx';
 import { SafeToSpendCard } from '../../components/dashboard/SafeToSpendCard.jsx';
 import { SpendingChart } from '../../components/dashboard/SpendingChart.jsx';
+import SankeyFlow from '../../components/dashboard/SankeyFlow.jsx';
 import { StatsCard } from '../../components/dashboard/StatsCard.jsx';
-import { WhatIfSimulator } from '../../components/dashboard/WhatIfSimulator.jsx';
-import HealthScoreGauge from '../../components/HealthScoreGauge.jsx';
-import { CollapsibleCard } from '../../components/mobile/CollapsibleCard.jsx';
+import { Card } from '../../components/ui/Card.jsx';
 import { NotificationBell } from '../../components/notifications/NotificationBell.jsx';
-import { SafeToSpendOrb } from '../../components/orb/SafeToSpendOrb.jsx';
 import { TimelineView } from '../../components/timeline/TimelineView.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
@@ -34,7 +27,7 @@ import { dashboardService } from '../../services/dashboard.js';
 
 /* ── Constants ─────────────────────────────────────────────── */
 
-const MOBILE_TAB_IDS = ['operations', 'analytics', 'timeline'];
+const MOBILE_TAB_IDS = ['overview', 'timeline'];
 const DESKTOP_TAB_IDS = ['overview', 'timeline'];
 
 const EMPTY_SUMMARY = {
@@ -50,78 +43,6 @@ const EMPTY_SUMMARY = {
   spending_chart: [],
   safe_to_spend_stats: null,
 };
-
-/* ── Helpers ───────────────────────────────────────────────── */
-
-function getHealthTone(score) {
-  if (score >= 80) {
-    return {
-      badge: 'bg-emerald-500/12 border-emerald-400/30 text-emerald-300',
-      ring: 'bg-emerald-500',
-      accent: 'text-emerald-300',
-    };
-  }
-  if (score >= 65) {
-    return {
-      badge: 'bg-blue-500/12 border-blue-400/30 text-blue-300',
-      ring: 'bg-blue-500',
-      accent: 'text-blue-300',
-    };
-  }
-  if (score >= 45) {
-    return {
-      badge: 'bg-amber-500/12 border-amber-400/30 text-amber-300',
-      ring: 'bg-amber-500',
-      accent: 'text-amber-300',
-    };
-  }
-  return {
-    badge: 'bg-rose-500/12 border-rose-400/30 text-rose-300',
-    ring: 'bg-rose-500',
-    accent: 'text-rose-300',
-  };
-}
-
-/* ── Mobile Health Score Snapshot ──────────────────────────── */
-
-function HealthScoreSnapshot({ healthScore }) {
-  const safeScore = Math.max(0, Math.min(100, Number(healthScore?.score || 0)));
-  const tone = getHealthTone(safeScore);
-  const message = healthScore?.message || 'Keep logging transactions to unlock better recommendations.';
-
-  return (
-    <div className="glass-card rounded-[24px] p-4 sm:p-5 relative overflow-hidden group">
-      <div className={cn("absolute -top-12 -left-12 w-32 h-32 rounded-full blur-[60px] opacity-20", tone.ring)} />
-      
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500/80">
-            Health
-          </p>
-          <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className={cn('text-[1.8rem] font-extrabold tracking-tighter sm:text-4xl font-display leading-none', tone.accent)}>
-              {safeScore}
-            </span>
-            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">Score</span>
-          </div>
-        </div>
-        <span className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[14px] border-2 shadow-xl', tone.badge)}>
-          <ShieldCheck size={18} strokeWidth={2.5} />
-        </span>
-      </div>
-
-      <div className="mt-4">
-        <div className="h-1.5 overflow-hidden rounded-full bg-white/5 border border-white/5">
-          <div 
-            className={cn('h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(139,92,246,0.3)]', tone.ring)} 
-            style={{ width: `${safeScore}%` }} 
-          />
-        </div>
-        <p className="mt-3 text-[12px] font-medium leading-tight text-zinc-400/90 line-clamp-1">{message}</p>
-      </div>
-    </div>
-  );
-}
 
 /* ── Tab Button ────────────────────────────────────────────── */
 
@@ -157,6 +78,7 @@ export default function Dashboard() {
   // Tab state
   const [mobileTab, setMobileTab] = useState(MOBILE_TAB_IDS[0]);
   const [desktopTab, setDesktopTab] = useState(DESKTOP_TAB_IDS[0]);
+  const [activeChart, setActiveChart] = useState('sankey');
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -270,7 +192,7 @@ export default function Dashboard() {
 
 
             {/* Stats grid - PRIMARY DATA TOP */}
-            <div className="grid grid-cols-2 gap-3 opacity-0 animate-stagger-1">
+            <div className="grid grid-cols-3 gap-2 opacity-0 animate-stagger-1">
               <StatsCard
                 title="Balance"
                 value={formatCurrency(summary.total_balance)}
@@ -278,7 +200,7 @@ export default function Dashboard() {
                 trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
                 icon={Wallet}
                 color="violet"
-                className="shadow-xl shadow-violet-500/5"
+                className="shadow-xl shadow-violet-500/5 px-2 py-3"
               />
               <StatsCard
                 title="Income"
@@ -287,7 +209,7 @@ export default function Dashboard() {
                 trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
                 icon={TrendingUp}
                 color="emerald"
-                className="shadow-xl shadow-emerald-500/5"
+                className="shadow-xl shadow-emerald-500/5 px-2 py-3"
               />
               <StatsCard
                 title="Expenses"
@@ -296,22 +218,13 @@ export default function Dashboard() {
                 trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
                 icon={ArrowUpRight}
                 color="rose"
-                className="shadow-xl shadow-rose-500/5"
-              />
-              <StatsCard
-                title="Savings"
-                value={formatCurrency(summary.total_savings)}
-                trendValue={null}
-                icon={PiggyBank}
-                color="blue"
-                className="shadow-xl shadow-blue-500/5"
+                className="shadow-xl shadow-rose-500/5 px-2 py-3"
               />
             </div>
 
             {/* Analysis Metrics - SECONDARY */}
-            <div className="grid gap-3 sm:grid-cols-2 opacity-0 animate-stagger-2">
+            <div className="opacity-0 animate-stagger-2">
               <SafeToSpendCard stats={summary.safe_to_spend_stats} />
-              <HealthScoreSnapshot healthScore={summary.health_score} />
             </div>
 
             {/* Priority actions */}
@@ -328,26 +241,15 @@ export default function Dashboard() {
             <div className="sticky top-0 z-50 pt-3 pb-3 bg-[#09090b]/80 backdrop-blur-2xl -mx-1 px-1">
               <div className="flex gap-2 overflow-x-auto rounded-[20px] border border-white/10 bg-black/40 p-1.5 scrollbar-none shadow-2xl">
                 <button
-                  onClick={() => setMobileTab('operations')}
+                  onClick={() => setMobileTab('overview')}
                   className={cn(
                     'flex-1 h-10 flex items-center justify-center rounded-[14px] text-xs font-bold transition-all duration-300 px-4 whitespace-nowrap',
-                    mobileTab === 'operations'
+                    mobileTab === 'overview'
                       ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30 scale-[1.02]'
                       : 'text-zinc-500 hover:text-zinc-300'
                   )}
                 >
-                  Operations
-                </button>
-                <button
-                  onClick={() => setMobileTab('analytics')}
-                  className={cn(
-                    'flex-1 h-10 flex items-center justify-center rounded-[14px] text-xs font-bold transition-all duration-300 px-4 whitespace-nowrap',
-                    mobileTab === 'analytics'
-                      ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30 scale-[1.02]'
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  )}
-                >
-                  Analytics
+                  Overview
                 </button>
                 <button
                   onClick={() => setMobileTab('timeline')}
@@ -365,33 +267,51 @@ export default function Dashboard() {
 
 
             <div key={mobileTab} className="animate-fade-in">
-              {mobileTab === 'operations' && (
+              {mobileTab === 'overview' && (
                 <div className="space-y-4">
-                  <MoneyFlow stats={summary.safe_to_spend_stats} />
-                  <FinancialTriagePanel triage={triage} />
-                  <CollapsibleCard
-                    title="What If Simulator"
-                    description="Test a purchase before you commit to it."
-                  >
-                    <WhatIfSimulator safeBalance={summary.safe_to_spend_stats?.safe_to_spend || 0} />
-                  </CollapsibleCard>
-                  <CollapsibleCard
-                    title="Smart Insights"
-                    description="Tips and warnings generated from your current money signals."
-                    defaultOpen={Boolean(summary.health_score.insights?.length)}
-                  >
-                    <InsightsPanel insights={summary.health_score.insights || []} />
-                  </CollapsibleCard>
-                </div>
-              )}
+                  {/* Unified Chart Card */}
+                  <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-md overflow-hidden relative">
+                    <div className="flex justify-between items-center px-4 pt-4 pb-1">
+                      <h3 className="font-bold text-white text-xs uppercase tracking-wider">Visual Flow</h3>
+                      <div className="flex rounded-lg bg-zinc-800/60 p-0.5 border border-white/5">
+                        <button
+                          onClick={() => setActiveChart('sankey')}
+                          className={cn(
+                            "px-2 py-1 text-[10px] font-semibold rounded-md transition-all",
+                            activeChart === 'sankey' 
+                              ? "bg-violet-600 text-white shadow-sm" 
+                              : "text-zinc-400 hover:text-white"
+                          )}
+                        >
+                          Flow
+                        </button>
+                        <button
+                          onClick={() => setActiveChart('trend')}
+                          className={cn(
+                            "px-2 py-1 text-[10px] font-semibold rounded-md transition-all",
+                            activeChart === 'trend' 
+                              ? "bg-violet-600 text-white shadow-sm" 
+                              : "text-zinc-400 hover:text-white"
+                          )}
+                        >
+                          Trend
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3">
+                      {activeChart === 'sankey' ? (
+                        <SankeyFlow summary={summary} />
+                      ) : (
+                        <SpendingChart
+                          data={summary.spending_chart}
+                          range={chartRange}
+                          onRangeChange={setChartRange}
+                        />
+                      )}
+                    </div>
+                  </Card>
 
-              {mobileTab === 'analytics' && (
-                <div className="space-y-4">
-                  <SpendingChart
-                    data={summary.spending_chart}
-                    range={chartRange}
-                    onRangeChange={setChartRange}
-                  />
                   <RecentActivity transactions={summary.recent_transactions} maxItems={5} />
                 </div>
               )}
@@ -445,7 +365,7 @@ export default function Dashboard() {
           </div>
 
           {/* ── Stats Row ── */}
-          <div id="desktop-stats" className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div id="desktop-stats" className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <StatsCard
               title="Total Balance"
               value={formatCurrency(summary.total_balance)}
@@ -453,6 +373,7 @@ export default function Dashboard() {
               trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
               icon={Wallet}
               color="violet"
+              className="hover-glow-violet"
             />
             <StatsCard
               title="Monthly Income"
@@ -461,6 +382,7 @@ export default function Dashboard() {
               trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
               icon={TrendingUp}
               color="emerald"
+              className="hover-glow-emerald"
             />
             <StatsCard
               title="Monthly Expenses"
@@ -469,13 +391,7 @@ export default function Dashboard() {
               trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
               icon={ArrowUpRight}
               color="rose"
-            />
-            <StatsCard
-              title="Total Savings"
-              value={formatCurrency(summary.total_savings)}
-              trendValue={null}
-              icon={PiggyBank}
-              color="blue"
+              className="hover-glow-rose"
             />
           </div>
 
@@ -503,19 +419,52 @@ export default function Dashboard() {
               <div key={desktopTab} className="animate-fade-in">
                 {desktopTab === 'overview' && (
                   <div className="space-y-6">
-                    <MoneyFlow stats={summary.safe_to_spend_stats} />
-
                     {triage?.actions?.length > 0 ? (
                       <ActionCenter actions={triage.actions} onAction={handleActionClick} />
                     ) : null}
 
-                    <FinancialTriagePanel triage={triage} />
-
-                    <SpendingChart
-                      data={summary.spending_chart}
-                      range={chartRange}
-                      onRangeChange={setChartRange}
-                    />
+                    {/* Unified Chart Card */}
+                    <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-md overflow-hidden relative">
+                      <div className="flex justify-between items-center px-5 pt-5 pb-2">
+                        <h3 className="font-bold text-white text-sm uppercase tracking-wider">Visual Flow Analysis</h3>
+                        <div className="flex rounded-xl bg-zinc-800/60 p-1 border border-white/5">
+                          <button
+                            onClick={() => setActiveChart('sankey')}
+                            className={cn(
+                              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                              activeChart === 'sankey' 
+                                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10" 
+                                : "text-zinc-400 hover:text-white"
+                            )}
+                          >
+                            Cash Flow
+                          </button>
+                          <button
+                            onClick={() => setActiveChart('trend')}
+                            className={cn(
+                              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                              activeChart === 'trend' 
+                                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10" 
+                                : "text-zinc-400 hover:text-white"
+                            )}
+                          >
+                            Spending Trend
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="p-5 pt-2">
+                        {activeChart === 'sankey' ? (
+                          <SankeyFlow summary={summary} />
+                        ) : (
+                          <SpendingChart
+                            data={summary.spending_chart}
+                            range={chartRange}
+                            onRangeChange={setChartRange}
+                          />
+                        )}
+                      </div>
+                    </Card>
 
                     <RecentActivity transactions={summary.recent_transactions} />
                   </div>
@@ -529,10 +478,7 @@ export default function Dashboard() {
 
             {/* RIGHT — Utility Sidebar (1/3) */}
             <div className="xl:col-span-1 space-y-6 sticky top-8 self-start">
-              <SafeToSpendOrb />
-              <HealthScoreGauge />
-              <WhatIfSimulator safeBalance={summary.safe_to_spend_stats?.safe_to_spend || 0} />
-              <InsightsPanel insights={summary.health_score.insights || []} />
+              <SafeToSpendCard stats={summary.safe_to_spend_stats} />
             </div>
           </div>
         </>
