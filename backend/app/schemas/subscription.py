@@ -19,7 +19,7 @@ class SubscriptionCreate(SubscriptionBase):
 
 class SubscriptionUpdate(BaseModel):
     name: Optional[str] = None
-    amount: Optional[Decimal] = Field(default=None, gt=0, max_digits=14, decimal_places=2)
+    amount: Optional[Decimal] = Field(default=None, gt=0)
     billing_cycle: Optional[SubscriptionBillingCycle] = None
     next_billing_date: Optional[datetime] = None
     is_active: Optional[bool] = None

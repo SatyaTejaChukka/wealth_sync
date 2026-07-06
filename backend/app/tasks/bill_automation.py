@@ -21,6 +21,7 @@ from app.models.bill import Bill
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
 from app.models.notification import Notification
+from app.models.loan import Loan
 
 def calculate_next_due_date(due_day: int, last_paid_at: datetime = None) -> datetime:
     """Calculate next bill due date based on due_day of month."""
@@ -156,15 +157,72 @@ async def process_subscriptions():
                     due_date=next_due
                 )
 
+async def process_loans():
+    """Check all active loans and create pending transactions for upcoming EMIs."""
+    async with AsyncSessionLocal() as db:
+        # Get all active loans
+        result = await db.execute(select(Loan).filter(Loan.status == "active"))
+        loans = result.scalars().all()
+        
+        for loan in loans:
+            # Calculate next due date
+            next_due = calculate_next_due_date(loan.due_day, loan.last_paid_at)
+            
+            # Create pending transaction 3 days before
+            reminder_date = next_due - timedelta(days=3)
+            
+            if datetime.utcnow() >= reminder_date and datetime.utcnow() < next_due:
+                # Check if pending transaction already exists
+                existing = await db.execute(
+                    select(Transaction).filter(
+                        Transaction.user_id == loan.user_id,
+                        Transaction.status == "pending",
+                        Transaction.loan_id == loan.id
+                    )
+                )
+                if existing.scalars().first():
+                    continue  # Already created
+                
+                # Create pending transaction
+                transaction = Transaction(
+                    id=str(uuid4()),
+                    user_id=loan.user_id,
+                    category_id=loan.category_id,
+                    amount=loan.emi_amount,
+                    type="EXPENSE",
+                    description=f"EMI Payment: {loan.name}",
+                    occurred_at=next_due,
+                    status="pending",
+                    loan_id=loan.id
+                )
+                db.add(transaction)
+                
+                # Create notification
+                days_until_due = (next_due - datetime.utcnow()).days
+                notification = Notification(
+                    id=str(uuid4()),
+                    user_id=loan.user_id,
+                    title=f"EMI Due in {days_until_due} Days",
+                    message=f"{loan.name} EMI - INR {loan.emi_amount:.2f} due on {next_due.strftime('%b %d, %Y')}",
+                    type="bill_reminder",
+                    action_url=f"/dashboard/transactions",
+                    related_id=transaction.id
+                )
+                db.add(notification)
+                
+                await db.commit()
+
 @shared_task(name='app.tasks.bill_automation.check_and_create_pending_bills')
 def check_and_create_pending_bills():
     """
-    Main periodic task that runs daily to check bills and subscriptions.
+    Main periodic task that runs daily to check bills, subscriptions, and loans.
     Creates pending transactions and notifications for upcoming payments.
     Also executes Autopilot payments for due bills.
     """
-async def run_all_tasks():
+    async def run_all_tasks():
         await process_bills()
+        await process_subscriptions()
+        await process_loans()
 
         from app.services.autopilot import AutopilotService
         async with AsyncSessionLocal() as db:

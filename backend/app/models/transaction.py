@@ -14,7 +14,10 @@ class Transaction(Base):
             name="ck_transactions_status_valid",
         ),
         CheckConstraint(
-            "bill_id IS NULL OR subscription_id IS NULL",
+            "(CASE WHEN bill_id IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN subscription_id IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN loan_id IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN lent_id IS NOT NULL THEN 1 ELSE 0 END) <= 1",
             name="ck_transactions_single_source_link",
         ),
     )
@@ -28,9 +31,13 @@ class Transaction(Base):
     occurred_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Bill tracking fields
+    # Source tracking fields
     status = Column(String, default="completed") # pending, completed, cancelled
     bill_id = Column(String, ForeignKey("bills.id"), nullable=True)
     subscription_id = Column(String, ForeignKey("subscriptions.id"), nullable=True)
+    loan_id = Column(String, ForeignKey("loans.id"), nullable=True)
+    lent_id = Column(String, ForeignKey("debts_lent.id"), nullable=True)
 
     category = relationship("BudgetCategory", back_populates="transactions")
+    loan = relationship("Loan", back_populates="transactions")
+    lent_record = relationship("LentMoney", back_populates="transactions")

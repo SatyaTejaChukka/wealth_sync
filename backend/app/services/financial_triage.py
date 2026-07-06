@@ -10,6 +10,7 @@ from app.models.bill import Bill
 from app.models.budget import BudgetCategory, BudgetRule
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
+from app.models.loan import Loan
 from app.schemas.triage import FinancialTriageResponse, TriageAction
 
 
@@ -220,8 +221,23 @@ class FinancialTriageService:
                 )
         stale_subscriptions.sort(key=lambda item: item["monthly_cost"], reverse=True)
 
+        loans_result = await db.execute(
+            select(Loan).filter(Loan.user_id == user_id, Loan.status == "active")
+        )
+        loans = loans_result.scalars().all()
+
+        overdue_loans: list[dict] = []
+        for loan in loans:
+            due_date = cls._month_due_date(now, loan.due_day)
+            paid_this_cycle = bool(loan.last_paid_at and loan.last_paid_at >= due_date)
+            if paid_this_cycle:
+                continue
+            if now > due_date + timedelta(days=1):
+                overdue_loans.append({"loan": loan, "due_date": due_date})
+
         monthly_bill_cost = sum((cls._to_decimal(bill.amount_estimated) for bill in bills), Decimal("0"))
-        monthly_fixed_costs = monthly_bill_cost + monthly_subscription_cost
+        monthly_loan_cost = sum((cls._to_decimal(loan.emi_amount) for loan in loans), Decimal("0"))
+        monthly_fixed_costs = monthly_bill_cost + monthly_subscription_cost + monthly_loan_cost
 
         actions: list[TriageAction] = []
 
@@ -313,6 +329,22 @@ class FinancialTriageService:
                 due_date=due_date,
                 action_route="/dashboard/bills",
                 action_label="Resolve overdue bill",
+            )
+
+        for overdue in overdue_loans[:3]:
+            loan = overdue["loan"]
+            due_date = overdue["due_date"]
+            severity = "critical" if not loan.autopay_enabled else "high"
+            add_action(
+                priority=95 if severity == "critical" else 83,
+                severity=severity,
+                area="loans",
+                title=f"EMI overdue: {loan.name}",
+                detail=f"This loan EMI of {loan.emi_amount:.2f} was due on {due_date.date().isoformat()}. Pay it immediately.",
+                impact_amount=cls._to_decimal(loan.emi_amount),
+                due_date=due_date,
+                action_route="/dashboard/loans",
+                action_label="Pay EMI",
             )
 
         if not overdue_bills and due_soon_bills:
@@ -461,6 +493,7 @@ class FinancialTriageService:
                 risk_score += 4
 
         risk_score += min(len(overdue_bills) * 18, 36)
+        risk_score += min(len(overdue_loans) * 20, 40)
         risk_score += min(len(over_budget_rules) * 8, 24)
 
         if monthly_income > 0 and pending_transaction_total > 0:

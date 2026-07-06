@@ -7,6 +7,8 @@ from sqlalchemy.future import select
 from app.models.bill import Bill
 from app.models.budget import BudgetCategory
 from app.models.subscription import Subscription
+from app.models.loan import Loan
+from app.models.lent_money import LentMoney
 
 
 MAX_FUTURE_SKEW_SECONDS = 5
@@ -56,11 +58,14 @@ async def ensure_transaction_links_owned(
     user_id: str,
     bill_id: str | None,
     subscription_id: str | None,
+    loan_id: str | None = None,
+    lent_id: str | None = None,
 ) -> None:
-    if bill_id and subscription_id:
+    non_null_links = sum(1 for link in [bill_id, subscription_id, loan_id, lent_id] if link is not None)
+    if non_null_links > 1:
         raise HTTPException(
             status_code=422,
-            detail="A transaction cannot link both bill_id and subscription_id.",
+            detail="A transaction can link at most one of bill_id, subscription_id, loan_id, or lent_id.",
         )
 
     if bill_id:
@@ -79,3 +84,23 @@ async def ensure_transaction_links_owned(
         )
         if subscription_result.scalar_one_or_none() is None:
             raise HTTPException(status_code=404, detail="Subscription not found")
+
+    if loan_id:
+        loan_result = await session.execute(
+            select(Loan.id).filter(
+                Loan.id == loan_id,
+                Loan.user_id == user_id,
+            )
+        )
+        if loan_result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=404, detail="Loan profile not found")
+
+    if lent_id:
+        lent_result = await session.execute(
+            select(LentMoney.id).filter(
+                LentMoney.id == lent_id,
+                LentMoney.user_id == user_id,
+            )
+        )
+        if lent_result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=404, detail="Lending profile not found")

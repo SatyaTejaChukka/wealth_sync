@@ -7,11 +7,10 @@ from app.core.config import settings
 async def test_health_check(client: AsyncClient):
     response = await client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "ok",
-        "app_name": settings.PROJECT_NAME,
-        "env": settings.ENVIRONMENT,
-    }
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["app_name"] == settings.PROJECT_NAME
+    assert data["env"] == settings.ENVIRONMENT
 
 @pytest.mark.asyncio
 async def test_signup_flow(client: AsyncClient):

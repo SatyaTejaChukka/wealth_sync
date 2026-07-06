@@ -8,6 +8,8 @@ from app.models.savings import SavingsGoal
 from app.models.subscription import Subscription
 from app.models.health_score import FinancialHealthScore
 from app.models.notification import Notification
+from app.models.loan import Loan
+from app.models.lent_money import LentMoney
 from app.models.autopilot_payment import (
     AutopilotPayment,
     AutopilotPaymentStateHistory,

@@ -28,7 +28,7 @@ class BudgetRuleBase(BaseModel):
     category_id: str
     allocation_type: AllocationType
     allocation_value: Decimal = Field(ge=0, max_digits=14, decimal_places=2)
-    monthly_limit: Optional[Decimal] = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    monthly_limit: Optional[Decimal] = Field(default=None, ge=0)
 
 class BudgetRuleCreate(BudgetRuleBase):
     pass
@@ -36,8 +36,8 @@ class BudgetRuleCreate(BudgetRuleBase):
 class BudgetRuleUpdate(BaseModel):
     category_id: Optional[str] = None
     allocation_type: Optional[AllocationType] = None
-    allocation_value: Optional[Decimal] = Field(default=None, ge=0, max_digits=14, decimal_places=2)
-    monthly_limit: Optional[Decimal] = Field(default=None, ge=0, max_digits=14, decimal_places=2)
+    allocation_value: Optional[Decimal] = Field(default=None, ge=0)
+    monthly_limit: Optional[Decimal] = Field(default=None, ge=0)
 
 class BudgetRuleResponse(BudgetRuleBase):
     id: str

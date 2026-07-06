@@ -16,19 +16,23 @@ class TransactionBase(BaseModel):
     status: Optional[TransactionStatus] = TransactionStatus.completed
     bill_id: Optional[str] = None
     subscription_id: Optional[str] = None
+    loan_id: Optional[str] = None
+    lent_id: Optional[str] = None
 
 class TransactionCreate(TransactionBase):
     pass
 
 class TransactionUpdate(BaseModel):
     category_id: Optional[str] = None
-    amount: Optional[Decimal] = Field(default=None, gt=0, max_digits=14, decimal_places=2)
+    amount: Optional[Decimal] = Field(default=None, gt=0)
     type: Optional[TransactionType] = None
     description: Optional[str] = None
     occurred_at: Optional[datetime] = None
     status: Optional[TransactionStatus] = None
     bill_id: Optional[str] = None
     subscription_id: Optional[str] = None
+    loan_id: Optional[str] = None
+    lent_id: Optional[str] = None
 
 class TransactionResponse(TransactionBase):
     id: str

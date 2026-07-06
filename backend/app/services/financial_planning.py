@@ -14,6 +14,7 @@ from app.models.income import IncomeSource
 from app.models.savings import SavingsGoal, SavingsLog
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
+from app.models.loan import Loan
 
 
 class FinancialPlanningService:
@@ -194,6 +195,11 @@ class FinancialPlanningService:
         )
         goals = goals_res.scalars().all()
 
+        loans_res = await session.execute(
+            select(Loan).filter(Loan.user_id == user_id, Loan.status == "active")
+        )
+        loans = loans_res.scalars().all()
+
         categories_res = await session.execute(
             select(BudgetCategory).filter(BudgetCategory.user_id == user_id)
         )
@@ -313,7 +319,27 @@ class FinancialPlanningService:
                 }
             )
 
-        commitments_total = unpaid_bills_amount + subscriptions_amount
+        loans_amount = Decimal("0")
+        for loan in loans:
+            is_paid_this_month = bool(loan.last_paid_at and loan.last_paid_at >= start_of_month)
+            if is_paid_this_month:
+                continue
+            amount = cls._to_decimal(loan.emi_amount)
+            loans_amount += amount
+            commitments_items.append(
+                {
+                    "type": "LOAN",
+                    "name": f"EMI: {loan.name}",
+                    "amount": cls._to_money(amount),
+                    "priority": 100,
+                    "metadata": {
+                        "due_day": loan.due_day,
+                        "autopay_enabled": bool(loan.autopay_enabled),
+                    },
+                }
+            )
+
+        commitments_total = unpaid_bills_amount + subscriptions_amount + loans_amount
 
         planned_expense_items: List[Dict[str, Any]] = []
         planned_expense_requested_total = Decimal("0")
@@ -411,7 +437,7 @@ class FinancialPlanningService:
             (
                 cls._to_decimal(tx.amount)
                 for tx in completed_expense_transactions
-                if tx.bill_id or tx.subscription_id
+                if tx.bill_id or tx.subscription_id or tx.loan_id
             ),
             Decimal("0"),
         )
@@ -421,6 +447,7 @@ class FinancialPlanningService:
                 for tx in completed_expense_transactions
                 if not tx.bill_id
                 and not tx.subscription_id
+                and not tx.loan_id
                 and not (tx.description or "").startswith(cls.GOAL_CONTRIBUTION_PREFIX)
                 and tx.category_id in planned_rule_category_ids
             ),
@@ -628,6 +655,7 @@ class FinancialPlanningService:
             "breakdown": {
                 "unpaid_bills": cls._to_money(unpaid_bills_amount),
                 "subscriptions": cls._to_money(subscriptions_amount),
+                "unpaid_loans": cls._to_money(loans_amount),
                 "hard_commitments": cls._to_money(commitments_total),
                 "planned_expenses_requested": cls._to_money(planned_expense_requested_total),
                 "planned_expenses_allocated": cls._to_money(planned_expense_allocated),

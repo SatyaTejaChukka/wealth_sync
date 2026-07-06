@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 from uuid import uuid4
 from datetime import datetime
 
@@ -19,6 +20,7 @@ from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.bill import Bill
 from app.models.subscription import Subscription
+from app.models.loan import Loan
 from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
 
 router = APIRouter()
@@ -113,6 +115,7 @@ async def create_transaction(
         user_id=current_user.id,
         bill_id=transaction_data.get("bill_id"),
         subscription_id=transaction_data.get("subscription_id"),
+        loan_id=transaction_data.get("loan_id"),
     )
 
     transaction = Transaction(
@@ -188,6 +191,7 @@ async def update_transaction(
     target_category_id = update_data.get("category_id", transaction.category_id)
     target_bill_id = update_data.get("bill_id", transaction.bill_id)
     target_subscription_id = update_data.get("subscription_id", transaction.subscription_id)
+    target_loan_id = update_data.get("loan_id", transaction.loan_id)
 
     await ensure_category_owned(
         db,
@@ -199,6 +203,7 @@ async def update_transaction(
         user_id=current_user.id,
         bill_id=target_bill_id,
         subscription_id=target_subscription_id,
+        loan_id=target_loan_id,
     )
 
     target_status = update_data.get("status", transaction.status)
@@ -301,5 +306,46 @@ async def complete_transaction(
                 sub.next_billing_date = datetime.utcnow() + relativedelta(years=1)
             db.add(sub)
             await db.commit()
+    elif transaction.loan_id:
+        loan_result = await db.execute(
+            select(Loan).filter(
+                Loan.id == transaction.loan_id,
+                Loan.user_id == current_user.id,
+            )
+        )
+        loan = loan_result.scalars().first()
+        if loan:
+            loan.last_paid_at = datetime.utcnow()
+            
+            # Count completed payments
+            payments_count_res = await db.execute(
+                select(func.count(Transaction.id)).filter(
+                    Transaction.loan_id == loan.id,
+                    Transaction.status == "completed"
+                )
+            )
+            payments_count = payments_count_res.scalar() or 0
+            if payments_count >= loan.tenure_months:
+                loan.status = "closed"
+                
+            db.add(loan)
+            await db.commit()
+    elif transaction.lent_id:
+        from app.models.lent_money import LentMoney
+        from app.services.lent_money_service import LentMoneyService
+        
+        lent_result = await db.execute(
+            select(LentMoney).filter(
+                LentMoney.id == transaction.lent_id,
+                LentMoney.user_id == current_user.id,
+            )
+        )
+        lent = lent_result.scalars().first()
+        if lent and lent.status == "active":
+            details = await LentMoneyService.get_lent_status_details(db, lent)
+            if details["outstanding_balance"] <= 0:
+                lent.status = "settled"
+                db.add(lent)
+                await db.commit()
     
     return transaction

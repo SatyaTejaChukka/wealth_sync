@@ -19,7 +19,7 @@ class BillCreate(BillBase):
 
 class BillUpdate(BaseModel):
     name: Optional[str] = None
-    amount_estimated: Optional[Decimal] = Field(default=None, gt=0, max_digits=14, decimal_places=2)
+    amount_estimated: Optional[Decimal] = Field(default=None, gt=0)
     due_day: Optional[int] = Field(default=None, ge=1, le=31)
     frequency: Optional[RecurringFrequency] = None
     autopay_enabled: Optional[bool] = None

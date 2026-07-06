@@ -14,7 +14,7 @@ class IncomeSourceCreate(IncomeSourceBase):
     pass
 
 class IncomeSourceUpdate(IncomeSourceBase):
-    amount: Optional[Decimal] = Field(default=None, gt=0, max_digits=14, decimal_places=2)
+    amount: Optional[Decimal] = Field(default=None, gt=0)
     frequency: Optional[RecurringFrequency] = None
     active: Optional[bool] = None
 

@@ -125,7 +125,7 @@ def root():
 # Routes
 from app.api.v1 import (
     auth, income, categories, budgets, transactions, 
-    bills, savings, subscriptions, users, dashboard, notifications, health, autopilot
+    bills, savings, subscriptions, users, dashboard, notifications, health, autopilot, loans, lent_money, calendar
 )
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
@@ -140,4 +140,8 @@ app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["u
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["dashboard"])
 app.include_router(notifications.router, prefix=f"{settings.API_V1_STR}/notifications", tags=["notifications"])
 app.include_router(autopilot.router, prefix=f"{settings.API_V1_STR}/autopilot", tags=["autopilot"])
+app.include_router(loans.router, prefix=f"{settings.API_V1_STR}/loans", tags=["loans"])
+app.include_router(lent_money.router, prefix=f"{settings.API_V1_STR}/lent", tags=["lent"])
+app.include_router(calendar.router, prefix=f"{settings.API_V1_STR}/calendar", tags=["calendar"])
 app.include_router(health.router, prefix=f"{settings.API_V1_STR}/health", tags=["health"])
+

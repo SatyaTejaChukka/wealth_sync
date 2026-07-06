@@ -18,6 +18,22 @@ from app.schemas.auth import UserCreate, UserResponse, Token
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+async def seed_default_categories(db: AsyncSession, user_id: str) -> None:
+    from app.models.budget import BudgetCategory
+    defaults = [
+        {"name": "Salary", "color": "#3b82f6"},
+        {"name": "Housing", "color": "#f59e0b"},
+        {"name": "Loans", "color": "#8b5cf6"},
+        {"name": "Lending", "color": "#ec4899"},
+        {"name": "Investments", "color": "#10b981"},
+        {"name": "Entertainment", "color": "#ef4444"},
+    ]
+    for d in defaults:
+        cat = BudgetCategory(user_id=user_id, name=d["name"], color=d["color"])
+        db.add(cat)
+    await db.commit()
+
+
 @router.post("/signup", response_model=Token, status_code=201)
 @limiter.limit(settings.RATE_LIMIT_SIGNUP)
 async def create_user(
@@ -47,6 +63,10 @@ async def create_user(
         await db.commit()
         await db.refresh(user)
         logger.info("User created successfully")
+        
+        # Seed default categories for new user
+        await seed_default_categories(db, user.id)
+        
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         return {
             "access_token": security.create_access_token(
