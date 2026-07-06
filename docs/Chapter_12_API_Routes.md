@@ -91,10 +91,83 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.bill import Bill
+from app.models.subscription import Subscription  # ⭐ Added for auto-linking
 from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
 
 # Line 16: Router
 router = APIRouter()
+
+
+### Helper Function: auto_link_bill_or_subscription
+This helper function is used to automatically link expense transactions to matching bills or active subscriptions. It uses exact and substring name comparisons.
+
+```python
+async def auto_link_bill_or_subscription(
+    db: AsyncSession,
+    user_id: str,
+    transaction: Transaction,
+    explicit_unlink: bool = False
+) -> None:
+    if explicit_unlink:
+        return
+    if transaction.type != TransactionType.EXPENSE.value or transaction.bill_id or transaction.subscription_id:
+        return
+
+    desc_lower = (transaction.description or "").strip().lower()
+    if not desc_lower:
+        return
+
+    # Fetch bills and active subscriptions
+    bills_res = await db.execute(select(Bill).filter(Bill.user_id == user_id))
+    bills = bills_res.scalars().all()
+
+    subs_res = await db.execute(select(Subscription).filter(
+        Subscription.user_id == user_id,
+        Subscription.is_active == True
+    ))
+    subs = subs_res.scalars().all()
+
+    matched_bill = None
+    matched_sub = None
+
+    # 1. Try exact name match
+    for b in bills:
+        if b.name.strip().lower() == desc_lower:
+            matched_bill = b
+            break
+
+    if not matched_bill:
+        for s in subs:
+            if s.name.strip().lower() == desc_lower:
+                matched_sub = s
+                break
+
+    # 2. Try substring match (with optional category filters)
+    if not matched_bill and not matched_sub:
+        for b in bills:
+            b_name_lower = b.name.strip().lower()
+            if b_name_lower in desc_lower or desc_lower in b_name_lower:
+                if not b.category_id or b.category_id == transaction.category_id:
+                    matched_bill = b
+                    break
+
+        if not matched_bill:
+            for s in subs:
+                s_name_lower = s.name.strip().lower()
+                if s_name_lower in desc_lower or desc_lower in s_name_lower:
+                    if not s.category_id or s.category_id == transaction.category_id:
+                        matched_sub = s
+                        break
+
+    if matched_bill:
+        transaction.bill_id = matched_bill.id
+        if matched_bill.category_id and not transaction.category_id:
+            transaction.category_id = matched_bill.category_id
+    elif matched_sub:
+        transaction.subscription_id = matched_sub.id
+        if matched_sub.category_id and not transaction.category_id:
+            transaction.category_id = matched_sub.category_id
+```
 ```
 
 ---
@@ -129,6 +202,9 @@ async def create_transaction(
     # Line 36-38: Default occurred_at to now
     if not transaction.occurred_at:
         transaction.occurred_at = datetime.utcnow()
+
+    # ⭐ Auto-link bills or subscriptions
+    await auto_link_bill_or_subscription(db, current_user.id, transaction, explicit_unlink=False)
 
     # Line 40-42: Save to database
     db.add(transaction)             # Add to session
@@ -243,10 +319,20 @@ async def update_transaction(
     if update_data.get('occurred_at'):
         update_data['occurred_at'] = update_data['occurred_at'].replace(tzinfo=None)
 
+    # ⭐ Detect explicit unlinking of bill or subscription
+    explicit_unlink = False
+    if "bill_id" in update_data and update_data["bill_id"] is None:
+        explicit_unlink = True
+    if "subscription_id" in update_data and update_data["subscription_id"] is None:
+        explicit_unlink = True
+
     # Line 96-97: Apply updates
     for field, value in update_data.items():
         setattr(transaction, field, value)
     # ↑ setattr: Dynamically set attributes
+
+    # ⭐ Run auto-linking logic on update
+    await auto_link_bill_or_subscription(db, current_user.id, transaction, explicit_unlink=explicit_unlink)
 
     # Line 99-102: Save
     db.add(transaction)

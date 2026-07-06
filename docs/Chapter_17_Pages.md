@@ -136,8 +136,32 @@ const validate = () => {
 
 #### 1. Header
 
+Includes the "Money Weather" state calculated using `calculateSafeBudgetSignal` from `safe_to_spend_stats`.
+
 ```jsx
-<h1>Welcome back, {user?.full_name}</h1>
+const weatherState = useMemo(() => {
+  if (!summary.safe_to_spend_stats) return null;
+  return calculateSafeBudgetSignal(summary.safe_to_spend_stats).weatherState;
+}, [summary.safe_to_spend_stats]);
+
+// Render Header:
+<h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl flex flex-wrap items-center gap-3">
+  <span>Welcome back, </span>
+  <span className="bg-linear-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+    {user?.full_name || user?.email?.split('@')[0] || 'User'}
+  </span>
+  {weatherState && (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-zinc-900/60 px-2.5 py-1 text-xs font-semibold text-zinc-300">
+      <span className={cn(
+        "h-1.5 w-1.5 rounded-full",
+        weatherState === 'calm' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
+        weatherState === 'balanced' ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
+        'bg-rose-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+      )} />
+      Weather: <span className="capitalize">{weatherState}</span>
+    </span>
+  )}
+</h1>
 <p>{autopilotStatusText}</p>
 <NotificationBell />
 <Button onClick={() => navigate('/dashboard/transactions')}>
@@ -270,17 +294,52 @@ const handleDelete = async (id) => {
 
 ---
 
-### Budget.jsx - Budget Rules
+### Budget.jsx - Budget & Planning
 
 **Sections**:
 
-1. **Budget Overview Card**: Total income, allocated, remaining
-2. **Categories List**: With progress bars
-3. **Rules Manager**: FIXED vs PERCENT allocation
+1. **Expected Income Sources**: Configure recurring deposits (salaries, freelance, etc.) that feed the autopilot system using `incomeService`. Display active/inactive tags, frequency, and credit day. Uses the `IncomeForm` inside a modal.
+2. **Rules List**: A responsive grid showing budget rules for categories (e.g. Groceries) with progress bars (color-coded based on pacing threshold: green/emerald under 80%, yellow/amber between 80-100%, and red/rose over budget limit).
+3. **Category Maintenance**: Opens a modal to manage raw spending categories.
 
-**Add Rule Form**:
+**Income Form**:
 
 ```jsx
+function IncomeForm({ initialData, onSubmit, onCancel, submitText }) {
+  const [formData, setFormData] = useState({
+    amount: initialData?.amount ? String(initialData.amount) : '',
+    frequency: initialData?.frequency || 'monthly',
+    payday: initialData?.payday ? String(initialData.payday) : '',
+    active: initialData?.active !== undefined ? initialData.active : true,
+  });
+  
+  // Submit maps form payload to API format
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      amount: parseFloat(formData.amount),
+      frequency: formData.frequency,
+      active: formData.active,
+      payday: formData.frequency === 'monthly' ? formData.payday : null,
+    };
+    onSubmit(payload);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Input label="Amount" type="number" value={formData.amount} ... />
+      <Select label="Frequency" options={frequencies} value={formData.frequency} ... />
+      {formData.frequency === 'monthly' && <Input label="Salary Credit Day (1-31)" ... />}
+      <Switch label="Active" checked={formData.active} ... />
+    </form>
+  );
+}
+```
+
+**Add/Edit Budget Rule Form**:
+
+```jsx
+// BudgetRuleForm
 <Form>
   <Select
     label="Category"

@@ -1,0 +1,111 @@
+{
+  "nodes": [
+    { "id": "end_user", "label": "End User", "group": "actor", "column": 1 },
+    
+    { "id": "react_app", "label": "React Frontend", "group": "client", "column": 2 },
+    { "id": "dashboard_ui", "label": "Dashboard UI", "group": "client", "column": 2 },
+    { "id": "transaction_form", "label": "Transaction Form", "group": "client", "column": 2 },
+    { "id": "autopilot_ui", "label": "Autopilot Settings", "group": "client", "column": 2 },
+
+    { "id": "auth_api", "label": "Auth API (/auth)", "group": "api", "column": 3 },
+    { "id": "dashboard_api", "label": "Dashboard API", "group": "api", "column": 3 },
+    { "id": "transactions_api", "label": "Transactions API", "group": "api", "column": 3 },
+    { "id": "budgets_api", "label": "Budgets API", "group": "api", "column": 3 },
+    { "id": "autopilot_api", "label": "Autopilot API", "group": "api", "column": 3 },
+
+    { "id": "health_score_service", "label": "Health Score Svc", "group": "service", "column": 4 },
+    { "id": "budget_engine", "label": "Budget Engine", "group": "service", "column": 4 },
+    { "id": "autopilot_service", "label": "Autopilot Service", "group": "service", "column": 4 },
+    { "id": "financial_triage", "label": "Financial Triage", "group": "service", "column": 4 },
+
+    { "id": "celery_worker", "label": "Celery Worker", "group": "worker", "column": 4 },
+    { "id": "bill_automation_task", "label": "Bill Automation Task", "group": "worker", "column": 4 },
+
+    { "id": "db_user", "label": "User Table", "group": "database", "column": 5 },
+    { "id": "db_transaction", "label": "Transaction Table", "group": "database", "column": 5 },
+    { "id": "db_budget", "label": "Budget Category/Rule", "group": "database", "column": 5 },
+    { "id": "db_autopilot", "label": "Autopilot Payment", "group": "database", "column": 5 },
+    { "id": "db_notification", "label": "Notification Table", "group": "database", "column": 5 }
+  ],
+  "edges": [
+    { "id": "e_user_react", "source": "end_user", "target": "react_app", "label": "Opens app" },
+    { "id": "e_react_auth", "source": "react_app", "target": "auth_api", "label": "Login/Signup req" },
+    { "id": "e_auth_db", "source": "auth_api", "target": "db_user", "label": "Verify/Create User" },
+    
+    { "id": "e_user_dash", "source": "end_user", "target": "dashboard_ui", "label": "Views Dashboard" },
+    { "id": "e_dash_api", "source": "dashboard_ui", "target": "dashboard_api", "label": "Fetch Summary" },
+    { "id": "e_dash_health", "source": "dashboard_api", "target": "health_score_service", "label": "Calc Score" },
+    { "id": "e_dash_db_txn", "source": "dashboard_api", "target": "db_transaction", "label": "Fetch Txns" },
+    
+    { "id": "e_user_txn", "source": "end_user", "target": "transaction_form", "label": "Adds Transaction" },
+    { "id": "e_txn_api", "source": "transaction_form", "target": "transactions_api", "label": "POST /transactions" },
+    { "id": "e_txn_db", "source": "transactions_api", "target": "db_transaction", "label": "Save Txn" },
+    { "id": "e_txn_budget_check", "source": "transactions_api", "target": "db_budget", "label": "Verify Category" },
+
+    { "id": "e_user_auto", "source": "end_user", "target": "autopilot_ui", "label": "Configures Rules" },
+    { "id": "e_auto_ui_api", "source": "autopilot_ui", "target": "autopilot_api", "label": "Salary Engine Req" },
+    { "id": "e_auto_api_svc", "source": "autopilot_api", "target": "autopilot_service", "label": "Calc Splits" },
+    { "id": "e_auto_svc_db", "source": "autopilot_service", "target": "db_autopilot", "label": "Save Orders" },
+    
+    { "id": "e_celery_task", "source": "celery_worker", "target": "bill_automation_task", "label": "Runs Daily" },
+    { "id": "e_task_auto_svc", "source": "bill_automation_task", "target": "autopilot_service", "label": "Trigger Due Bills" },
+    { "id": "e_svc_db_pay", "source": "autopilot_service", "target": "db_autopilot", "label": "Mark Executed" },
+    { "id": "e_task_notif", "source": "bill_automation_task", "target": "db_notification", "label": "Create Alert" }
+  ],
+  "flows": [
+    {
+      "id": "signup_flow",
+      "name": "User Signup Flow",
+      "description": "A new user registers an account.",
+      "steps": [
+        { "edgeId": "e_user_react", "description": "User opens the web app." },
+        { "edgeId": "e_react_auth", "description": "Frontend sends credentials to /auth/signup." },
+        { "edgeId": "e_auth_db", "description": "API hashes password and inserts into Users table." }
+      ]
+    },
+    {
+      "id": "dashboard_load",
+      "name": "Dashboard Load & Health Score",
+      "description": "User opens dashboard, aggregating data and calculating health score.",
+      "steps": [
+        { "edgeId": "e_user_dash", "description": "User navigates to Dashboard." },
+        { "edgeId": "e_dash_api", "description": "Frontend requests /dashboard/summary." },
+        { "edgeId": "e_dash_db_txn", "description": "API aggregates monthly incomes & expenses from DB." },
+        { "edgeId": "e_dash_health", "description": "API passes totals to HealthScoreService to determine status." }
+      ]
+    },
+    {
+      "id": "add_transaction",
+      "name": "Add Expense Transaction",
+      "description": "User logs a new expense.",
+      "steps": [
+        { "edgeId": "e_user_txn", "description": "User fills out transaction form." },
+        { "edgeId": "e_txn_api", "description": "Submits to /transactions API." },
+        { "edgeId": "e_txn_budget_check", "description": "API verifies the user owns the selected Category." },
+        { "edgeId": "e_txn_db", "description": "Transaction is committed to database." }
+      ]
+    },
+    {
+      "id": "autopilot_salary",
+      "name": "Salary Rule Engine (Autopilot)",
+      "description": "User checks how upcoming salary will be split.",
+      "steps": [
+        { "edgeId": "e_user_auto", "description": "User opens Autopilot view." },
+        { "edgeId": "e_auto_ui_api", "description": "Requests /autopilot/salary-rule-engine." },
+        { "edgeId": "e_auto_api_svc", "description": "API calls AutopilotService.calculate_salary_rule_split." },
+        { "edgeId": "e_auto_svc_db", "description": "Service fetches rules, bills, goals from DB to calculate allocation." }
+      ]
+    },
+    {
+      "id": "daily_automation",
+      "name": "Daily Bill Automation (Cron)",
+      "description": "Background worker processes upcoming bills and executes payments.",
+      "steps": [
+        { "edgeId": "e_celery_task", "description": "Celery beat triggers check_and_create_pending_bills daily." },
+        { "edgeId": "e_task_auto_svc", "description": "Task invokes AutopilotService to process approved due payments." },
+        { "edgeId": "e_svc_db_pay", "description": "Service updates status of executed AutopilotPayments in DB." },
+        { "edgeId": "e_task_notif", "description": "Task also creates Notifications for upcoming manual bills." }
+      ]
+    }
+  ]
+}

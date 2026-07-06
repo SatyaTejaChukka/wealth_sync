@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WealthSync Architecture & Flows</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --panel-bg: #1a1d24;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --border: #2e3340;
+            --accent: #eab308; /* Yellow/Gold for highlighting */
+            --accent-dim: rgba(234, 179, 8, 0.2);
+            --node-bg: #1e222b;
+            
+            --color-actor: #f43f5e;
+            --color-client: #3b82f6;
+            --color-api: #8b5cf6;
+            --color-service: #10b981;
+            --color-worker: #f59e0b;
+            --color-database: #ec4899;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layout */
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+        }
+
+        #sidebar {
+            width: 400px;
+            background-color: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        /* Header / Legend */
+        #header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        h1 { margin: 0 0 5px 0; font-size: 20px; font-weight: 600; }
+        .subtitle { color: var(--text-muted); font-size: 13px; max-width: 600px; margin-bottom: 15px;}
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+        /* Canvas Elements */
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .edge {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 2;
+            transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;
+        }
+
+        .edge.highlighted {
+            stroke: var(--accent);
+            stroke-width: 3;
+            z-index: 100;
+        }
+
+        .edge.dimmed {
+            opacity: 0.15;
+        }
+
+        .node {
+            position: absolute;
+            background-color: var(--node-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 15px;
+            min-width: 160px;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .node::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            border-radius: 2px;
+        }
+        
+        .node[data-group="actor"]::before { background-color: var(--color-actor); }
+        .node[data-group="client"]::before { background-color: var(--color-client); }
+        .node[data-group="api"]::before { background-color: var(--color-api); }
+        .node[data-group="service"]::before { background-color: var(--color-service); }
+        .node[data-group="worker"]::before { background-color: var(--color-worker); }
+        .node[data-group="database"]::before { background-color: var(--color-database); }
+
+        .node.highlighted {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-dim);
+            color: #fff;
+            z-index: 100;
+        }
+
+        .node.dimmed {
+            opacity: 0.2;
+            filter: grayscale(100%);
+        }
+
+        /* Labels on edges */
+        .edge-label {
+            position: absolute;
+            background: var(--bg);
+            color: var(--text-muted);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            cursor: default;
+        }
+
+        .edge-label.highlighted {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-weight: 600;
+            z-index: 101;
+        }
+
+        .edge-label.dimmed {
+            opacity: 0.1;
+        }
+
+        .step-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            color: #000;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        /* Sidebar Panels */
+        .panel {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flows-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .flow-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .flow-card:hover {
+            border-color: #475569;
+        }
+
+        .flow-card.active {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .flow-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+        
+        .flow-card.active .flow-title {
+            color: var(--accent);
+        }
+
+        .flow-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        #steps-panel {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .step-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .clear-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+        
+        /* Column Headers */
+        .column-headers {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            right: 0;
+            display: flex;
+            pointer-events: none;
+        }
+        
+        .col-header {
+            position: absolute;
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: #334155;
+            text-align: center;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <div id="header">
+            <h1>WealthSync - Architecture & Flows</h1>
+            <div class="subtitle">Explore the components and data flows powering the WealthSync platform. Select a flow on the right to visualize the path.</div>
+            
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-actor)"></div> Actor</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-client)"></div> Client</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-api)"></div> API Layer</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-service)"></div> Service/Domain</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-worker)"></div> Background Worker</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-database)"></div> Storage</div>
+            </div>
+        </div>
+
+        <!-- Rendered by JS -->
+        <div class="column-headers" id="col-headers"></div>
+        <svg id="edges-layer"></svg>
+        <div id="nodes-layer"></div>
+    </div>
+
+    <div id="sidebar">
+        <div class="panel" style="flex: 1.5;">
+            <div class="panel-header">
+                <span>Flows</span>
+                <button class="clear-btn" id="clear-btn" style="display: none;">Clear</button>
+            </div>
+            <div class="flows-list" id="flows-container">
+                <!-- Flow cards rendered here -->
+            </div>
+        </div>
+        
+        <div class="panel" id="steps-panel" style="display: none; flex: 1;">
+            <div class="panel-header">Steps</div>
+            <div id="steps-container">
+                <!-- Steps rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graphData = null;
+        let activeFlowId = null;
+
+        const COL_WIDTH = 250;
+        const ROW_HEIGHT = 80;
+        const OFFSET_X = 150;
+        const OFFSET_Y = 180;
+
+        const container = document.getElementById('canvas-container');
+        const svg = document.getElementById('edges-layer');
+        const nodesLayer = document.getElementById('nodes-layer');
+        const colHeaders = document.getElementById('col-headers');
+        const flowsContainer = document.getElementById('flows-container');
+        const stepsPanel = document.getElementById('steps-panel');
+        const stepsContainer = document.getElementById('steps-container');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Fetch Data
+        async function init() {
+            try {
+                const res = await fetch('architecture.json');
+                graphData = await res.json();
+                
+                calculateLayout();
+                renderGraph();
+                renderFlows();
+                
+                clearBtn.addEventListener('click', clearSelection);
+            } catch (err) {
+                console.error("Failed to load architecture.json", err);
+                nodesLayer.innerHTML = "<div style='padding: 100px; color: red;'>Error loading architecture.json. Make sure the file exists.</div>";
+            }
+        }
+
+        // Layout Engine
+        function calculateLayout() {
+            // Group nodes by column
+            const cols = {};
+            graphData.nodes.forEach(n => {
+                if (!cols[n.column]) cols[n.column] = [];
+                cols[n.column].push(n);
+            });
+
+            // Set coordinates
+            Object.keys(cols).forEach(colIdx => {
+                const nodesInCol = cols[colIdx];
+                const x = OFFSET_X + ((parseInt(colIdx) - 1) * COL_WIDTH);
+                
+                // Render Col Header
+                const colNames = {
+                    1: "Actors", 2: "Client Surfaces", 3: "API Routes", 4: "Services & Workers", 5: "Storage & Data"
+                };
+                if(colNames[colIdx]) {
+                    const h = document.createElement('div');
+                    h.className = 'col-header';
+                    h.style.left = `${x}px`;
+                    h.innerText = colNames[colIdx];
+                    colHeaders.appendChild(h);
+                }
+
+                nodesInCol.forEach((n, i) => {
+                    n.x = x;
+                    n.y = OFFSET_Y + (i * ROW_HEIGHT);
+                });
+            });
+            
+            // Adjust height if needed
+            const maxY = Math.max(...graphData.nodes.map(n => n.y));
+            if(maxY > container.clientHeight) {
+                svg.style.height = `${maxY + 100}px`;
+            }
+            const maxX = Math.max(...graphData.nodes.map(n => n.x));
+            if(maxX > container.clientWidth) {
+                svg.style.width = `${maxX + 200}px`;
+            }
+        }
+
+        // Render nodes and edges
+        function renderGraph() {
+            // Create a lookup map for nodes
+            const nodeMap = {};
+            graphData.nodes.forEach(n => nodeMap[n.id] = n);
+
+            // Render Edges
+            graphData.edges.forEach(e => {
+                const src = nodeMap[e.source];
+                const tgt = nodeMap[e.target];
+                
+                if(!src || !tgt) return;
+
+                // Bezier curve
+                const dx = Math.abs(tgt.x - src.x);
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                
+                // Control points for smooth horizontal flow
+                const cp1x = src.x + (dx * 0.4);
+                const cp1y = src.y;
+                const cp2x = tgt.x - (dx * 0.4);
+                const cp2y = tgt.y;
+
+                const d = `M ${src.x} ${src.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${tgt.x} ${tgt.y}`;
+                
+                path.setAttribute("d", d);
+                path.setAttribute("id", `edge-${e.id}`);
+                path.classList.add("edge");
+                svg.appendChild(path);
+
+                // Add arrowhead
+                // Simple hack: add a marker def
+                
+                // Edge Label (HTML for easy styling)
+                const midX = (src.x + tgt.x) / 2;
+                const midY = (src.y + tgt.y) / 2;
+                
+                const label = document.createElement("div");
+                label.className = "edge-label";
+                label.id = `label-${e.id}`;
+                label.style.left = `${midX}px`;
+                label.style.top = `${midY - 15}px`;
+                label.innerHTML = `<span>${e.label}</span>`;
+                nodesLayer.appendChild(label);
+            });
+
+            // Render Nodes
+            graphData.nodes.forEach(n => {
+                const el = document.createElement("div");
+                el.className = "node";
+                el.id = `node-${n.id}`;
+                el.setAttribute("data-group", n.group);
+                el.style.left = `${n.x}px`;
+                el.style.top = `${n.y}px`;
+                el.innerText = n.label;
+                nodesLayer.appendChild(el);
+            });
+        }
+
+        // Render right sidebar
+        function renderFlows() {
+            graphData.flows.forEach(flow => {
+                const card = document.createElement("div");
+                card.className = "flow-card";
+                card.id = `flow-card-${flow.id}`;
+                card.innerHTML = `
+                    <div class="flow-title">${flow.name}</div>
+                    <div class="flow-desc">${flow.description}</div>
+                `;
+                
+                card.addEventListener('click', () => selectFlow(flow.id));
+                flowsContainer.appendChild(card);
+            });
+        }
+
+        function selectFlow(flowId) {
+            activeFlowId = flowId;
+            
+            // Update UI State
+            document.querySelectorAll('.flow-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(`flow-card-${flowId}`).classList.add('active');
+            clearBtn.style.display = 'block';
+            stepsPanel.style.display = 'flex';
+
+            const flow = graphData.flows.find(f => f.id === flowId);
+            
+            // Get involved edges and nodes
+            const activeEdgeIds = new Set();
+            const activeNodeIds = new Set();
+            
+            flow.steps.forEach(step => {
+                activeEdgeIds.add(step.edgeId);
+                const edge = graphData.edges.find(e => e.id === step.edgeId);
+                if(edge) {
+                    activeNodeIds.add(edge.source);
+                    activeNodeIds.add(edge.target);
+                }
+            });
+
+            // Apply classes
+            graphData.nodes.forEach(n => {
+                const el = document.getElementById(`node-${n.id}`);
+                if(activeNodeIds.has(n.id)) {
+                    el.classList.add('highlighted');
+                    el.classList.remove('dimmed');
+                } else {
+                    el.classList.remove('highlighted');
+                    el.classList.add('dimmed');
+                }
+            });
+
+            graphData.edges.forEach(e => {
+                const path = document.getElementById(`edge-${e.id}`);
+                const label = document.getElementById(`label-${e.id}`);
+                
+                // Remove step badge if exists
+                const existingBadge = label.querySelector('.step-badge');
+                if(existingBadge) existingBadge.remove();
+
+                if(activeEdgeIds.has(e.id)) {
+                    path.classList.add('highlighted');
+                    path.classList.remove('dimmed');
+                    label.classList.add('highlighted');
+                    label.classList.remove('dimmed');
+                    
+                    // Add step number to label
+                    const stepIdx = flow.steps.findIndex(s => s.edgeId === e.id);
+                    if(stepIdx !== -1) {
+                        label.innerHTML = `<span class="step-badge">${stepIdx + 1}</span><span>${e.label}</span>`;
+                    }
+                } else {
+                    path.classList.remove('highlighted');
+                    path.classList.add('dimmed');
+                    label.classList.remove('highlighted');
+                    label.classList.add('dimmed');
+                    label.innerHTML = `<span>${e.label}</span>`;
+                }
+            });
+
+            // Render Steps
+            stepsContainer.innerHTML = '';
+            flow.steps.forEach((step, idx) => {
+                const el = document.createElement("div");
+                el.className = "step-item";
+                
+                const edge = graphData.edges.find(e => e.id === step.edgeId);
+                let title = edge ? edge.label : 'Step';
+                
+                el.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">
+                            <span class="step-badge">${idx + 1}</span> ${title}
+                        </div>
+                        <div style="color: var(--text-muted); padding-left: 24px;">${step.description}</div>
+                    </div>
+                `;
+                stepsContainer.appendChild(el);
+            });
+        }
+
+        function clearSelection() {
+            activeFlowId = null;
+            
+            document.querySelectorAll('.flow-card').forEach(el => el.classList.remove('active'));
+            clearBtn.style.display = 'none';
+            stepsPanel.style.display = 'none';
+
+            document.querySelectorAll('.node, .edge, .edge-label').forEach(el => {
+                el.classList.remove('highlighted', 'dimmed');
+            });
+            
+            document.querySelectorAll('.step-badge').forEach(el => el.remove());
+        }
+
+        // Boot
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

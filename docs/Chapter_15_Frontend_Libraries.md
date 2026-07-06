@@ -12,12 +12,14 @@ frontend/src/lib/
 ├── auth.jsx              # AuthProvider ⭐
 ├── format.js             # Formatting utilities
 ├── utils.js              # Helper functions
+├── safeBudgetSignal.js   # ⭐ Safe Budget Calculations & Weather Signals
 └── financeFeedback.js    # Haptic feedback
 
 frontend/src/services/
 ├── dashboard.js          # Dashboard API
 ├── transactions.js       # Transactions API
 ├── bills.js              # Bills API
+├── income.js             # ⭐ Expected Income API
 └── ... (other API modules)
 
 frontend/src/hooks/
@@ -160,6 +162,41 @@ cn("px-2", "px-4"); // "px-2 px-4" (both applied, conflict!)
 
 // ✅ With twMerge
 cn("px-2", "px-4"); // "px-4" (latest wins)
+```
+
+---
+
+## 3b. lib/safeBudgetSignal.js - Safe Budget Calculations & Weather Signals
+
+This utility computes financial ratios, pacing scores, and the "Money Weather" state for the dashboard from live safe-to-spend metrics.
+
+### calculateSafeBudgetSignal
+
+```jsx
+export function calculateSafeBudgetSignal(payload = {}) {
+  // Extracts metrics like remaining budget, daily limit, monthly income, commitments, etc.
+  // Computes runway, pacing, daily spend, burn, and commitments ratios.
+  // Calculates an overall composite score:
+  // score = 0.44 * runwayScore + 0.24 * pacingScore + 0.14 * burnScore + 0.1 * dailyScore + 0.08 * commitmentsScore;
+  
+  // Derives Weather State:
+  // - score >= 0.67 -> "calm"
+  // - score >= 0.38 -> "balanced"
+  // - otherwise    -> "cautious"
+  
+  // Derives Orb State:
+  // - score >= 0.67 -> "carefree"
+  // - score >= 0.38 -> "mindful"
+  // - otherwise    -> "careful"
+}
+```
+
+### calculateOrbSize
+
+```jsx
+export function calculateOrbSize(score, { min = 120, max = 200 } = {}) {
+  // Uses a quadratic easing function to map the score to a pixel dimension for the 3D Safe-To-Spend Orb.
+}
 ```
 
 ---
@@ -377,6 +414,29 @@ export const billService = {
     const response = await api.post(`/bills/${id}/pay`, { amount });
     return response.data;
   },
+};
+
+// income.js
+export const incomeService = {
+  async getIncomes() {
+    const response = await api.get("/income/");
+    return response.data;
+  },
+
+  async createIncome(data) {
+    const response = await api.post("/income/", data);
+    return response.data;
+  },
+
+  async updateIncome(id, data) {
+    const response = await api.put(`/income/${id}`, data);
+    return response.data;
+  },
+
+  async deleteIncome(id) {
+    const response = await api.delete(`/income/${id}`);
+    return response.data;
+  }
 };
 ```
 
