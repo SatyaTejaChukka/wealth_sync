@@ -74,6 +74,28 @@ classDiagram
         +current_amount: Numeric
     }
 
+    class Loan {
+        +id: String
+        +user_id: String
+        +principal_amount: Numeric
+        +interest_rate: Numeric
+        +tenure_months: Integer
+        +start_date: Date
+        +due_day: Integer
+        +emi_amount: Numeric
+        +status: String
+    }
+
+    class LentMoney {
+        +id: String
+        +user_id: String
+        +borrower_name: String
+        +principal_amount: Numeric
+        +interest_rate_val: Numeric
+        +interest_rate_type: String
+        +status: String
+    }
+
     Base <|-- User
     Base <|-- Transaction
     Base <|-- BudgetCategory
@@ -81,10 +103,14 @@ classDiagram
     Base <|-- Bill
     Base <|-- Subscription
     Base <|-- SavingsGoal
+    Base <|-- Loan
+    Base <|-- LentMoney
 
     User "1" --> "*" Transaction : owns
     User "1" --> "*" BudgetCategory : creates
     User "1" --> "*" Bill : has
+    User "1" --> "*" Loan : has
+    User "1" --> "*" LentMoney : lends
     BudgetCategory "1" --> "*" Transaction : categorizes
     BudgetCategory "1" --> "*" BudgetRule : restricts
 ```
@@ -518,6 +544,18 @@ class Bill(Base):
 
 - User alerts (bill due, payment succeeded)
 - `type`: Discriminator for notification templates
+
+### app/models/loan.py
+
+- **Loan**: Represents bank/personal loan debt profile
+- `principal_amount` & `interest_rate`: Used to compute interest burdens
+- `emi_amount`: Precalculated monthly repayment value
+
+### app/models/lent_money.py
+
+- **LentMoney**: Manages peer-to-peer lending contracts
+- `interest_rate_val` & `interest_rate_type`: Allows both percentage rates and flat amounts
+- `interest_frequency` & `interest_type`: Configures simple/compounded calculations
 
 ---
 

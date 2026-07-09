@@ -483,6 +483,33 @@ GET /triage         # Financial triage actions
 GET /recent-activity # Last 10 transactions
 ```
 
+### api/v1/loans.py
+
+```python
+GET /               # List active/closed loans
+POST /              # Create a new loan tracking instance
+GET /{id}           # Read details of a specific loan
+POST /{id}/repay    # Log manual EMI repayment transaction
+DELETE /{id}        # Delete/remove loan profile
+```
+
+### api/v1/lent_money.py
+
+```python
+GET /               # List P2P lent money logs
+POST /              # Log a borrower profile
+GET /{id}           # Get day-accurate outstanding balance breakdowns
+POST /{id}/repay    # Log borrower repayment transaction
+POST /{id}/settle   # Full settlement of outstanding balance (principal + accrued interest)
+DELETE /{id}        # Delete/remove lent money profile
+```
+
+### api/v1/calendar.py
+
+```python
+GET /events         # Unified events feed: bills, EMIs, subs, and P2P expected dates
+```
+
 ---
 
 ## Key Patterns Across All Routes

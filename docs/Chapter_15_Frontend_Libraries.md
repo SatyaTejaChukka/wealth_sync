@@ -438,6 +438,62 @@ export const incomeService = {
     return response.data;
   }
 };
+
+// loans.js
+export const loanService = {
+  async list() {
+    const response = await api.get('/loans/');
+    return response.data;
+  },
+  async create(data) {
+    const response = await api.post('/loans/', data);
+    return response.data;
+  },
+  async repay(id, amount) {
+    const response = await api.post(`/loans/${id}/repay`, { amount });
+    return response.data;
+  },
+  async delete(id) {
+    const response = await api.delete(`/loans/${id}`);
+    return response.data;
+  }
+};
+
+// lent.js
+export const lentService = {
+  async list() {
+    const response = await api.get('/lent/');
+    return response.data;
+  },
+  async create(data) {
+    const response = await api.post('/lent/', data);
+    return response.data;
+  },
+  async getDetails(id) {
+    const response = await api.get(`/lent/${id}`);
+    return response.data;
+  },
+  async repay(id, amount) {
+    const response = await api.post(`/lent/${id}/repay`, { amount });
+    return response.data;
+  },
+  async settle(id) {
+    const response = await api.post(`/lent/${id}/settle`);
+    return response.data;
+  },
+  async delete(id) {
+    const response = await api.delete(`/lent/${id}`);
+    return response.data;
+  }
+};
+
+// calendar.js
+export const calendarService = {
+  async getEvents(year, month) {
+    const response = await api.get(`/calendar/events`, { params: { year, month } });
+    return response.data;
+  }
+};
 ```
 
 ---

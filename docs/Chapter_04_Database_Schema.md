@@ -40,12 +40,16 @@ erDiagram
     USER ||--o{ HEALTH_SCORE : receives
     USER ||--o{ AUTOPILOT_PAYMENT : schedules
     USER ||--o{ NOTIFICATION : receives
+    USER ||--o{ LOAN : has
+    USER ||--o{ LENT_MONEY : lends
 
     BUDGET_CATEGORY ||--o{ TRANSACTION : categorizes
     BUDGET_CATEGORY ||--o{ BUDGET_RULE : restricts
     BUDGET_CATEGORY ||--o{ BILL : categorizes
     BUDGET_CATEGORY ||--o{ SUBSCRIPTION : categorizes
     BUDGET_CATEGORY ||--o{ AUTOPILOT_PAYMENT : categorizes
+    BUDGET_CATEGORY ||--o{ LOAN : categorizes
+    BUDGET_CATEGORY ||--o{ LENT_MONEY : categorizes
 
     SAVINGS_GOAL ||--o{ SAVINGS_LOG : tracks
     BILL ||--o{ AUTOPILOT_PAYMENT : automates
@@ -171,6 +175,43 @@ erDiagram
         string action_url
         string related_id
         datetime created_at
+    }
+
+    LOAN {
+        string id PK
+        string user_id FK
+        string name
+        decimal principal_amount
+        decimal interest_rate
+        integer tenure_months
+        date start_date
+        integer due_day
+        decimal emi_amount
+        string interest_type
+        string category_id FK
+        boolean autopay_enabled
+        string status
+        datetime last_paid_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    LENT_MONEY {
+        string id PK
+        string user_id FK
+        string borrower_name
+        decimal principal_amount
+        decimal interest_rate_val
+        string interest_rate_type
+        string interest_rate_basis
+        string interest_frequency
+        string interest_type
+        datetime lent_at
+        datetime due_date
+        string status
+        string category_id FK
+        datetime created_at
+        datetime updated_at
     }
 ```
 
@@ -452,7 +493,63 @@ class SavingsLog(Base):
 
 ---
 
-### 7. Other Tables (Abbreviated)
+### 7. Loans Table
+
+```python
+class Loan(Base):
+    __tablename__ = "loans"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(String, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    principal_amount = Column(Numeric(14, 2), nullable=False)
+    interest_rate = Column(Numeric(5, 2), nullable=False)
+    tenure_months = Column(Integer, nullable=False)
+    start_date = Column(Date, nullable=False)
+    due_day = Column(Integer, nullable=False)
+    emi_amount = Column(Numeric(14, 2), nullable=False)
+    interest_type = Column(String, default="compound", nullable=False)
+    category_id = Column(String, ForeignKey("budget_categories.id"), nullable=True)
+    autopay_enabled = Column(Boolean, default=False)
+    status = Column(String, default="active")
+    last_paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+```
+
+**Design Decisions**:
+- **`interest_type = Column(String, default="compound", nullable=False)`**: Allows representing simple interest or compounded interest profiles based on amortization.
+- **`emi_amount = Column(Numeric(14, 2), nullable=False)`**: Stores pre-calculated monthly EMI values to speed up monthly projection summaries.
+
+---
+
+### 8. Lent Money Table (P2P Ledger)
+
+```python
+class LentMoney(Base):
+    __tablename__ = "lent_money"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(String, index=True, nullable=False)
+    borrower_name = Column(String, nullable=False)
+    principal_amount = Column(Numeric(14, 2), nullable=False)
+    interest_rate_val = Column(Numeric(5, 2), nullable=False)
+    interest_rate_type = Column(String, default="percentage") # percentage, flat
+    interest_rate_basis = Column(String, default="monthly") # monthly, yearly
+    interest_frequency = Column(String, default="monthly") # monthly, flat
+    interest_type = Column(String, default="simple") # simple, compound
+    lent_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    due_date = Column(DateTime, nullable=True)
+    status = Column(String, default="active") # active, settled
+    category_id = Column(String, ForeignKey("budget_categories.id"), nullable=True)
+```
+
+**Design Decisions**:
+- **Flexible Interest Config**: Columns `interest_rate_type`, `interest_rate_basis`, and `interest_frequency` support flexible peer-to-peer structures (e.g. flat monthly interest vs percentage yearly accruals).
+- **Settlement Logic**: P2P lent records transition from `active` to `settled` once repayment ledger balances match outstanding debts.
+
+---
+
+### 9. Other Tables (Abbreviated)
 
 **FinancialHealthScore**
 

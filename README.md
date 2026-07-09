@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/SatyaTejaChukka/wealth_sync/actions/workflows/ci.yml/badge.svg)
 
-A comprehensive, full-stack personal finance management system built with **FastAPI** and **React**. Track income, expenses, bills, subscriptions, savings goals, and get an intelligent financial health score — all in a polished dark glassmorphism UI.
+A comprehensive, full-stack personal finance management system built with **FastAPI** and **React**. Track income, expenses, bills, subscriptions, savings goals, active loans, and peer-to-peer lending — all in a polished dark glassmorphism UI.
 
 ---
 
@@ -14,26 +14,26 @@ A comprehensive, full-stack personal finance management system built with **Fast
 - **Expense Tracking** — Daily transaction logging with category tagging
 - **Bill Management** — Recurring bill tracking with due-day reminders and autopay flags
 - **Subscription Tracker** — Monitor recurring subscriptions with billing cycle tracking
+- **Loan Tracking** — Track active loans, interest rates (simple/compound), and tenure with automatic EMI logs
+- **P2P Lent Money** — Manage peer-to-peer lending with dynamic day-accurate accrued interest calculators and one-click settlements
 
-### Smart Budgeting
+### Smart Budgeting & Calendar
 
 - **Budget Rules** — Create fixed-amount or percentage-based budget allocations per category
 - **Daily Spendable** — Calculates your "safe to spend" daily limit based on income, bills, and allocations
 - **Budget Summary** — Monthly overview of allocated vs. spent per category
+- **Financial Calendar** — Unified monthly calendar aggregating upcoming bills, loan EMIs, subscriptions, and expected lent returns with quick-pay actions
 
 ### Savings & Goals
 
 - **Savings Goals** — Set targets with deadlines, contribute funds, and track progress visually
 - **Contribution History** — Full log of contributions per goal with timestamps
 
-### Intelligence
+### Visual Analytics & UX
 
-- **Financial Health Score** — 0–100 score based on spending ratio, missed bills, savings progress, and budget adherence
-- **Health Score Gauge** — Animated circular gauge with grade (A+ to F) and personalized recommendations
-- **Dashboard Analytics** — Spending charts, category breakdowns, and recent activity feed
-
-### User Experience
-
+- **Sankey Flow Chart** — Interactive SVG Cash Flow diagram mapping income sources directly to categories, EMIs, and unspent savings
+- **Dashboard Analytics** — Spending trend charts, category breakdowns, and recent activity feed
+- **Neomorphic Glows & Hover Effects** — Premium card hover glows that shift color dynamically to match their category tags
 - **Toast Notifications** — Professional slide-in toasts for all CRUD operations (success, error, warning, info)
 - **Optimistic Updates** — Instant UI feedback on delete/update operations with automatic rollback on failure
 - **Auto-Login on Signup** — Seamless onboarding; new users land directly on the dashboard
@@ -64,11 +64,11 @@ A comprehensive, full-stack personal finance management system built with **Fast
 wealth_sync/
 ├── backend/
 │   ├── app/
-│   │   ├── api/v1/          # 12 route modules (auth, bills, budgets, etc.)
+│   │   ├── api/v1/          # 15 route modules (auth, bills, budgets, loans, lent, calendar, etc.)
 │   │   ├── core/            # Config, database, security, middleware
-│   │   ├── models/          # SQLAlchemy models (10 entities)
+│   │   ├── models/          # SQLAlchemy models (12 entities)
 │   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── services/        # Business logic (budget engine, health score)
+│   │   ├── services/        # Business logic (budget engine, loans, lent services)
 │   │   ├── tasks/           # Celery background tasks
 │   │   └── static/avatars/  # User avatar uploads
 │   ├── alembic/versions/    # Database migrations
@@ -77,9 +77,9 @@ wealth_sync/
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # 25 reusable components (UI, dashboard, etc.)
-│   │   ├── pages/           # 8 page views (Landing, Login, Dashboard, etc.)
-│   │   ├── services/        # 9 API service modules
+│   │   ├── components/      # 23 reusable components (UI, dashboard, etc.)
+│   │   ├── pages/           # 13 page views (Landing, Dashboard, Loans, Lent, Calendar, etc.)
+│   │   ├── services/        # 12 API service modules
 │   │   ├── lib/             # Auth context, API client, utilities
 │   │   └── layouts/         # MainLayout with Sidebar
 │   ├── package.json
@@ -298,6 +298,9 @@ All endpoints are under `/api/v1`. Interactive docs available at `/docs` (Swagge
 | Bills           | `/bills`              | Recurring bill tracking              |
 | Subscriptions   | `/subscriptions`      | Subscription management              |
 | Goals           | `/goals`              | Savings goals with contribution logs |
+| Loans           | `/loans`              | Active loan tracker and EMI logs     |
+| Lent Tracker    | `/lent`               | Peer-to-peer debt ledger & interest  |
+| Calendar        | `/calendar`           | Monthly events feed aggregates       |
 | Dashboard       | `/dashboard`          | Aggregated summary and analytics     |
 | Notifications   | `/notifications`      | User notification feed               |
 | Health Score    | `/health`             | Financial health score calculation   |

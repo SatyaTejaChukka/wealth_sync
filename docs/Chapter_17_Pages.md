@@ -18,6 +18,9 @@ frontend/src/pages/
     ├── Bills.jsx             # Bill tracking
     ├── Subscriptions.jsx     # Subscription management
     ├── Goals.jsx             # Savings goals
+    ├── Loans.jsx             # Active loan tracking dashboard
+    ├── Lent.jsx              # P2P lending & repayments ledger
+    ├── Calendar.jsx          # Unified financial events month-view
     ├── Analytics.jsx         # Charts & insights
     └── Settings.jsx          # User settings
 ```
@@ -511,6 +514,39 @@ const handleContribute = async (goalId, amount, note) => {
 
 ---
 
+### Loans.jsx - Active Loans Tracker
+
+**Purpose**: Manage active/closed bank loans, mortgages, or personal debts.
+
+**Structure**:
+1. **Header**: Summary cards (Total Outstanding Principal, monthly EMI sum) + "Add Loan" CTA trigger.
+2. **Loans Grid**: Individual cards displaying name, current balance, progress bar (paid vs total), and status badge.
+3. **Detail Sidebar**: Shows details (interest type, tenure, start date) + Repayments log ledger + "Record EMI Repayment" trigger modal.
+
+---
+
+### Lent.jsx - P2P lending Ledger
+
+**Purpose**: Track money lent to borrowers, calculate elapsed duration and day-accurate interest, and settle outstanding balances.
+
+**Structure**:
+1. **Borrowers Grid**: Lists borrower profiles with their active status.
+2. **Metrics Sidebar**: Displays elapsed days, interest accumulated up to today, total payments, and current net outstanding.
+3. **Action Triggers**: "Settle Outstanding Balance" button that auto-calculates total debt (principal + interest) up to the current day and logs a final settlement transaction.
+
+---
+
+### Calendar.jsx - Unified Financial Calendar
+
+**Purpose**: Aggregates all upcoming dues into a unified monthly calendar (Bills, EMIs, Subscriptions, Lent Returns) with quick-pay actions.
+
+**Structure**:
+1. **Calendar Grid**: Standard monthly grid showing days with color-coded bullet indicators representing payment category types.
+2. **Month Controls**: Navigational arrows (`<` and `>`) to change years/months dynamically.
+3. **Event Drawer**: Slide-out drawer listing category tasks for the clicked day, complete with "Mark as Paid" quick triggers.
+
+---
+
 ## Common Patterns Across Pages
 
 ### 1. Data Fetching
@@ -576,7 +612,7 @@ const handleDelete = async (id) => {
 
 ## Key Takeaways
 
-1. **9 pages**: 3 public + 6 dashboard pages
+1. **12 pages**: 3 public + 9 dashboard pages
 2. **Dashboard.jsx**: Most complex (cockpit mode, drag-and-drop, 3 decks)
 3. **CRUD patterns**: List → Create → Edit → Delete
 4. **Modal forms**: Reusable for add/edit
