@@ -171,23 +171,20 @@
 | `Toast.jsx`          | ✅         | Chapter 16 |
 | `LoadingSpinner.jsx` | ✅         | Chapter 16 |
 
-#### Dashboard Components (11 files)
+#### Dashboard Components (8 files)
 
 | Component                  | Documented | Coverage   |
 | -------------------------- | ---------- | ---------- |
 | `ActionCenter.jsx`         | ✅         | Chapter 16 |
-| `FinancialHealthScore.jsx` | ✅         | Chapter 16 |
 | `FinancialTriagePanel.jsx` | ✅         | Chapter 16 |
-| `InsightsPanel.jsx`        | ✅         | Chapter 16 |
-| `MoneyFlow.jsx`            | ✅         | Chapter 16 |
+| `SankeyFlow.jsx`            | ✅         | Chapter 16 |
 | `MoneyWeatherBackdrop.jsx` | ✅         | Chapter 16 |
 | `RecentActivity.jsx`       | ✅         | Chapter 16 |
 | `SafeToSpendCard.jsx`      | ✅         | Chapter 16 |
 | `SpendingChart.jsx`        | ✅         | Chapter 16 |
 | `StatsCard.jsx`            | ✅         | Chapter 16 |
-| `WhatIfSimulator.jsx`      | ✅         | Chapter 16 |
 
-#### Other Components (11 files)
+#### Other Components (10 files)
 
 | Component              | Documented | Coverage   |
 | ---------------------- | ---------- | ---------- |
@@ -200,10 +197,9 @@
 | `GoalForm.jsx`         | ✅         | Chapter 16 |
 | `Sidebar.jsx`          | ✅         | Chapter 16 |
 | `NotificationBell.jsx` | ✅         | Chapter 16 |
-| `HealthScoreGauge.jsx` | ✅         | Chapter 16 |
 | `ErrorBoundary.jsx`    | ✅         | Chapter 16 |
 
-**Total**: 34/34 files = **100% coverage**
+**Total**: 30/30 files = **100% coverage**
 
 ---
 
@@ -221,8 +217,11 @@
 | `subscriptions.js` | ✅         | Chapter 15 |
 | `transactions.js`  | ✅         | Chapter 15 |
 | `user.js`          | ✅         | Chapter 15 |
+| `loans.js`         | ✅         | Chapter 15 |
+| `lent.js`          | ✅         | Chapter 15 |
+| `calendar.js`      | ✅         | Chapter 15 |
 
-**Total**: 10/10 files = **100% coverage**
+**Total**: 13/13 files = **100% coverage**
 
 ---
 

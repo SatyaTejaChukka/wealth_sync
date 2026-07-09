@@ -25,12 +25,9 @@ graph TB
     subgraph "Dashboard Components"
         SafeToSpendCard
         StatsCard
-        MoneyFlow
+        SankeyFlow
         SpendingChart
-        HealthScoreGauge
-        InsightsPanel
         ActionCenter
-        WhatIfSimulator
     end
 
     subgraph "Feature Components"
@@ -462,22 +459,20 @@ interface StatsCardProps {
 
 ---
 
-### MoneyFlow
+### SankeyFlow
 
-**Path**: `components/dashboard/MoneyFlow.jsx`
+**Path**: `components/dashboard/SankeyFlow.jsx`
 
-**Purpose**: Sankey diagram showing income → expenses → categories
+**Purpose**: Render a custom interactive Cash Flow diagram showing income distribution to categories and savings pool.
 
-**Library**: Recharts or D3.js
+**Visual Representation**:
+- **Left Column**: Income nodes (salary, freelance, etc.)
+- **Middle Column**: Cash pool hub
+- **Right Column**: Category expenditure nodes + final net savings (blue) or deficits (red)
 
-**Visual**:
-
-```
-Income ($5000) ──┬──> Groceries ($500)
-                 ├──> Rent ($1200)
-                 ├──> Entertainment ($300)
-                 └──> Savings ($2000)
-```
+**Interactive Features**:
+- Custom animated SVG paths that glow on mouse hover.
+- Custom overlay tooltips displaying percentage allocations and monetary values.
 
 ---
 
@@ -488,35 +483,10 @@ Income ($5000) ──┬──> Groceries ($500)
 **Purpose**: Line/bar chart for spending over time
 
 **Types**:
-
 - Line chart: Daily spending trend
 - Bar chart: Spending by category
 
 **Library**: Recharts
-
----
-
-### HealthScoreGauge
-
-**Path**: `components/HealthScoreGauge.jsx`
-
-**Purpose**: Circular gauge showing health score (0-100)
-
-**Visual**: Half-circle/radial gauge
-
-- 0-40: Red (Poor)
-- 41-70: Yellow (Fair)
-- 71-100: Green (Good)
-
----
-
-### InsightsPanel
-
-**Path**: `components/dashboard/InsightsPanel.jsx`
-
-**Purpose**: AI-generated insights (e.g., "You spent 20% more on dining than last month")
-
-**Data**: Calculated by backend health score calculator
 
 ---
 
@@ -527,20 +497,6 @@ Income ($5000) ──┬──> Groceries ($500)
 **Purpose**: Action cards (pay bill, approve autopilot, add transaction)
 
 **Layout**: Grid of clickable cards
-
----
-
-### WhatIfSimulator
-
-**Path**: `components/dashboard/WhatIfSimulator.jsx`
-
-**Purpose**: "What if I save $X more?" scenario simulator
-
-**UI**:
-
-- Slider for amount
-- Shows projected savings date
-- Updates in real-time
 
 ---
 
@@ -817,9 +773,9 @@ const { transactions, loading } = useTransactions();
 
 ## Key Takeaways
 
-1. **34 components** organized by category
+1. **32 components** organized by category
 2. **Core UI**: Reusable primitives (Button, Input, Card)
-3. **Dashboard**: Complex visualizations (Charts, Gauges)
+3. **Dashboard**: Complex visualizations (Charts, Flow Diagrams)
 4. **Feature**: Domain-specific forms and tables
 5. **Patterns**: Compound components, render props, custom hooks
 6. **Accessibility**: Keyboard, screen readers, contrast
