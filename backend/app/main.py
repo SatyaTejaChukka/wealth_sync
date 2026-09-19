@@ -51,17 +51,29 @@ app.add_middleware(RequestContextMiddleware)
 
 # Trusted hosts (Host header protection)
 if settings.ALLOWED_HOSTS:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+    allowed_hosts = list(settings.ALLOWED_HOSTS)
+    if "*.onrender.com" not in allowed_hosts and "*" not in allowed_hosts:
+        allowed_hosts.extend(["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com"])
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # CORS
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+cors_origins = list(settings.BACKEND_CORS_ORIGINS) if settings.BACKEND_CORS_ORIGINS else []
+for default_origin in [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://wealthsync-lemon.vercel.app",
+]:
+    if default_origin not in cors_origins:
+        cors_origins.append(default_origin)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_origin_regex=r"^https://.*\.vercel\.app$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Static files
 os.makedirs("app/static/avatars", exist_ok=True)

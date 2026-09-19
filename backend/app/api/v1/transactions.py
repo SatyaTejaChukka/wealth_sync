@@ -222,9 +222,9 @@ async def update_transaction(
 
     await auto_link_bill_or_subscription(db, current_user.id, transaction, explicit_unlink=explicit_unlink)
 
-    db.add(transaction)
+    await db.add(transaction)
     await db.commit()
-    await db.refresh(transaction)
+    await db.refresh(transaction, ['category'])
     return transaction
 
 @router.delete("/{transaction_id}", response_model=TransactionResponse)
@@ -237,15 +237,19 @@ async def delete_transaction(
     Delete a transaction.
     """
     result = await db.execute(
-        select(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id)
+        select(Transaction)
+        .options(selectinload(Transaction.category))
+        .filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id)
     )
     transaction = result.scalars().first()
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
+    response_data = TransactionResponse.model_validate(transaction)
+
     await db.delete(transaction)
     await db.commit()
-    return transaction
+    return response_data
 
 @router.post("/{transaction_id}/complete", response_model=TransactionResponse)
 async def complete_transaction(
@@ -273,7 +277,7 @@ async def complete_transaction(
     transaction.occurred_at = datetime.utcnow() # Update to actual payment time
     db.add(transaction)
     await db.commit()
-    await db.refresh(transaction)
+    await db.refresh(transaction, ['category'])
     
     # Update bill/subscription last_paid_at if linked
     if transaction.bill_id:

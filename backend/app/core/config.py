@@ -35,12 +35,13 @@ class Settings(BaseSettings):
                 return []
             if v.startswith("["):
                 try:
-                    return json.loads(v)
+                    origins = json.loads(v)
+                    return [str(i).strip().rstrip('/') for i in origins if str(i).strip()]
                 except json.JSONDecodeError:
                     pass
-            return [i.strip() for i in v.split(",") if i.strip()]
+            return [i.strip().rstrip('/') for i in v.split(",") if i.strip()]
         if isinstance(v, list):
-            return v
+            return [str(i).strip().rstrip('/') for i in v if str(i).strip()]
         raise ValueError(v)
 
     @field_validator("ALLOWED_HOSTS", mode="before")
