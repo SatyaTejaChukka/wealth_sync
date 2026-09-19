@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func
+from sqlalchemy import func, update
 from uuid import uuid4
 from datetime import datetime
 
@@ -21,6 +21,8 @@ from app.models.transaction import Transaction
 from app.models.bill import Bill
 from app.models.subscription import Subscription
 from app.models.loan import Loan
+from app.models.autopilot_payment import AutopilotPayment
+from app.models.electricity_account import ElectricityBill
 from app.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionResponse
 
 router = APIRouter()
@@ -246,6 +248,18 @@ async def delete_transaction(
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     response_data = TransactionResponse.model_validate(transaction)
+
+    # Unlink any autopilot payments or electricity bills referencing this transaction
+    await db.execute(
+        update(AutopilotPayment)
+        .where(AutopilotPayment.transaction_id == transaction_id)
+        .values(transaction_id=None)
+    )
+    await db.execute(
+        update(ElectricityBill)
+        .where(ElectricityBill.transaction_id == transaction_id)
+        .values(transaction_id=None)
+    )
 
     await db.delete(transaction)
     await db.commit()
