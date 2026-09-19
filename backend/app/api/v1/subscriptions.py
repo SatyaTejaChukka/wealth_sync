@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import update
 from uuid import uuid4
 
 from app.api import deps
@@ -10,6 +11,7 @@ from app.api.validators import ensure_category_owned
 from app.core.database import get_db
 from app.models.user import User
 from app.models.subscription import Subscription
+from app.models.transaction import Transaction
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate, SubscriptionResponse
 
 router = APIRouter()
@@ -97,10 +99,19 @@ async def delete_subscription(
     sub = result.scalars().first()
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    
+
+    response_data = SubscriptionResponse.model_validate(sub)
+
+    # Unlink any transactions referencing this subscription
+    await db.execute(
+        update(Transaction)
+        .where(Transaction.subscription_id == sub_id)
+        .values(subscription_id=None)
+    )
+
     await db.delete(sub)
     await db.commit()
-    return sub
+    return response_data
 
 @router.post("/{sub_id}/log-usage", response_model=SubscriptionResponse)
 async def log_usage(

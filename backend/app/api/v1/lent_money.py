@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.orm import selectinload
 from uuid import uuid4
 from datetime import datetime, date
@@ -152,9 +152,18 @@ async def delete_lent_record(
     if not lent:
         raise HTTPException(status_code=404, detail="Lending profile not found")
 
+    response_data = LentMoneyResponse.model_validate(lent)
+
+    # Unlink any transactions referencing this lending record
+    await db.execute(
+        update(Transaction)
+        .where(Transaction.lent_id == lent_id)
+        .values(lent_id=None)
+    )
+
     await db.delete(lent)
     await db.commit()
-    return lent
+    return response_data
 
 
 @router.post("/{lent_id}/repay", response_model=TransactionResponse)

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import update
 from uuid import uuid4
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from app.api.validators import ensure_category_owned
 from app.core.database import get_db
 from app.models.user import User
 from app.models.bill import Bill
+from app.models.transaction import Transaction
 from app.schemas.bill import BillCreate, BillUpdate, BillResponse
 
 router = APIRouter()
@@ -114,9 +116,18 @@ async def delete_bill(
     if not bill:
         raise HTTPException(status_code=404, detail="Bill not found")
 
+    response_data = BillResponse.model_validate(bill)
+
+    # Unlink any transactions referencing this bill
+    await db.execute(
+        update(Transaction)
+        .where(Transaction.bill_id == bill_id)
+        .values(bill_id=None)
+    )
+
     await db.delete(bill)
     await db.commit()
-    return bill
+    return response_data
 
 @router.post("/{bill_id}/mark-paid", response_model=BillResponse)
 async def mark_bill_paid(

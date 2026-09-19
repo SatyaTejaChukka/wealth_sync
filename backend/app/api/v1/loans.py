@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import func, update
 from sqlalchemy.orm import selectinload
 from uuid import uuid4
 from datetime import datetime, date
@@ -216,9 +216,18 @@ async def delete_loan(
     if not loan:
         raise HTTPException(status_code=404, detail="Loan profile not found")
 
+    response_data = LoanResponse.model_validate(loan)
+
+    # Unlink any transactions referencing this loan
+    await db.execute(
+        update(Transaction)
+        .where(Transaction.loan_id == loan_id)
+        .values(loan_id=None)
+    )
+
     await db.delete(loan)
     await db.commit()
-    return loan
+    return response_data
 
 
 @router.post("/{loan_id}/pay", response_model=TransactionResponse)

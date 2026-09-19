@@ -249,6 +249,8 @@ async def delete_category(
             ),
         )
 
+    response_data = CategoryResponse.model_validate(category)
+
     try:
         await db.delete(category)
         await db.commit()
@@ -277,4 +279,4 @@ async def delete_category(
             ),
         )
 
-    return category
+    return response_data

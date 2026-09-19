@@ -82,16 +82,12 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 @app.on_event("startup")
 async def startup():
     logger.info("Starting up application...")
-    # Create tables (dev-only unless explicitly enabled)
-    if settings.AUTO_CREATE_TABLES:
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            logger.info("Database tables created/verified")
-        except Exception as exc:
-            if settings.ENVIRONMENT == "production":
-                raise
-            logger.warning("Skipping database initialization in development: %s", exc)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created/verified")
+    except Exception as exc:
+        logger.warning("Database schema check warning: %s", exc)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -102,6 +98,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "code": ErrorCode.VALIDATION_ERROR.value,
             "detail": exc.errors(),
             "body": str(exc.body),
+        },
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": str(exc) if settings.DEBUG else "An internal server error occurred.",
+            "error_type": type(exc).__name__,
         },
     )
 

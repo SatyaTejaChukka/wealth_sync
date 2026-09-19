@@ -70,10 +70,12 @@ async def delete_goal(
     goal = result.scalars().first()
     if not goal:
         raise HTTPException(status_code=404, detail="Savings Goal not found")
-    
+
+    response_data = SavingsGoalResponse.model_validate(goal)
+
     await db.delete(goal)
     await db.commit()
-    return goal
+    return response_data
 
 @router.post("/{goal_id}/contribute", response_model=SavingsGoalResponse)
 async def contribute_to_goal(

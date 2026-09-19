@@ -114,10 +114,12 @@ async def delete_budget_rule(
     rule = result.scalars().first()
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    
+
+    response_data = BudgetRuleResponse.model_validate(rule)
+
     await db.delete(rule)
     await db.commit()
-    return rule
+    return response_data
 
 
 @router.get("/summary")
