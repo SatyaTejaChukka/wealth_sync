@@ -9,7 +9,7 @@ This module runs daily to check all active bills/subscriptions and:
 
 from celery import shared_task
 import calendar
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select, and_
 from uuid import uuid4
@@ -212,10 +212,75 @@ async def process_loans():
                 
                 await db.commit()
 
+from sqlalchemy.orm import selectinload
+from app.models.electricity_account import ElectricityAccount, ElectricityBill
+from app.services.electricity_service import ElectricityService
+
+async def process_electricity_bills():
+    """
+    Smart Adaptive Polling & Reminder Engine:
+    1. Filter active accounts based on adaptive billing cycle (skip if current month already fetched).
+    2. Concurrently poll eligible accounts with semaphore throttling (max 10 concurrent requests).
+    3. Evaluate due date reminders (3d, 1d, due today, overdue) for all unpaid bills without network calls.
+    """
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(
+            select(ElectricityAccount).filter(ElectricityAccount.is_active == True)
+        )
+        accounts = res.scalars().all()
+
+        accounts_to_poll = []
+        for account in accounts:
+            try:
+                should_poll, _ = await ElectricityService.should_poll_account(db, account)
+                if should_poll:
+                    accounts_to_poll.append(account)
+            except Exception:
+                continue
+
+    # Concurrency throttled background polling
+    if accounts_to_poll:
+        semaphore = asyncio.Semaphore(10)
+
+        async def poll_account(account_id: str):
+            async with semaphore:
+                try:
+                    async with AsyncSessionLocal() as session:
+                        acc_res = await session.execute(
+                            select(ElectricityAccount).filter(ElectricityAccount.id == account_id)
+                        )
+                        acc = acc_res.scalars().first()
+                        if acc:
+                            await ElectricityService.fetch_and_sync_latest_bill(
+                                session, acc, send_notifications=True
+                            )
+                except Exception:
+                    pass
+
+        await asyncio.gather(*(poll_account(acc.id) for acc in accounts_to_poll))
+
+    # Reminder Mode: Evaluate due dates locally with deduplication
+    async with AsyncSessionLocal() as db:
+        unpaid_bills_res = await db.execute(
+            select(ElectricityBill)
+            .join(ElectricityAccount)
+            .filter(
+                ElectricityBill.status == "unpaid",
+                ElectricityAccount.is_active == True,
+            )
+            .options(selectinload(ElectricityBill.account))
+        )
+        unpaid_bills = unpaid_bills_res.scalars().all()
+        for bill in unpaid_bills:
+            try:
+                await ElectricityService.process_due_reminders(db, bill, bill.account)
+            except Exception:
+                continue
+
 @shared_task(name='app.tasks.bill_automation.check_and_create_pending_bills')
 def check_and_create_pending_bills():
     """
-    Main periodic task that runs daily to check bills, subscriptions, and loans.
+    Main periodic task that runs daily to check bills, subscriptions, loans, and electricity bills.
     Creates pending transactions and notifications for upcoming payments.
     Also executes Autopilot payments for due bills.
     """
@@ -223,6 +288,7 @@ def check_and_create_pending_bills():
         await process_bills()
         await process_subscriptions()
         await process_loans()
+        await process_electricity_bills()
 
         from app.services.autopilot import AutopilotService
         async with AsyncSessionLocal() as db:
@@ -235,3 +301,4 @@ def check_and_create_pending_bills():
     asyncio.run(run_all_tasks())
 
     return "Bill automation task completed"
+

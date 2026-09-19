@@ -41,19 +41,18 @@ export const SafeToSpendCard = ({ stats }) => {
           </div>
           
           <div className="mt-2">
-             <span className="text-[2rem] sm:text-[2.8rem] font-extrabold text-white tracking-tight leading-none font-display">
+             <span className="text-[1.85rem] sm:text-[2.8rem] font-extrabold text-white tracking-tight leading-none font-display truncate block" title={formatCurrency(safe_to_spend)}>
                 {(() => {
-                  const { symbol, amount } = splitCurrency(formatCurrency(safe_to_spend));
+                  const { symbol, amount, isNegative } = splitCurrency(formatCurrency(safe_to_spend));
                   return (
                     <>
+                      {isNegative && <span className="text-rose-400 font-bold mr-0.5 select-none">-</span>}
                       <span className="text-[0.55em] font-medium text-white/30 mr-1 select-none">{symbol}</span>
                       {amount}
                     </>
                   );
                 })()}
              </span>
-
-
           </div>
         </div>
 

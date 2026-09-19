@@ -43,3 +43,9 @@ async def client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://wealthsync.onrender.com") as c:
         yield c
+
+@pytest.fixture
+async def db_session():
+    async with TestingSessionLocal() as session:
+        yield session
+

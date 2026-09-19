@@ -9,7 +9,8 @@ import {
   Repeat,
   Landmark,
   HandCoins,
-  AlertCircle
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -92,6 +93,8 @@ export default function Calendar() {
   // Event category color indicator mapping
   const getEventBadgeClass = (type) => {
     switch (type) {
+      case 'electricity':
+        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
       case 'bill':
         return 'bg-red-500/10 text-red-400 border-red-500/20';
       case 'loan':
@@ -107,6 +110,8 @@ export default function Calendar() {
 
   const getEventDotClass = (type) => {
     switch (type) {
+      case 'electricity':
+        return 'bg-amber-400';
       case 'bill':
         return 'bg-red-500';
       case 'loan':
@@ -122,6 +127,8 @@ export default function Calendar() {
 
   const getEventIcon = (type) => {
     switch (type) {
+      case 'electricity':
+        return <Zap size={14} className="text-amber-400" />;
       case 'bill':
         return <FileText size={14} className="text-red-400" />;
       case 'loan':
@@ -190,6 +197,21 @@ export default function Calendar() {
       setSelectedDayEvents(dayEvents);
     } catch (e) {
       toast.error('Failed to settle lent money');
+    }
+  };
+
+  const handlePayElectricity = async (billId) => {
+    try {
+      await api.post(`/electricity/bills/${billId}/pay`, {});
+      toast.success('Electricity bill payment recorded & logged as expense!');
+
+      const updatedEvents = await calendarService.getEvents(year, month);
+      setEvents(updatedEvents);
+
+      const dayEvents = updatedEvents.filter(e => e.due_date === selectedDateStr);
+      setSelectedDayEvents(dayEvents);
+    } catch (e) {
+      toast.error('Failed to pay electricity bill');
     }
   };
 
@@ -350,6 +372,14 @@ export default function Calendar() {
                         {/* Event action button */}
                         {!isPaid && (
                           <div className="pt-2 border-t border-white/2">
+                            {event.type === 'electricity' && (
+                              <Button 
+                                onClick={() => handlePayElectricity(event.linked_id)}
+                                className="w-full bg-linear-to-r from-amber-500 to-yellow-500 text-zinc-950 font-bold text-xs py-1.5 h-8 border-0"
+                              >
+                                Pay Electricity Bill
+                              </Button>
+                            )}
                             {event.type === 'bill' && (
                               <Button 
                                 onClick={() => handlePayBill(event.linked_id)}

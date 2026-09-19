@@ -326,9 +326,10 @@ export function SafeToSpendOrb() {
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">{viewMode === 'daily' ? 'Today' : 'This month'}</p>
               <p className="text-4xl leading-none font-bold text-white mt-2 tabular-nums">
                 {(() => {
-                  const { symbol, amount } = splitCurrency(formatCurrency(displayAmount).replace('.00', ''));
+                  const { symbol, amount, isNegative } = splitCurrency(formatCurrency(displayAmount).replace('.00', ''));
                   return (
                     <>
+                      {isNegative && <span className="text-rose-400 font-bold mr-0.5 select-none">-</span>}
                       <span className="text-[0.55em] font-medium text-white/30 mr-0.5 select-none">{symbol}</span>
                       {amount}
                     </>

@@ -6,16 +6,22 @@ import { Modal } from '../../components/ui/Modal.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Select } from '../../components/ui/Select.jsx';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
-import { Plus, Trash2, CheckCircle, CircleX, Calendar } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, CircleX, Calendar, Zap, Sparkles } from 'lucide-react';
 import { billService } from '../../services/bills.js';
+import { electricityService } from '../../services/electricity.js';
 import { categoryService } from '../../services/categories.js';
 import { useToast } from '../../components/ui/Toast.jsx';
+import { ElectricityCard } from '../../components/bills/ElectricityCard.jsx';
+import { LinkElectricityModal } from '../../components/bills/LinkElectricityModal.jsx';
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
+  const [electricityAccounts, setElectricityAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingElectricity, setLoadingElectricity] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showElectricityModal, setShowElectricityModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
   const [pendingDeleteBillId, setPendingDeleteBillId] = useState(null);
   const [formData, setFormData] = useState({
@@ -29,6 +35,7 @@ export default function Bills() {
 
   useEffect(() => {
     loadBills();
+    loadElectricityAccounts();
     loadCategories();
   }, []);
 
@@ -40,6 +47,52 @@ export default function Bills() {
       console.error('Failed to load bills', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadElectricityAccounts = async () => {
+    try {
+      setLoadingElectricity(true);
+      const data = await electricityService.getAccounts();
+      setElectricityAccounts(data);
+    } catch (err) {
+      console.error('Failed to load electricity accounts', err);
+    } finally {
+      setLoadingElectricity(false);
+    }
+  };
+
+  const handleFetchElectricityBill = async (accountId) => {
+    try {
+      await electricityService.fetchBill(accountId);
+      toast.success('Latest electricity bill fetched!');
+      loadElectricityAccounts();
+    } catch (err) {
+      console.error('Failed to fetch bill', err);
+      toast.error('Could not fetch latest bill from provider');
+    }
+  };
+
+  const handlePayElectricityBill = async (billId) => {
+    try {
+      await electricityService.payBill(billId);
+      toast.success('Electricity bill payment recorded & logged as expense!');
+      loadElectricityAccounts();
+    } catch (err) {
+      console.error('Failed to pay bill', err);
+      toast.error('Failed to record payment');
+    }
+  };
+
+  const handleDeleteElectricityAccount = async (accountId) => {
+    if (!window.confirm('Are you sure you want to unlink this electricity connection?')) return;
+    try {
+      await electricityService.deleteAccount(accountId);
+      toast.success('Electricity connection unlinked');
+      loadElectricityAccounts();
+    } catch (err) {
+      console.error('Failed to delete account', err);
+      toast.error('Failed to unlink account');
     }
   };
 
@@ -138,33 +191,105 @@ export default function Bills() {
     : null;
 
   return (
-    <div className="space-y-6 animate-slide-up">
+    <div className="space-y-8 animate-slide-up">
+      {/* Header with dual actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Bills</h1>
-          <p className="text-zinc-400 mt-1">Manage your recurring bills</p>
+          <h1 className="text-3xl font-bold text-white">Bills & Utilities</h1>
+          <p className="text-zinc-400 mt-1">Manage recurring bills & live electricity connections</p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingBill(null);
-            setFormData({ name: '', amount: '', due_day: '', category_id: '', autopay_enabled: false });
-            setShowModal(true);
-          }}
-          variant="gradient"
-          icon={<Plus size={18} />}
-          className="w-full sm:w-auto"
-        >
-          Add Bill
-        </Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button
+            onClick={() => setShowElectricityModal(true)}
+            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold border-none shadow-lg shadow-amber-500/20"
+            icon={<Zap size={18} className="fill-zinc-950" />}
+          >
+            Link Electricity Bill
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingBill(null);
+              setFormData({ name: '', amount: '', due_day: '', category_id: '', autopay_enabled: false });
+              setShowModal(true);
+            }}
+            variant="gradient"
+            icon={<Plus size={18} />}
+            className="w-full sm:w-auto"
+          >
+            Add Manual Bill
+          </Button>
+        </div>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {loading ? (
-          <div className="p-8 text-center text-zinc-500">Loading bills...</div>
-        ) : bills.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500">No bills found. Add your first bill!</div>
+      {/* Section 1: Linked Electricity Connections (Live Auto-Fetch) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <Zap className="h-4 w-4 fill-amber-400/40" />
+            </div>
+            <h2 className="text-lg font-semibold text-white tracking-tight">Linked Electricity Connections</h2>
+            <span className="text-xs bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full font-medium">
+              Live Auto-Fetch
+            </span>
+          </div>
+        </div>
+
+        {loadingElectricity ? (
+          <div className="p-8 text-center text-zinc-500 rounded-2xl border border-white/5 bg-zinc-900/30">
+            Checking electricity connections...
+          </div>
+        ) : electricityAccounts.length === 0 ? (
+          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-zinc-900/40 to-zinc-900/20 p-6 backdrop-blur-md">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-white flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-400" />
+                  Auto-fetch your real monthly electricity bill
+                </h3>
+                <p className="text-xs text-zinc-400 max-w-xl">
+                  Link your APSPDCL, BESCOM, or state electricity connection once with your Service Number. WealthSync will automatically poll generated bills, track units consumed, and alert you before due dates.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setShowElectricityModal(true)}
+                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shrink-0"
+                icon={<Zap size={14} />}
+              >
+                Connect Provider
+              </Button>
+            </div>
+          </div>
         ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {electricityAccounts.map((account) => (
+              <ElectricityCard
+                key={account.id}
+                account={account}
+                onFetch={handleFetchElectricityBill}
+                onPay={handlePayElectricityBill}
+                onDelete={handleDeleteElectricityAccount}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Section 2: Recurring / Manual Bills */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white tracking-tight">Recurring Bills & Subscriptions</h2>
+          <span className="text-xs text-zinc-500 font-medium">{bills.length} total</span>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {loading ? (
+            <div className="p-8 text-center text-zinc-500">Loading bills...</div>
+          ) : bills.length === 0 ? (
+            <div className="p-8 text-center text-zinc-500">No manual bills found. Add your first bill!</div>
+          ) : (
           bills.map((bill) => (
             <div
               key={bill.id}
@@ -347,6 +472,7 @@ export default function Bills() {
           </table>
         </div>
       </div>
+    </div>
 
       <Modal
         isOpen={showModal}
@@ -456,6 +582,15 @@ export default function Bills() {
           if (!id) return;
           setPendingDeleteBillId(null);
           await handleDelete(id);
+        }}
+      />
+
+      <LinkElectricityModal
+        isOpen={showElectricityModal}
+        onClose={() => setShowElectricityModal(false)}
+        onSuccess={() => {
+          toast.success('Electricity connection linked & verified successfully!');
+          loadElectricityAccounts();
         }}
       />
     </div>

@@ -10,6 +10,7 @@ from app.models.health_score import FinancialHealthScore
 from app.models.notification import Notification
 from app.models.loan import Loan
 from app.models.lent_money import LentMoney
+from app.models.electricity_account import ElectricityAccount, ElectricityBill
 from app.models.autopilot_payment import (
     AutopilotPayment,
     AutopilotPaymentStateHistory,

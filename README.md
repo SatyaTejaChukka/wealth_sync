@@ -13,6 +13,7 @@ A comprehensive, full-stack personal finance management system built with **Fast
 - **Income Tracking** — Manage multiple income sources (salary, freelance, dividends)
 - **Expense Tracking** — Daily transaction logging with category tagging
 - **Bill Management** — Recurring bill tracking with due-day reminders and autopay flags
+- **Electricity Bill Auto-Fetch** — Google Pay / PhonePe-style connection linking (APSPDCL, BESCOM, TSSPDCL, MSEDCL) with automated background bill polling, kWh consumption tracking, and proactive due reminders
 - **Subscription Tracker** — Monitor recurring subscriptions with billing cycle tracking
 - **Loan Tracking** — Track active loans, interest rates (simple/compound), and tenure with automatic EMI logs
 - **P2P Lent Money** — Manage peer-to-peer lending with dynamic day-accurate accrued interest calculators and one-click settlements
@@ -22,7 +23,7 @@ A comprehensive, full-stack personal finance management system built with **Fast
 - **Budget Rules** — Create fixed-amount or percentage-based budget allocations per category
 - **Daily Spendable** — Calculates your "safe to spend" daily limit based on income, bills, and allocations
 - **Budget Summary** — Monthly overview of allocated vs. spent per category
-- **Financial Calendar** — Unified monthly calendar aggregating upcoming bills, loan EMIs, subscriptions, and expected lent returns with quick-pay actions
+- **Financial Calendar** — Unified monthly calendar aggregating upcoming bills, electricity dues, loan EMIs, subscriptions, and expected lent returns with quick-pay actions
 
 ### Savings & Goals
 
@@ -64,11 +65,11 @@ A comprehensive, full-stack personal finance management system built with **Fast
 wealth_sync/
 ├── backend/
 │   ├── app/
-│   │   ├── api/v1/          # 15 route modules (auth, bills, budgets, loans, lent, calendar, etc.)
+│   │   ├── api/v1/          # 16 route modules (auth, bills, electricity, budgets, loans, lent, calendar, etc.)
 │   │   ├── core/            # Config, database, security, middleware
-│   │   ├── models/          # SQLAlchemy models (12 entities)
+│   │   ├── models/          # SQLAlchemy models (14 entities)
 │   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── services/        # Business logic (budget engine, loans, lent services)
+│   │   ├── services/        # Business logic (budget engine, loans, lent, electricity services)
 │   │   ├── tasks/           # Celery background tasks
 │   │   └── static/avatars/  # User avatar uploads
 │   ├── alembic/versions/    # Database migrations
@@ -77,9 +78,9 @@ wealth_sync/
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # 23 reusable components (UI, dashboard, etc.)
+│   │   ├── components/      # 25 reusable components (UI, bills, dashboard, etc.)
 │   │   ├── pages/           # 13 page views (Landing, Dashboard, Loans, Lent, Calendar, etc.)
-│   │   ├── services/        # 12 API service modules
+│   │   ├── services/        # 13 API service modules
 │   │   ├── lib/             # Auth context, API client, utilities
 │   │   └── layouts/         # MainLayout with Sidebar
 │   ├── package.json
@@ -296,6 +297,7 @@ All endpoints are under `/api/v1`. Interactive docs available at `/docs` (Swagge
 | Categories      | `/categories`         | Spending categories                  |
 | Budgets         | `/budgets`            | Budget rules and monthly summaries   |
 | Bills           | `/bills`              | Recurring bill tracking              |
+| Electricity     | `/electricity`        | Live utility connection & bill fetch |
 | Subscriptions   | `/subscriptions`      | Subscription management              |
 | Goals           | `/goals`              | Savings goals with contribution logs |
 | Loans           | `/loans`              | Active loan tracker and EMI logs     |

@@ -4,6 +4,7 @@ from typing import Any, List, Optional, Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 
 from app.api import deps
@@ -13,13 +14,14 @@ from app.models.bill import Bill
 from app.models.loan import Loan
 from app.models.subscription import Subscription
 from app.models.lent_money import LentMoney
+from app.models.electricity_account import ElectricityAccount, ElectricityBill
 
 router = APIRouter()
 
 class CalendarEventResponse(BaseModel):
     title: str
     amount: float
-    type: str  # "bill", "loan", "subscription", "lent"
+    type: str  # "bill", "loan", "subscription", "lent", "electricity"
     due_date: str  # YYYY-MM-DD
     status: str  # "paid", "unpaid", "expected" (for lent returns)
     linked_id: str
@@ -153,5 +155,25 @@ async def get_calendar_events(
                     status="expected",
                     linked_id=lent.id
                 ))
+
+    # 5. Fetch Electricity Bills
+    elec_res = await db.execute(
+        select(ElectricityBill)
+        .join(ElectricityAccount)
+        .filter(ElectricityAccount.user_id == current_user.id)
+        .options(selectinload(ElectricityBill.account))
+    )
+    elec_bills = elec_res.scalars().all()
+    for e_bill in elec_bills:
+        if e_bill.due_date.year == year and e_bill.due_date.month == month:
+            account_label = e_bill.account.nickname or e_bill.account.provider_code
+            events.append(CalendarEventResponse(
+                title=f"⚡ Electricity: {account_label}",
+                amount=float(e_bill.amount),
+                type="electricity",
+                due_date=e_bill.due_date.isoformat(),
+                status=e_bill.status,
+                linked_id=e_bill.id
+            ))
 
     return events

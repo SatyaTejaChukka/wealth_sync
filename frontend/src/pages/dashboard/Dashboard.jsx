@@ -192,15 +192,16 @@ export default function Dashboard() {
 
 
             {/* Stats grid - PRIMARY DATA TOP */}
-            <div className="grid grid-cols-3 gap-2 opacity-0 animate-stagger-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 opacity-0 animate-stagger-1">
               <StatsCard
-                title="Balance"
+                title="Total Balance"
                 value={formatCurrency(summary.total_balance)}
                 trend={summary.balance_change >= 0 ? 'up' : 'down'}
                 trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
                 icon={Wallet}
                 color="violet"
-                className="shadow-xl shadow-violet-500/5 px-2 py-3"
+                className="col-span-2 sm:col-span-1 shadow-xl shadow-violet-500/5"
+                isHero
               />
               <StatsCard
                 title="Income"
@@ -209,7 +210,7 @@ export default function Dashboard() {
                 trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
                 icon={TrendingUp}
                 color="emerald"
-                className="shadow-xl shadow-emerald-500/5 px-2 py-3"
+                className="col-span-1 shadow-xl shadow-emerald-500/5"
               />
               <StatsCard
                 title="Expenses"
@@ -218,7 +219,7 @@ export default function Dashboard() {
                 trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
                 icon={ArrowUpRight}
                 color="rose"
-                className="shadow-xl shadow-rose-500/5 px-2 py-3"
+                className="col-span-1 shadow-xl shadow-rose-500/5"
               />
             </div>
 
