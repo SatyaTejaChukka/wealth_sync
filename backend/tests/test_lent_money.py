@@ -1,5 +1,6 @@
 import time
 from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 import pytest
 from httpx import AsyncClient
 
@@ -37,7 +38,7 @@ async def test_lent_money_crud_and_custom_rate(client: AsyncClient):
         "interest_rate_val": 2.0,
         "interest_rate_basis": 100.0,
         "interest_frequency": "monthly",
-        "lent_at": (date.today() - timedelta(days=30)).isoformat(), # exactly 30 days ago
+        "lent_at": (date.today() - relativedelta(months=1)).isoformat(), # exactly 1 month ago
         "category_id": category_id,
         "notes": "Lent for short term business support"
     }
@@ -60,12 +61,12 @@ async def test_lent_money_crud_and_custom_rate(client: AsyncClient):
     # Interest calculation verify:
     # Principal: 50,000
     # Rate: 2 rs per 100 per month = 2% per month
-    # Duration: exactly 30 days = 1 month
+    # Duration: exactly 1 month
     # Expected simple interest: 50,000 * (2/100) * 1 = 1,000
     # Expected outstanding balance: 50,000 + 1,000 = 51,000
     assert float(details["accrued_interest"]) == 1000.0
     assert float(details["outstanding_balance"]) == 51000.0
-    assert details["elapsed_duration"]["months"] == 1 or (details["elapsed_duration"]["months"] == 0 and details["elapsed_duration"]["days"] == 30)
+    assert details["elapsed_duration"]["months"] == 1
 
 
 @pytest.mark.asyncio
@@ -73,14 +74,14 @@ async def test_lent_money_repayment_flow(client: AsyncClient):
     token = await signup_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
-    # 1. Create Lent Record (simple interest 12% p.a., lent 365 days ago)
+    # 1. Create Lent Record (simple interest 12% p.a., lent 1 year ago)
     lent_payload = {
         "borrower_name": "Alice Smith",
         "principal_amount": 10000.0,
         "interest_rate_type": "percentage",
         "interest_rate_val": 12.0,
         "interest_frequency": "yearly",
-        "lent_at": (date.today() - timedelta(days=365)).isoformat()
+        "lent_at": (date.today() - relativedelta(years=1)).isoformat()
     }
     create_res = await client.post(
         "/api/v1/lent/",
@@ -132,9 +133,9 @@ async def test_lent_money_compound_interest(client: AsyncClient):
     token = await signup_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Create Lent Record (borrower: Bob, 10% monthly compounding interest, lent 60 days ago)
+    # Create Lent Record (borrower: Bob, 10% monthly compounding interest, lent 2 months ago)
     # principal: 10,000, 10% per month compounding
-    # delta_days = 60 days = 2 months
+    # delta_months = 2 months
     # Formula: 10,000 * ((1 + 0.1) ^ 2) - 10,000 = 10,000 * (1.21 - 1) = 2,100 accrued interest.
     lent_payload = {
         "borrower_name": "Bob Compounding",
@@ -143,7 +144,7 @@ async def test_lent_money_compound_interest(client: AsyncClient):
         "interest_rate_val": 10.0,
         "interest_frequency": "monthly",
         "interest_type": "compound",
-        "lent_at": (date.today() - timedelta(days=60)).isoformat()
+        "lent_at": (date.today() - relativedelta(months=2)).isoformat()
     }
 
     create_res = await client.post(

@@ -7,6 +7,7 @@ import { Modal } from '../../components/ui/Modal.jsx';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
 import { GoalForm } from '../../components/goals/GoalForm.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
+import { formatCurrency } from '../../lib/format.js';
 
 function ProgressBar({ current, target }) {
     const safeCurrent = Math.max(0, current);
@@ -26,7 +27,7 @@ function ProgressBar({ current, target }) {
 function formatGoalCurrency(value) {
     const amount = Number(value);
     const safe = Number.isFinite(amount) ? amount : 0;
-    return `$${safe.toFixed(0)}`;
+    return formatCurrency(safe);
 }
 
 export default function Goals() {
@@ -80,7 +81,7 @@ export default function Goals() {
           await goalService.contribute(id, amount);
           setAddingFundsTo(null);
           setRefreshTrigger(p => p+1);
-          toast.success(`$${amount.toFixed(2)} added to goal`);
+          toast.success(`${formatCurrency(amount)} added to goal`);
           
           if (viewingGoal && viewingGoal.id === id) {
               // Refresh logs if viewing details
@@ -232,8 +233,8 @@ export default function Goals() {
 					  <CardContent className="space-y-4">
 						  <div className="flex items-end justify-between">
 							  <div>
-								  <p className="text-2xl font-bold text-white">${parseFloat(goal.current_amount).toFixed(0)}</p>
-								  <p className="text-xs text-zinc-500">of ${parseFloat(goal.target_amount).toFixed(0)}</p>
+								  <p className="text-2xl font-bold text-white">{formatCurrency(goal.current_amount)}</p>
+								  <p className="text-xs text-zinc-500">of {formatCurrency(goal.target_amount)}</p>
                                   <p className="text-[11px] text-indigo-300 mt-1">
                                       Committed: {formatGoalCurrency(safeCommittedMonthly)} / month
                                   </p>

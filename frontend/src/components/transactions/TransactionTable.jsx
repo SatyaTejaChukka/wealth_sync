@@ -11,6 +11,7 @@ import { Modal } from '../ui/Modal.jsx';
 import { ConfirmDialog } from '../ui/ConfirmDialog.jsx';
 import { TransactionForm } from './TransactionForm.jsx';
 import { useToast } from '../ui/Toast.jsx';
+import { formatCurrency } from '../../lib/format.js';
 
 const STATUS_META = {
   pending: {
@@ -275,7 +276,7 @@ export function TransactionTable({ refreshTrigger }) {
                       transaction.type === 'INCOME' ? 'text-emerald-400' : 'text-white'
                     )}
                   >
-                    {transaction.type === 'INCOME' ? '+' : ''}${parseFloat(transaction.amount).toFixed(2)}
+                    {transaction.type === 'INCOME' ? '+' : ''}{formatCurrency(transaction.amount)}
                   </span>
                 </div>
 
@@ -425,7 +426,7 @@ export function TransactionTable({ refreshTrigger }) {
                           transaction.type === 'INCOME' ? 'text-emerald-400' : 'text-white'
                         )}
                       >
-                        {transaction.type === 'INCOME' ? '+' : ''}${parseFloat(transaction.amount).toFixed(2)}
+                        {transaction.type === 'INCOME' ? '+' : ''}{formatCurrency(transaction.amount)}
                       </td>
                       <td className="p-6 text-right whitespace-nowrap">
                         {transaction.status === 'pending' && (
@@ -546,7 +547,7 @@ export function TransactionTable({ refreshTrigger }) {
                   viewingTransaction.type === 'INCOME' ? 'text-emerald-400' : 'text-white'
                 )}
               >
-                ${parseFloat(viewingTransaction.amount).toFixed(2)}
+                {formatCurrency(viewingTransaction.amount)}
               </span>
             </div>
 

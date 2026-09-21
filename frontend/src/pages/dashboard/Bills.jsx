@@ -13,6 +13,7 @@ import { categoryService } from '../../services/categories.js';
 import { useToast } from '../../components/ui/Toast.jsx';
 import { ElectricityCard } from '../../components/bills/ElectricityCard.jsx';
 import { LinkElectricityModal } from '../../components/bills/LinkElectricityModal.jsx';
+import { formatCurrency } from '../../lib/format.js';
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
@@ -312,7 +313,7 @@ export default function Bills() {
                     Due day {bill.due_day}
                   </p>
                 </div>
-                <span className="text-lg font-bold text-white">${parseFloat(bill.amount_estimated).toFixed(2)}</span>
+                <span className="text-lg font-bold text-white">{formatCurrency(bill.amount_estimated)}</span>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 {bill.category && (
@@ -402,7 +403,7 @@ export default function Bills() {
                     className="hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <td className="p-6 font-medium text-white">{bill.name}</td>
-                    <td className="p-6 text-white font-bold">${parseFloat(bill.amount_estimated).toFixed(2)}</td>
+                    <td className="p-6 text-white font-bold">{formatCurrency(bill.amount_estimated)}</td>
                     <td className="p-6 text-zinc-300">
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-zinc-500" />

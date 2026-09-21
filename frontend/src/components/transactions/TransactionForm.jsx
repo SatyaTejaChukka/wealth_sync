@@ -8,6 +8,7 @@ import { billService } from '../../services/bills.js';
 import { subscriptionService } from '../../services/subscriptions.js';
 import { Plus, Check } from 'lucide-react';
 import { useToast } from '../ui/Toast.jsx';
+import { formatCurrency } from '../../lib/format.js';
 
 function toDatetimeLocalValue(value) {
   if (!value) return '';
@@ -24,7 +25,7 @@ function getInitialLinkType(initialData) {
 
 function formatRecurringAmount(value) {
   const amount = Number(value);
-  return Number.isFinite(amount) ? `$${amount.toFixed(2)}` : '$0.00';
+  return Number.isFinite(amount) ? formatCurrency(amount) : formatCurrency(0);
 }
 
 export function TransactionForm({ onSubmit, onCancel, initialData = {} }) {
@@ -359,7 +360,7 @@ export function TransactionForm({ onSubmit, onCancel, initialData = {} }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Amount</label>
+            <label className="text-sm font-medium text-zinc-400">Amount (₹)</label>
             <Input 
                 required
                 type="number"

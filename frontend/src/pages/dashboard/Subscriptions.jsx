@@ -10,6 +10,7 @@ import { subscriptionService } from '../../services/subscriptions.js';
 import { categoryService } from '../../services/categories.js';
 import { cn } from '../../lib/utils';
 import { useToast } from '../../components/ui/Toast.jsx';
+import { formatCurrency } from '../../lib/format.js';
 
 export default function Subscriptions() {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -233,7 +234,7 @@ export default function Subscriptions() {
                 </span>
                 <span className="text-zinc-500">
                   {sub.usage_count > 0
-                    ? `$${(Number(sub.amount) / Number(sub.usage_count)).toFixed(2)} per use`
+                    ? `${formatCurrency(Number(sub.amount) / Number(sub.usage_count))} per use`
                     : 'No usage logged'}
                 </span>
               </div>
@@ -321,7 +322,7 @@ export default function Subscriptions() {
                     className="hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <td className="p-6 font-medium text-white">{sub.name}</td>
-                    <td className="p-6 text-white font-bold">${parseFloat(sub.amount).toFixed(2)}</td>
+                    <td className="p-6 text-white font-bold">{formatCurrency(sub.amount)}</td>
                     <td className="p-6">
                       <span className={cn(
                         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
@@ -356,7 +357,7 @@ export default function Subscriptions() {
                       <div className="text-zinc-300 font-medium">{sub.usage_count ?? 0} uses</div>
                       <div className="text-xs text-zinc-500 mt-1">
                         {sub.usage_count > 0
-                          ? `$${(Number(sub.amount) / Number(sub.usage_count)).toFixed(2)} per use`
+                          ? `${formatCurrency(Number(sub.amount) / Number(sub.usage_count))} per use`
                           : 'No usage logged'}
                       </div>
                     </td>
