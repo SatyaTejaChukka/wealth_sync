@@ -161,3 +161,62 @@ async def test_lent_money_compound_interest(client: AsyncClient):
 
     assert float(details["accrued_interest"]) == 2100.0
     assert float(details["outstanding_balance"]) == 12100.0
+
+
+@pytest.mark.asyncio
+async def test_lent_money_delete(client: AsyncClient):
+    token = await signup_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. Create a category
+    cat_res = await client.post(
+        "/api/v1/categories/",
+        json={"name": "Lending Cat", "color": "#10b981"},
+        headers=headers
+    )
+    assert cat_res.status_code == 201
+    category_id = cat_res.json()["id"]
+
+    # 2. Create Lent Record
+    lent_payload = {
+        "borrower_name": "Delete Me",
+        "principal_amount": 5000.0,
+        "interest_rate_type": "percentage",
+        "interest_rate_val": 2.0,
+        "interest_frequency": "monthly",
+        "lent_at": date.today().isoformat(),
+        "category_id": category_id
+    }
+    create_res = await client.post("/api/v1/lent/", json=lent_payload, headers=headers)
+    assert create_res.status_code == 201
+    lent_id = create_res.json()["id"]
+
+    # 3. Record a repayment
+    repay_res = await client.post(
+        f"/api/v1/lent/{lent_id}/repay",
+        params={"amount": 1000.0, "notes": "Part repayment"},
+        headers=headers
+    )
+    assert repay_res.status_code == 200
+
+    # 4. Delete Lent Record
+    del_res = await client.delete(f"/api/v1/lent/{lent_id}", headers=headers)
+    assert del_res.status_code == 200, f"Delete failed: {del_res.status_code} {del_res.text}"
+
+    # 5. Test deletion with category_id = None
+    lent_payload_no_cat = {
+        "borrower_name": "Delete Me No Cat",
+        "principal_amount": 3000.0,
+        "interest_rate_type": "percentage",
+        "interest_rate_val": 1.0,
+        "interest_frequency": "monthly",
+        "lent_at": date.today().isoformat(),
+        "category_id": None
+    }
+    create_res2 = await client.post("/api/v1/lent/", json=lent_payload_no_cat, headers=headers)
+    assert create_res2.status_code == 201
+    lent_id2 = create_res2.json()["id"]
+
+    del_res2 = await client.delete(f"/api/v1/lent/{lent_id2}", headers=headers)
+    assert del_res2.status_code == 200, f"Delete failed: {del_res2.status_code} {del_res2.text}"
+

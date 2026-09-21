@@ -143,7 +143,7 @@ async def delete_lent_record(
     Remove a lending record.
     """
     result = await db.execute(
-        select(LentMoney).filter(
+        select(LentMoney).options(selectinload(LentMoney.category)).filter(
             LentMoney.id == lent_id,
             LentMoney.user_id == current_user.id
         )

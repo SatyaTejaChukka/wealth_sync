@@ -36,5 +36,25 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             response.headers["X-Trace-ID"] = request_id
             response.headers["X-Process-Time"] = f"{process_time:.2f}ms"
             return response
+        except Exception as exc:
+            import logging
+            from fastapi.responses import JSONResponse
+            from app.core.config import settings
+            logging.getLogger(__name__).error(
+                f"Unhandled exception on {request.method} {request.url}: {exc}", 
+                exc_info=True
+            )
+            process_time = (time.time() - start_time) * 1000
+            response = JSONResponse(
+                status_code=500,
+                content={
+                    "detail": str(exc) if settings.DEBUG else "An internal server error occurred.",
+                    "error_type": type(exc).__name__,
+                },
+            )
+            response.headers["X-Request-ID"] = request_id
+            response.headers["X-Trace-ID"] = request_id
+            response.headers["X-Process-Time"] = f"{process_time:.2f}ms"
+            return response
         finally:
             request_id_ctx_var.reset(token)

@@ -207,7 +207,7 @@ async def delete_loan(
     Remove a loan profile.
     """
     result = await db.execute(
-        select(Loan).filter(
+        select(Loan).options(selectinload(Loan.category)).filter(
             Loan.id == loan_id,
             Loan.user_id == current_user.id
         )
