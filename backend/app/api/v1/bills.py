@@ -1,9 +1,9 @@
 from typing import Any, List, Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from uuid import uuid4
 from datetime import datetime
 
@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.bill import Bill
 from app.models.transaction import Transaction
+from app.models.autopilot_payment import AutopilotPayment
 from app.schemas.bill import BillCreate, BillUpdate, BillResponse
 
 router = APIRouter()
@@ -104,10 +105,11 @@ async def update_bill(
 async def delete_bill(
     bill_id: str,
     current_user: Annotated[User, Depends(deps.get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    delete_transactions: bool = Query(True, description="Whether to also delete transactions associated with this bill")
 ) -> Any:
     """
-    Delete a bill.
+    Delete a bill and clean up related records.
     """
     result = await db.execute(
         select(Bill).options(selectinload(Bill.category)).filter(Bill.id == bill_id, Bill.user_id == current_user.id)
@@ -118,11 +120,28 @@ async def delete_bill(
 
     response_data = BillResponse.model_validate(bill)
 
-    # Unlink any transactions referencing this bill
+    if delete_transactions:
+        # Delete transactions linked to this bill
+        await db.execute(
+            delete(Transaction)
+            .where(Transaction.bill_id == bill_id, Transaction.user_id == current_user.id)
+        )
+    else:
+        # Unlink any transactions referencing this bill
+        await db.execute(
+            update(Transaction)
+            .where(Transaction.bill_id == bill_id, Transaction.user_id == current_user.id)
+            .values(bill_id=None)
+        )
+
+    # Clean up any autopilot payment orders referencing this bill
     await db.execute(
-        update(Transaction)
-        .where(Transaction.bill_id == bill_id)
-        .values(bill_id=None)
+        delete(AutopilotPayment)
+        .where(
+            AutopilotPayment.source_type == "BILL",
+            AutopilotPayment.source_id == bill_id,
+            AutopilotPayment.user_id == current_user.id
+        )
     )
 
     await db.delete(bill)

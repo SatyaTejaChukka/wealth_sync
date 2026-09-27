@@ -9,7 +9,9 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.errors import ErrorCode, error_payload
 from app.models.user import User
+from app.schemas.commitment_vault import CommitmentVaultResponse
 from app.services.autopilot import AutopilotService
+from app.services.financial_planning import FinancialPlanningService
 
 router = APIRouter()
 
@@ -79,6 +81,17 @@ async def get_daily_safe_to_spend(
 ):
     data = await AutopilotService.calculate_daily_safe_spend(db, current_user.id)
     return data
+
+
+@router.get("/commitment-vault", response_model=CommitmentVaultResponse)
+async def get_commitment_vault(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(deps.get_current_user)],
+):
+    """
+    Get deterministic allocation of tracked ledger balance into Protected, Future, and Free vaults.
+    """
+    return await FinancialPlanningService.calculate_commitment_vault(db, current_user.id)
 
 
 @router.get("/timeline", response_model=TimelineEventResponse)

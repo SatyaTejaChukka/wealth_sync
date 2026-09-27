@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, update
+from sqlalchemy import func, update, delete
 from sqlalchemy.orm import selectinload
 from uuid import uuid4
 from datetime import datetime, date
@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.loan import Loan
 from app.models.transaction import Transaction
+from app.models.autopilot_payment import AutopilotPayment
 from app.schemas.loan import (
     LoanCreate,
     LoanUpdate,
@@ -201,7 +202,8 @@ async def update_loan(
 async def delete_loan(
     loan_id: str,
     current_user: Annotated[User, Depends(deps.get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    delete_transactions: bool = Query(True, description="Whether to also delete transactions associated with this loan")
 ) -> Any:
     """
     Remove a loan profile.
@@ -218,11 +220,28 @@ async def delete_loan(
 
     response_data = LoanResponse.model_validate(loan)
 
-    # Unlink any transactions referencing this loan
+    if delete_transactions:
+        # Delete transactions referencing this loan
+        await db.execute(
+            delete(Transaction)
+            .where(Transaction.loan_id == loan_id, Transaction.user_id == current_user.id)
+        )
+    else:
+        # Unlink transactions referencing this loan
+        await db.execute(
+            update(Transaction)
+            .where(Transaction.loan_id == loan_id, Transaction.user_id == current_user.id)
+            .values(loan_id=None)
+        )
+
+    # Clean up any autopilot payment orders referencing this loan
     await db.execute(
-        update(Transaction)
-        .where(Transaction.loan_id == loan_id)
-        .values(loan_id=None)
+        delete(AutopilotPayment)
+        .where(
+            AutopilotPayment.source_type == "LOAN",
+            AutopilotPayment.source_id == loan_id,
+            AutopilotPayment.user_id == current_user.id
+        )
     )
 
     await db.delete(loan)

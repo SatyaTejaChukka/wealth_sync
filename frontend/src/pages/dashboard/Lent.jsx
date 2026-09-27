@@ -477,7 +477,7 @@ export default function Lent() {
                 </div>
               )}
 
-              {/* Transactions Timeline */}
+              {/* Transactions History */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs text-zinc-400">
                   <span className="flex items-center gap-1.5">

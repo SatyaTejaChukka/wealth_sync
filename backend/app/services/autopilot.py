@@ -22,6 +22,13 @@ from app.models.savings import SavingsGoal, SavingsLog
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
 from app.services.financial_planning import FinancialPlanningService
+from app.services.planning_dates import (
+    monthly_multiplier,
+    next_income_date,
+    next_recurring_date,
+    parse_payday,
+    safe_day,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -63,48 +70,19 @@ class AutopilotService:
 
     @staticmethod
     def _month_safe_day(year: int, month: int, day: int) -> int:
-        return max(1, min(day, calendar.monthrange(year, month)[1]))
+        return safe_day(year, month, day)
 
     @classmethod
     def _next_recurring_date(cls, now: datetime, day: int) -> datetime:
-        safe_day = cls._month_safe_day(now.year, now.month, day)
-        current_month_date = now.replace(day=safe_day, hour=0, minute=0, second=0, microsecond=0)
-        if current_month_date.date() >= now.date():
-            return current_month_date
-
-        next_month_anchor = (now.replace(day=1) + timedelta(days=32)).replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        next_safe_day = cls._month_safe_day(next_month_anchor.year, next_month_anchor.month, day)
-        return next_month_anchor.replace(day=next_safe_day)
+        return next_recurring_date(now, day)
 
     @staticmethod
     def _parse_payday(payday: str | None) -> int | None:
-        if not payday:
-            return None
-        numeric = "".join(ch for ch in payday if ch.isdigit())
-        if not numeric:
-            return None
-        parsed = int(numeric)
-        if parsed < 1 or parsed > 31:
-            return None
-        return parsed
+        return parse_payday(payday)
 
     @staticmethod
     def _monthly_multiplier(frequency: str | None) -> Decimal:
-        value = (frequency or "monthly").strip().lower()
-        if value == "monthly":
-            return Decimal("1")
-        if value == "weekly":
-            return Decimal("52") / Decimal("12")
-        if value == "biweekly":
-            return Decimal("26") / Decimal("12")
-        if value == "yearly":
-            return Decimal("1") / Decimal("12")
-        if value == "daily":
-            return Decimal("30")
-        # Unknown frequencies default to monthly for safety.
-        return Decimal("1")
+        return monthly_multiplier(frequency)
 
     @staticmethod
     def _to_money(value: Decimal) -> float:

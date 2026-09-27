@@ -38,6 +38,12 @@ export default function Bills() {
     loadBills();
     loadElectricityAccounts();
     loadCategories();
+
+    const handleBillsSync = () => {
+      loadBills();
+    };
+    window.addEventListener('bills:changed', handleBillsSync);
+    return () => window.removeEventListener('bills:changed', handleBillsSync);
   }, []);
 
   const loadBills = async () => {

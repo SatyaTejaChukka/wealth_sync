@@ -6,15 +6,11 @@ export const autopilotService = {
     return response.data;
   },
 
-  getTimeline: async (daysPast = 7, daysFuture = 30) => {
-    const response = await api.get('/autopilot/timeline', {
-      params: {
-        days_past: daysPast,
-        days_future: daysFuture,
-      },
-    });
+  getCommitmentVault: async () => {
+    const response = await api.get('/autopilot/commitment-vault');
     return response.data;
   },
+
 
   listPayments: async (status, limit = 100) => {
     const params = { limit };

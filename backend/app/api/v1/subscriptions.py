@@ -1,9 +1,9 @@
 from typing import Any, List, Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from uuid import uuid4
 
 from app.api import deps
@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
+from app.models.autopilot_payment import AutopilotPayment
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate, SubscriptionResponse
 
 router = APIRouter()
@@ -91,7 +92,8 @@ async def update_subscription(
 async def delete_subscription(
     sub_id: str,
     current_user: Annotated[User, Depends(deps.get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)],
+    delete_transactions: bool = Query(True, description="Whether to also delete transactions associated with this subscription")
 ) -> Any:
     result = await db.execute(
         select(Subscription).options(selectinload(Subscription.category)).filter(Subscription.id == sub_id, Subscription.user_id == current_user.id)
@@ -102,11 +104,28 @@ async def delete_subscription(
 
     response_data = SubscriptionResponse.model_validate(sub)
 
-    # Unlink any transactions referencing this subscription
+    if delete_transactions:
+        # Delete transactions referencing this subscription
+        await db.execute(
+            delete(Transaction)
+            .where(Transaction.subscription_id == sub_id, Transaction.user_id == current_user.id)
+        )
+    else:
+        # Unlink transactions referencing this subscription
+        await db.execute(
+            update(Transaction)
+            .where(Transaction.subscription_id == sub_id, Transaction.user_id == current_user.id)
+            .values(subscription_id=None)
+        )
+
+    # Clean up any autopilot payment orders referencing this subscription
     await db.execute(
-        update(Transaction)
-        .where(Transaction.subscription_id == sub_id)
-        .values(subscription_id=None)
+        delete(AutopilotPayment)
+        .where(
+            AutopilotPayment.source_type == "SUBSCRIPTION",
+            AutopilotPayment.source_id == sub_id,
+            AutopilotPayment.user_id == current_user.id
+        )
     )
 
     await db.delete(sub)
