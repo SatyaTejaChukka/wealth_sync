@@ -1,20 +1,40 @@
-from __future__ import annotations
-
-from datetime import datetime
+import calendar
+from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import or_
+from sqlalchemy import inspect, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.models.autopilot_payment import AutopilotPayment
 from app.models.bill import Bill
 from app.models.budget import BudgetCategory, BudgetRule
 from app.models.income import IncomeSource
+from app.models.loan import Loan
 from app.models.savings import SavingsGoal, SavingsLog
 from app.models.subscription import Subscription
 from app.models.transaction import Transaction
-from app.models.loan import Loan
+from app.schemas.commitment_vault import (
+    CommitmentVaultResponse,
+    CommitmentVaultSnapshot,
+    FreeVaultBucket,
+    FutureVaultBucket,
+    FutureVaultItem,
+    ProtectedVaultBucket,
+    ProtectedVaultItem,
+    VaultBasis,
+    VaultBuckets,
+    VaultDataQuality,
+    VaultIntegrity,
+)
+from app.services.planning_dates import (
+    monthly_multiplier,
+    next_income_date,
+    next_recurring_date,
+    parse_payday,
+    safe_day,
+)
 
 
 class FinancialPlanningService:
@@ -34,18 +54,7 @@ class FinancialPlanningService:
 
     @staticmethod
     def _monthly_multiplier(frequency: str | None) -> Decimal:
-        value = (frequency or "monthly").strip().lower()
-        if value == "monthly":
-            return Decimal("1")
-        if value == "weekly":
-            return Decimal("52") / Decimal("12")
-        if value == "biweekly":
-            return Decimal("26") / Decimal("12")
-        if value == "yearly":
-            return Decimal("1") / Decimal("12")
-        if value == "daily":
-            return Decimal("30")
-        return Decimal("1")
+        return monthly_multiplier(frequency)
 
     @staticmethod
     def _effective_transaction(transaction: Transaction) -> bool:
@@ -684,3 +693,342 @@ class FinancialPlanningService:
             "safe_to_spend_stats": safe_to_spend_stats,
             "salary_rule_engine": salary_rule_engine,
         }
+
+    @classmethod
+    async def calculate_commitment_vault(
+        cls,
+        session: AsyncSession,
+        user_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> CommitmentVaultResponse:
+        current_time = now or datetime.utcnow()
+        horizon_start = current_time.date()
+        month_start = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        # 1. Resolve planning horizon
+        incomes_res = await session.execute(
+            select(IncomeSource).filter(IncomeSource.user_id == user_id, IncomeSource.active == True)
+        )
+        income_sources = incomes_res.scalars().all()
+        horizon_end, horizon_source, next_income_date_val = next_income_date(
+            current_time, income_sources
+        )
+
+        # 2. Tracked balance from completed/legacy transactions up to now
+        all_tx_res = await session.execute(
+            select(Transaction).filter(Transaction.user_id == user_id)
+        )
+        all_transactions = all_tx_res.scalars().all()
+
+        has_transactions = len(all_transactions) > 0
+        has_pending_transactions = any(tx.status == "pending" for tx in all_transactions)
+
+        completed_txs = [
+            tx
+            for tx in all_transactions
+            if tx.status in {"completed", None}
+            and (tx.occurred_at is None or tx.occurred_at <= current_time)
+        ]
+
+        total_income = sum(
+            (cls._to_decimal(tx.amount) for tx in completed_txs if str(tx.type).upper() == "INCOME"),
+            Decimal("0"),
+        )
+        total_expense = sum(
+            (cls._to_decimal(tx.amount) for tx in completed_txs if str(tx.type).upper() == "EXPENSE"),
+            Decimal("0"),
+        )
+        tracked_balance = total_income - total_expense
+
+        # 3. Check Autopilot payments table availability
+        payment_order_map: Dict[tuple[str, str, date], AutopilotPayment] = {}
+        try:
+            connection = await session.connection()
+
+            def check_table(sync_conn):
+                inspector = inspect(sync_conn)
+                return inspector.has_table("autopilot_payments")
+
+            has_autopilot_table = await connection.run_sync(check_table)
+            if has_autopilot_table:
+                orders_res = await session.execute(
+                    select(AutopilotPayment).filter(
+                        AutopilotPayment.user_id == user_id,
+                        AutopilotPayment.due_on >= horizon_start,
+                        AutopilotPayment.due_on <= horizon_end,
+                    )
+                )
+                for order in orders_res.scalars().all():
+                    payment_order_map[(order.source_type, order.source_id, order.due_on)] = order
+        except Exception:
+            payment_order_map = {}
+
+        # 4. Protected Vault Items
+        protected_items: List[ProtectedVaultItem] = []
+
+        # 4a. Bills
+        bills_res = await session.execute(
+            select(Bill).filter(Bill.user_id == user_id)
+        )
+        bills = bills_res.scalars().all()
+        for bill in bills:
+            is_paid_this_cycle = bool(bill.last_paid_at and bill.last_paid_at >= month_start)
+            if is_paid_this_cycle:
+                continue
+
+            bill_due_day = safe_day(current_time.year, current_time.month, bill.due_day)
+            bill_due_date = current_time.replace(
+                day=bill_due_day, hour=0, minute=0, second=0, microsecond=0
+            ).date()
+
+            if bill_due_date <= horizon_end:
+                linked_order = payment_order_map.get(("BILL", bill.id, bill_due_date))
+                if linked_order and linked_order.status == "succeeded":
+                    # Fully paid through Autopilot execution
+                    continue
+
+                payment_status = linked_order.status if linked_order else None
+                provider_action_url = linked_order.provider_action_url if linked_order else None
+
+                protected_items.append(
+                    ProtectedVaultItem(
+                        source_type="BILL",
+                        source_id=bill.id,
+                        name=bill.name,
+                        amount=cls._to_decimal(bill.amount_estimated),
+                        due_on=bill_due_date,
+                        payment_status=payment_status,
+                        provider_action_url=provider_action_url,
+                    )
+                )
+
+        # 4b. Loans (Active only)
+        loans_res = await session.execute(
+            select(Loan).filter(Loan.user_id == user_id, Loan.status == "active")
+        )
+        loans = loans_res.scalars().all()
+        for loan in loans:
+            is_paid_this_cycle = bool(loan.last_paid_at and loan.last_paid_at >= month_start)
+            if is_paid_this_cycle:
+                continue
+
+            loan_due_day = safe_day(current_time.year, current_time.month, loan.due_day)
+            loan_due_date = current_time.replace(
+                day=loan_due_day, hour=0, minute=0, second=0, microsecond=0
+            ).date()
+
+            if loan_due_date <= horizon_end:
+                linked_order = payment_order_map.get(("LOAN", loan.id, loan_due_date))
+                if linked_order and linked_order.status == "succeeded":
+                    continue
+
+                payment_status = linked_order.status if linked_order else None
+                provider_action_url = linked_order.provider_action_url if linked_order else None
+
+                protected_items.append(
+                    ProtectedVaultItem(
+                        source_type="LOAN",
+                        source_id=loan.id,
+                        name=loan.name,
+                        amount=cls._to_decimal(loan.emi_amount),
+                        due_on=loan_due_date,
+                        payment_status=payment_status,
+                        provider_action_url=provider_action_url,
+                    )
+                )
+
+        # 4c. Subscriptions (Active only)
+        subs_res = await session.execute(
+            select(Subscription).filter(
+                Subscription.user_id == user_id, Subscription.is_active == True
+            )
+        )
+        subscriptions = subs_res.scalars().all()
+        for sub in subscriptions:
+            cycle_days = 30 if (sub.billing_cycle or "monthly").lower() == "monthly" else 365
+            if sub.next_billing_date:
+                sub_due = sub.next_billing_date
+                while sub_due.date() < horizon_start:
+                    sub_due = sub_due + timedelta(days=cycle_days)
+            else:
+                sub_due = current_time + timedelta(days=cycle_days)
+
+            sub_due_date = sub_due.date()
+            if sub_due_date <= horizon_end:
+                linked_order = payment_order_map.get(("SUBSCRIPTION", sub.id, sub_due_date))
+                if linked_order and linked_order.status == "succeeded":
+                    continue
+
+                payment_status = linked_order.status if linked_order else None
+                provider_action_url = linked_order.provider_action_url if linked_order else None
+
+                protected_items.append(
+                    ProtectedVaultItem(
+                        source_type="SUBSCRIPTION",
+                        source_id=sub.id,
+                        name=sub.name,
+                        amount=cls._to_decimal(sub.amount),
+                        due_on=sub_due_date,
+                        payment_status=payment_status,
+                        provider_action_url=provider_action_url,
+                    )
+                )
+
+        # Sort protected items by due_on
+        protected_items.sort(key=lambda x: (x.due_on, x.name))
+        protected_amount = sum((item.amount for item in protected_items), Decimal("0"))
+
+        # 5. Future Vault Items (Active savings goals)
+        goals_res = await session.execute(
+            select(SavingsGoal).filter(
+                SavingsGoal.user_id == user_id, SavingsGoal.is_completed == False
+            )
+        )
+        goals = goals_res.scalars().all()
+
+        logs_res = await session.execute(
+            select(SavingsLog)
+            .join(SavingsGoal, SavingsGoal.id == SavingsLog.goal_id)
+            .filter(
+                SavingsGoal.user_id == user_id,
+                SavingsGoal.is_completed == False,
+                SavingsLog.created_at >= month_start,
+                SavingsLog.created_at <= current_time,
+            )
+        )
+        logs = logs_res.scalars().all()
+        logged_by_goal: Dict[str, Decimal] = {}
+        for log in logs:
+            logged_by_goal[log.goal_id] = logged_by_goal.get(
+                log.goal_id, Decimal("0")
+            ) + cls._to_decimal(log.amount)
+
+        future_items: List[FutureVaultItem] = []
+        for goal in goals:
+            planned = cls._to_decimal(goal.monthly_contribution)
+            if planned <= Decimal("0"):
+                continue
+            completed = logged_by_goal.get(goal.id, Decimal("0"))
+            reserved = max(Decimal("0"), planned - completed)
+
+            future_items.append(
+                FutureVaultItem(
+                    goal_id=goal.id,
+                    name=goal.name,
+                    planned_amount=planned,
+                    completed_amount=completed,
+                    reserved_amount=reserved,
+                    target_date=goal.target_date.date() if goal.target_date else None,
+                )
+            )
+
+        future_items.sort(key=lambda x: x.name)
+        future_amount = sum((item.reserved_amount for item in future_items), Decimal("0"))
+
+        # 6. Free Vault & Integrity
+        reserve_total = protected_amount + future_amount
+        raw_free_amount = tracked_balance - reserve_total
+        free_amount = max(Decimal("0"), raw_free_amount)
+        shortfall_amount = max(Decimal("0"), -raw_free_amount)
+
+        days_until_horizon_end = max(1, (horizon_end - horizon_start).days)
+        daily_free_amount = (free_amount / Decimal(str(days_until_horizon_end))).quantize(
+            Decimal("0.01")
+        )
+
+        reasons: List[str] = []
+        if not has_transactions:
+            integrity_state = "incomplete"
+            data_quality_state = "needs_setup"
+            coverage_percent = 0.0
+            message = "Add transactions and income timing for an accurate vault."
+            reasons.append("No recorded transactions found in ledger.")
+        elif raw_free_amount < Decimal("0"):
+            integrity_state = "shortfall"
+            data_quality_state = "ready"
+            if reserve_total > Decimal("0"):
+                coverage_percent = float(
+                    round(
+                        (max(Decimal("0"), tracked_balance) / reserve_total) * Decimal("100"),
+                        1,
+                    )
+                )
+            else:
+                coverage_percent = 0.0
+            message = (
+                f"Tracked balance is short by Rs. {shortfall_amount:,.2f} to cover scheduled commitments."
+            )
+        else:
+            integrity_state = "covered"
+            data_quality_state = "ready"
+            coverage_percent = 100.0
+            message = "All scheduled commitments are covered by your tracked balance."
+
+        if has_pending_transactions:
+            reasons.append("Pending transactions are excluded from tracked balance.")
+            if data_quality_state == "ready":
+                data_quality_state = "warning"
+
+        if horizon_source == "month_end_fallback":
+            reasons.append("No active payday set; planning horizon falls back to month-end.")
+
+        return CommitmentVaultResponse(
+            generated_at=current_time,
+            basis=VaultBasis(
+                balance_source="tracked_ledger",
+                horizon_start=horizon_start,
+                horizon_end=horizon_end,
+                horizon_source=horizon_source,
+                next_income_date=next_income_date_val,
+                included_transaction_statuses=["completed", "legacy_null"],
+            ),
+            tracked_balance=tracked_balance,
+            vaults=VaultBuckets(
+                protected=ProtectedVaultBucket(
+                    amount=protected_amount,
+                    item_count=len(protected_items),
+                    items=protected_items,
+                ),
+                future=FutureVaultBucket(
+                    amount=future_amount,
+                    item_count=len(future_items),
+                    items=future_items,
+                ),
+                free=FreeVaultBucket(
+                    amount=free_amount,
+                    daily_amount=daily_free_amount,
+                    days_remaining=days_until_horizon_end,
+                ),
+            ),
+            integrity=VaultIntegrity(
+                state=integrity_state,
+                reserve_total=reserve_total,
+                shortfall_amount=shortfall_amount,
+                coverage_percent=coverage_percent,
+                message=message,
+            ),
+            data_quality=VaultDataQuality(
+                state=data_quality_state,
+                reasons=reasons,
+            ),
+        )
+
+    @classmethod
+    async def get_commitment_vault_snapshot(
+        cls,
+        session: AsyncSession,
+        user_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> CommitmentVaultSnapshot:
+        vault = await cls.calculate_commitment_vault(session, user_id, now=now)
+        return CommitmentVaultSnapshot(
+            tracked_balance=vault.tracked_balance,
+            protected_amount=vault.vaults.protected.amount,
+            future_amount=vault.vaults.future.amount,
+            free_amount=vault.vaults.free.amount,
+            integrity_state=vault.integrity.state,
+            shortfall_amount=vault.integrity.shortfall_amount,
+            horizon_end=vault.basis.horizon_end,
+        )

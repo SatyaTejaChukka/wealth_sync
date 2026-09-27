@@ -9,7 +9,16 @@ class TriageAction(BaseModel):
     id: str
     priority: int
     severity: Literal["critical", "high", "medium", "low"]
-    area: Literal["cashflow", "bills", "budget", "subscriptions", "transactions", "setup"]
+    area: Literal[
+        "cashflow",
+        "bills",
+        "budget",
+        "subscriptions",
+        "transactions",
+        "setup",
+        "loans",
+        "savings",
+    ]
     title: str
     detail: str
     impact_amount: Decimal = Decimal("0")

@@ -92,6 +92,21 @@ async def test_dashboard_triage_returns_prioritized_actions(client: AsyncClient)
     )
     assert bill_res.status_code == 201
 
+    loan_res = await client.post(
+        "/api/v1/loans/",
+        json={
+            "name": "Car Loan",
+            "principal_amount": 10000,
+            "interest_rate": 8.5,
+            "tenure_months": 24,
+            "start_date": "2025-01-01",
+            "due_day": 1,
+            "autopay_enabled": False,
+        },
+        headers=headers,
+    )
+    assert loan_res.status_code == 201
+
     triage_res = await client.get("/api/v1/dashboard/triage", headers=headers)
     assert triage_res.status_code == 200
     triage = triage_res.json()
@@ -106,4 +121,5 @@ async def test_dashboard_triage_returns_prioritized_actions(client: AsyncClient)
     assert "bills" in action_areas
     assert "budget" in action_areas
     assert "transactions" in action_areas
+    assert "loans" in action_areas
 
