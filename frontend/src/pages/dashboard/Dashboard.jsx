@@ -2,9 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
+  CalendarDays,
+  HeartPulse,
   Plus,
   TrendingUp,
   Wallet,
+  PieChart as PieChartIcon,
+  BarChart3,
+  GitFork
 } from 'lucide-react';
 
 import { ActionCenter } from '../../components/dashboard/ActionCenter.jsx';
@@ -14,9 +19,11 @@ import { SafeToSpendCard } from '../../components/dashboard/SafeToSpendCard.jsx'
 import { SpendingChart } from '../../components/dashboard/SpendingChart.jsx';
 import SankeyFlow from '../../components/dashboard/SankeyFlow.jsx';
 import { StatsCard } from '../../components/dashboard/StatsCard.jsx';
-import { Card } from '../../components/ui/Card.jsx';
+import { CommitmentVault } from '../../components/dashboard/CommitmentVault.jsx';
+import { UpcomingCommitmentsCard } from '../../components/dashboard/UpcomingCommitmentsCard.jsx';
+import { FinancialHealthScore } from '../../components/dashboard/FinancialHealthScore.jsx';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card.jsx';
 import { NotificationBell } from '../../components/notifications/NotificationBell.jsx';
-import { TimelineView } from '../../components/timeline/TimelineView.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { useAuth } from '../../lib/auth.jsx';
@@ -25,10 +32,7 @@ import { calculateSafeBudgetSignal } from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 import { dashboardService } from '../../services/dashboard.js';
 
-/* ── Constants ─────────────────────────────────────────────── */
-
-const MOBILE_TAB_IDS = ['overview', 'timeline'];
-const DESKTOP_TAB_IDS = ['overview', 'timeline'];
+/* ── Constants & Helpers ───────────────────────────────────── */
 
 const EMPTY_SUMMARY = {
   total_balance: 0,
@@ -41,29 +45,74 @@ const EMPTY_SUMMARY = {
   health_score: { score: 0, message: 'No data', color: 'blue' },
   recent_transactions: [],
   spending_chart: [],
+  category_chart: [],
   safe_to_spend_stats: null,
+  commitment_vault: null,
 };
 
-/* ── Tab Button ────────────────────────────────────────────── */
+function getTimeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
-function TabButton({ label, isActive, onClick }) {
+/* ── Category Breakdown Subcomponent ───────────────────────── */
+
+function CategoryBreakdown({ categories = [], totalExpenses = 0 }) {
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-zinc-800 bg-black/20 p-8 text-center">
+        <PieChartIcon size={24} className="mx-auto text-zinc-500 mb-2" />
+        <p className="text-sm font-medium text-white">No category spending recorded</p>
+        <p className="text-xs text-zinc-500 mt-1">Expenses will appear categorized here as transactions occur.</p>
+      </div>
+    );
+  }
+
+  const validTotal = totalExpenses > 0 
+    ? totalExpenses 
+    : categories.reduce((acc, c) => acc + Number(c.value || 0), 0);
+
+  const colors = [
+    'from-violet-500 to-indigo-500',
+    'from-cyan-500 to-blue-500',
+    'from-emerald-500 to-teal-500',
+    'from-amber-500 to-orange-500',
+    'from-rose-500 to-pink-500',
+    'from-purple-500 to-violet-500',
+  ];
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors',
-        isActive
-          ? 'border-violet-400/50 bg-violet-500/15 text-violet-200'
-          : 'border-white/10 bg-zinc-900/70 text-zinc-300 hover:bg-zinc-900'
-      )}
-    >
-      {label}
-    </button>
+    <div className="space-y-3.5 py-1">
+      {categories.slice(0, 6).map((cat, idx) => {
+        const val = Number(cat.value || 0);
+        const pct = validTotal > 0 ? Math.min(100, Math.round((val / validTotal) * 100)) : 0;
+        const colorGradient = colors[idx % colors.length];
+
+        return (
+          <div key={cat.name || idx} className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-zinc-200 truncate">{cat.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-white">{formatCurrency(val)}</span>
+                <span className="text-[11px] text-zinc-500 w-9 text-right font-medium">{pct}%</span>
+              </div>
+            </div>
+            <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
+              <div
+                className={cn('h-full rounded-full bg-linear-to-r transition-all duration-500', colorGradient)}
+                style={{ width: `${Math.max(4, pct)}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
-/* ── Main Dashboard ────────────────────────────────────────── */
+/* ── Main Dashboard Component ──────────────────────────────── */
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -74,11 +123,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [triage, setTriage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Tab state
-  const [mobileTab, setMobileTab] = useState(MOBILE_TAB_IDS[0]);
-  const [desktopTab, setDesktopTab] = useState(DESKTOP_TAB_IDS[0]);
-  const [activeChart, setActiveChart] = useState('sankey');
+  const [activeChart, setActiveChart] = useState('sankey'); // 'sankey' | 'trend' | 'categories'
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -98,20 +143,30 @@ export default function Dashboard() {
     };
     fetchDashboard();
 
-    const onTransactionsChanged = () => {
+    const onSyncChanged = () => {
       fetchDashboard();
     };
-    window.addEventListener('transactions:changed', onTransactionsChanged);
-    return () => window.removeEventListener('transactions:changed', onTransactionsChanged);
+    window.addEventListener('transactions:changed', onSyncChanged);
+    window.addEventListener('bills:changed', onSyncChanged);
+    window.addEventListener('loans:changed', onSyncChanged);
+    window.addEventListener('subscriptions:changed', onSyncChanged);
+    return () => {
+      window.removeEventListener('transactions:changed', onSyncChanged);
+      window.removeEventListener('bills:changed', onSyncChanged);
+      window.removeEventListener('loans:changed', onSyncChanged);
+      window.removeEventListener('subscriptions:changed', onSyncChanged);
+    };
   }, [chartRange]);
 
   const summary = useMemo(() => data || EMPTY_SUMMARY, [data]);
+
   const autopilotReady =
     Number(summary.monthly_income || 0) > 0 ||
     Number(summary.safe_to_spend_stats?.total_committed || 0) > 0;
+
   const autopilotStatusText = autopilotReady
-    ? 'Autopilot is calculating from your live income, commitments, and transactions.'
-    : 'Add income, bills, subscriptions, or goals to start autopilot calculations.';
+    ? 'Autopilot is dynamically protecting commitments and projecting discretionary runway.'
+    : 'Add income sources, bills, or loan EMIs to enable automated commitments protection.';
 
   const weatherState = useMemo(() => {
     if (!summary.safe_to_spend_stats) return null;
@@ -127,363 +182,287 @@ export default function Dashboard() {
     [navigate]
   );
 
-  const mobilePriorityActions = useMemo(
-    () => (Array.isArray(triage?.actions) ? triage.actions.slice(0, 3) : []),
-    [triage?.actions]
-  );
+  const healthScoreVal = summary.health_score?.score ?? 0;
+  const healthScoreLabel = useMemo(() => {
+    if (healthScoreVal >= 80) return 'Optimal';
+    if (healthScoreVal >= 60) return 'Healthy';
+    if (healthScoreVal >= 40) return 'Fair';
+    return 'Attention Needed';
+  }, [healthScoreVal]);
 
-  /* ── Loading ─────────────────────────────────────────────── */
+  /* ── Loading State ────────────────────────────────────────── */
 
   if (isLoading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
+      <div className="flex h-[55vh] items-center justify-center">
         <div className="flex items-center gap-3 text-zinc-400">
-          <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
-          <span className="text-sm font-medium">Loading Dashboard...</span>
+          <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-violet-500 animate-spin" />
+          <span className="text-sm font-medium">Synchronizing Financial Dashboard...</span>
         </div>
       </div>
     );
   }
 
-  /* ── Render ──────────────────────────────────────────────── */
+  /* ── Render ───────────────────────────────────────────────── */
 
   return (
-    <div className="relative isolate space-y-4 animate-fade-in pb-12 md:space-y-8 md:pb-10 overflow-x-hidden">
-
-
+    <div className="relative isolate space-y-6 md:space-y-8 animate-fade-in pb-16 overflow-x-hidden">
+      {/* Ambient Financial Climate Backdrop */}
       <MoneyWeatherBackdrop stats={summary.safe_to_spend_stats} />
 
-      {isMobile ? (
-        /* ═══════════════════════════════════════════════════
-           MOBILE LAYOUT
-           ═══════════════════════════════════════════════════ */
-        <>
-          {/* ── Mobile Header & Hero Cards ── */}
-          <section id="mobile-hero" className="relative z-10 space-y-5 px-1">
-            <div className="space-y-3 animate-slide-up">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1" />
+      {/* ── Executive Header ── */}
+      <header className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div className="space-y-1.5 min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              <span>{getTimeGreeting()},{' '}</span>
+              <span className="bg-linear-to-r from-violet-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+                {user?.full_name || user?.email?.split('@')[0] || 'User'}
+              </span>
+            </h1>
 
-                <div className="flex shrink-0 items-center gap-3">
-                  <NotificationBell />
-                  <Button
-                    onClick={() => navigate('/dashboard/transactions')}
-                    variant="light"
-                    icon={<Plus size={16} />}
-                    className="shrink-0 rounded-2xl px-4 h-9 text-xs font-bold shadow-lg shadow-violet-500/10"
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
-
-              <div className="min-w-0 space-y-1.5">
-                <h1 className="text-[1.85rem] font-extrabold tracking-tight leading-[1.05] text-white sm:text-[2.2rem]">
-                  Welcome back,{' '}
-                  <span className="bg-linear-to-r from-violet-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent animate-pulse-slow">
-                    {user?.full_name || user?.email?.split('@')[0] || 'User'}
-                  </span>
-                </h1>
-                <p className="max-w-[20rem] text-[14px] font-medium leading-relaxed text-zinc-400/90 sm:max-w-md">
-                  {autopilotStatusText}
-                </p>
-              </div>
-            </div>
-
-
-            {/* Stats grid - PRIMARY DATA TOP */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 opacity-0 animate-stagger-1">
-              <StatsCard
-                title="Total Balance"
-                value={formatCurrency(summary.total_balance)}
-                trend={summary.balance_change >= 0 ? 'up' : 'down'}
-                trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
-                icon={Wallet}
-                color="violet"
-                className="col-span-2 sm:col-span-1 shadow-xl shadow-violet-500/5"
-                isHero
-              />
-              <StatsCard
-                title="Income"
-                value={formatCurrency(summary.monthly_income)}
-                trend={summary.income_change >= 0 ? 'up' : 'down'}
-                trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
-                icon={TrendingUp}
-                color="emerald"
-                className="col-span-1 shadow-xl shadow-emerald-500/5"
-              />
-              <StatsCard
-                title="Expenses"
-                value={formatCurrency(summary.monthly_expenses)}
-                trend={summary.expenses_change >= 0 ? 'up' : 'down'}
-                trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
-                icon={ArrowUpRight}
-                color="rose"
-                className="col-span-1 shadow-xl shadow-rose-500/5"
-              />
-            </div>
-
-            {/* Analysis Metrics - SECONDARY */}
-            <div className="opacity-0 animate-stagger-2">
-              <SafeToSpendCard stats={summary.safe_to_spend_stats} />
-            </div>
-
-            {/* Priority actions */}
-            {mobilePriorityActions.length > 0 ? (
-              <div className="opacity-0 animate-stagger-3">
-                <ActionCenter actions={mobilePriorityActions} onAction={handleActionClick} />
-              </div>
-            ) : null}
-
-          </section>
-
-          {/* ── Mobile Tabbed Content ── */}
-          <section id="mobile-tabs" className="relative z-10 space-y-5 px-1">
-            <div className="sticky top-0 z-50 pt-3 pb-3 bg-[#09090b]/80 backdrop-blur-2xl -mx-1 px-1">
-              <div className="flex gap-2 overflow-x-auto rounded-[20px] border border-white/10 bg-black/40 p-1.5 scrollbar-none shadow-2xl">
-                <button
-                  onClick={() => setMobileTab('overview')}
+            {weatherState && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/80 px-2.5 py-1 text-xs font-semibold text-zinc-300 backdrop-blur-md">
+                <span
                   className={cn(
-                    'flex-1 h-10 flex items-center justify-center rounded-[14px] text-xs font-bold transition-all duration-300 px-4 whitespace-nowrap',
-                    mobileTab === 'overview'
-                      ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30 scale-[1.02]'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                    'h-1.5 w-1.5 rounded-full',
+                    weatherState === 'calm'
+                      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
+                      : weatherState === 'balanced'
+                      ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.7)]'
+                      : 'bg-rose-400 shadow-[0_0_8px_rgba(239,68,68,0.7)]'
+                  )}
+                />
+                Climate: <span className="capitalize font-bold text-white">{weatherState}</span>
+              </span>
+            )}
+          </div>
+          <p className="max-w-2xl text-xs sm:text-sm font-medium text-zinc-400 leading-relaxed">
+            {autopilotStatusText}
+          </p>
+        </div>
+
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+          <Button
+            onClick={() => navigate('/dashboard/calendar')}
+            variant="outline"
+            icon={<CalendarDays size={15} />}
+            className="h-9 px-3.5 text-xs font-semibold border-white/10 hover:border-white/20 bg-zinc-900/60"
+          >
+            Calendar
+          </Button>
+
+          <Button
+            onClick={() => navigate('/dashboard/transactions')}
+            variant="light"
+            icon={<Plus size={16} />}
+            className="h-9 px-4 text-xs font-bold shadow-lg shadow-violet-500/15"
+          >
+            Add Transaction
+          </Button>
+
+          <NotificationBell />
+        </div>
+      </header>
+
+      {/* ── Commitment Vault (Centerpiece Ledger Interpretation) ── */}
+      <section className="relative z-10">
+        <CommitmentVault snapshot={summary.commitment_vault} isLoading={isLoading} />
+      </section>
+
+      {/* ── 4-Metric Key Performance Indicators Grid ── */}
+      <section className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatsCard
+          title="Total Balance"
+          value={formatCurrency(summary.total_balance)}
+          trend={summary.balance_change >= 0 ? 'up' : 'down'}
+          trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
+          icon={Wallet}
+          color="violet"
+          className="col-span-2 sm:col-span-1 shadow-lg shadow-violet-500/5 hover-glow-violet"
+          isHero
+        />
+
+        <StatsCard
+          title="Monthly Income"
+          value={formatCurrency(summary.monthly_income)}
+          trend={summary.income_change >= 0 ? 'up' : 'down'}
+          trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
+          icon={TrendingUp}
+          color="emerald"
+          className="col-span-1 shadow-lg shadow-emerald-500/5 hover-glow-emerald"
+        />
+
+        <StatsCard
+          title="Monthly Expenses"
+          value={formatCurrency(summary.monthly_expenses)}
+          trend={summary.expenses_change >= 0 ? 'up' : 'down'}
+          trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
+          icon={ArrowUpRight}
+          color="rose"
+          className="col-span-1 shadow-lg shadow-rose-500/5 hover-glow-rose"
+        />
+
+        <Card className="col-span-2 lg:col-span-1 border-white/5 bg-zinc-900/30 backdrop-blur-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 hover:scale-[1.01] transition-all duration-300">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="font-bold uppercase tracking-[0.08em] text-[9px] sm:text-[11px] text-zinc-400">
+                Health Score
+              </p>
+              <div className="p-1.5 rounded-[10px] bg-linear-to-br from-indigo-500 to-cyan-500 shadow-lg shadow-cyan-500/20 text-white border border-white/5">
+                <HeartPulse size={14} />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight font-display">
+                {healthScoreVal}
+              </span>
+              <span className="text-xs text-zinc-500 font-semibold">/ 100</span>
+              <span className="ml-auto inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full border bg-violet-500/10 text-violet-300 border-violet-500/20">
+                {healthScoreLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden border border-white/5 mt-3">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-700',
+                healthScoreVal >= 80 ? 'bg-emerald-400' :
+                healthScoreVal >= 60 ? 'bg-cyan-400' :
+                healthScoreVal >= 40 ? 'bg-amber-400' : 'bg-rose-400'
+              )}
+              style={{ width: `${Math.max(5, healthScoreVal)}%` }}
+            />
+          </div>
+        </Card>
+      </section>
+
+      {/* ── Main Workspace: Strategic 2-Column Grid ── */}
+      <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        {/* ── Left Main Stream (8 cols) ── */}
+        <div className="xl:col-span-8 space-y-6">
+
+          {/* Priority Action Center (Surfaced if actions exist) */}
+          {triage?.actions?.length > 0 && (
+            <section id="priority-action-center" className="animate-fade-in">
+              <ActionCenter actions={triage.actions} onAction={handleActionClick} />
+            </section>
+          )}
+
+          {/* Visual Intelligence Hub (Sankey Flow / Spending Trend / Category Breakdown) */}
+          <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-xl overflow-hidden relative shadow-xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 pt-5 pb-3 gap-3 border-b border-white/5">
+              <div>
+                <h3 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
+                  <BarChart3 size={16} className="text-violet-400" />
+                  Financial Flow & Analytics
+                </h3>
+                <p className="text-xs text-zinc-500 mt-0.5">Interactive visibility into how money moves</p>
+              </div>
+
+              {/* Segmented View Control */}
+              <div className="flex items-center rounded-xl bg-black/40 p-1 border border-white/5 self-stretch sm:self-auto overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveChart('sankey')}
+                  className={cn(
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    activeChart === 'sankey'
+                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      : 'text-zinc-400 hover:text-white'
                   )}
                 >
-                  Overview
+                  <GitFork size={13} />
+                  <span>Cash Flow</span>
                 </button>
+
                 <button
-                  onClick={() => setMobileTab('timeline')}
+                  type="button"
+                  onClick={() => setActiveChart('trend')}
                   className={cn(
-                    'flex-1 h-10 flex items-center justify-center rounded-[14px] text-xs font-bold transition-all duration-300 px-4 whitespace-nowrap',
-                    mobileTab === 'timeline'
-                      ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30 scale-[1.02]'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    activeChart === 'trend'
+                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      : 'text-zinc-400 hover:text-white'
                   )}
                 >
-                  Timeline
+                  <TrendingUp size={13} />
+                  <span>Spending Trend</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveChart('categories')}
+                  className={cn(
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    activeChart === 'categories'
+                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      : 'text-zinc-400 hover:text-white'
+                  )}
+                >
+                  <PieChartIcon size={13} />
+                  <span>Categories</span>
                 </button>
               </div>
             </div>
 
-
-            <div key={mobileTab} className="animate-fade-in">
-              {mobileTab === 'overview' && (
-                <div className="space-y-4">
-                  {/* Unified Chart Card */}
-                  <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-md overflow-hidden relative">
-                    <div className="flex justify-between items-center px-4 pt-4 pb-1">
-                      <h3 className="font-bold text-white text-xs uppercase tracking-wider">Visual Flow</h3>
-                      <div className="flex rounded-lg bg-zinc-800/60 p-0.5 border border-white/5">
-                        <button
-                          onClick={() => setActiveChart('sankey')}
-                          className={cn(
-                            "px-2 py-1 text-[10px] font-semibold rounded-md transition-all",
-                            activeChart === 'sankey' 
-                              ? "bg-violet-600 text-white shadow-sm" 
-                              : "text-zinc-400 hover:text-white"
-                          )}
-                        >
-                          Flow
-                        </button>
-                        <button
-                          onClick={() => setActiveChart('trend')}
-                          className={cn(
-                            "px-2 py-1 text-[10px] font-semibold rounded-md transition-all",
-                            activeChart === 'trend' 
-                              ? "bg-violet-600 text-white shadow-sm" 
-                              : "text-zinc-400 hover:text-white"
-                          )}
-                        >
-                          Trend
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="p-3">
-                      {activeChart === 'sankey' ? (
-                        <SankeyFlow summary={summary} />
-                      ) : (
-                        <SpendingChart
-                          data={summary.spending_chart}
-                          range={chartRange}
-                          onRangeChange={setChartRange}
-                        />
-                      )}
-                    </div>
-                  </Card>
-
-                  <RecentActivity transactions={summary.recent_transactions} maxItems={5} />
+            {/* Hub Body */}
+            <div className="p-4 sm:p-6">
+              {activeChart === 'sankey' && (
+                <div className="animate-fade-in">
+                  <SankeyFlow summary={summary} />
                 </div>
               )}
 
-              {mobileTab === 'timeline' && (
-                <div className="w-full isolate max-h-[70vh] overflow-y-auto rounded-2xl scrollbar-thin scrollbar-track-transparent scrollbar-thumb-zinc-700">
-                  <TimelineView />
+              {activeChart === 'trend' && (
+                <div className="animate-fade-in">
+                  <SpendingChart
+                    data={summary.spending_chart}
+                    range={chartRange}
+                    onRangeChange={setChartRange}
+                  />
+                </div>
+              )}
+
+              {activeChart === 'categories' && (
+                <div className="animate-fade-in">
+                  <CategoryBreakdown
+                    categories={summary.category_chart}
+                    totalExpenses={Number(summary.monthly_expenses || 0)}
+                  />
                 </div>
               )}
             </div>
+          </Card>
+
+          {/* Recent Ledger Activity */}
+          <section id="recent-activity">
+            <RecentActivity transactions={summary.recent_transactions} maxItems={isMobile ? 5 : 8} />
           </section>
-        </>
-      ) : (
-        /* ═══════════════════════════════════════════════════
-           DESKTOP LAYOUT
-           ═══════════════════════════════════════════════════ */
-        <>
-          {/* ── Desktop Header ── */}
-          <div id="desktop-header" className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl flex flex-wrap items-center gap-3">
-                <span>Welcome back,{' '}</span>
-                <span className="bg-linear-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-                  {user?.full_name || user?.email?.split('@')[0] || 'User'}
-                </span>
-                {weatherState && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-zinc-900/60 px-2.5 py-1 text-xs font-semibold text-zinc-300">
-                    <span className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      weatherState === 'calm' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
-                      weatherState === 'balanced' ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
-                      'bg-rose-400 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
-                    )} />
-                    Weather: <span className="capitalize">{weatherState}</span>
-                  </span>
-                )}
-              </h1>
-              <p className="mt-1 max-w-2xl text-zinc-400">{autopilotStatusText}</p>
-            </div>
-            <div className="flex w-full items-center justify-start gap-3 overflow-x-auto pb-1 scrollbar-none sm:overflow-visible xl:w-auto xl:justify-end">
-              <NotificationBell />
-              <Button
-                onClick={() => navigate('/dashboard/transactions')}
-                variant="light"
-                icon={<Plus size={18} />}
-                className="shrink-0"
-              >
-                Add Transaction
-              </Button>
-            </div>
-          </div>
+        </div>
 
-          {/* ── Stats Row ── */}
-          <div id="desktop-stats" className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <StatsCard
-              title="Total Balance"
-              value={formatCurrency(summary.total_balance)}
-              trend={summary.balance_change >= 0 ? 'up' : 'down'}
-              trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
-              icon={Wallet}
-              color="violet"
-              className="hover-glow-violet"
-            />
-            <StatsCard
-              title="Monthly Income"
-              value={formatCurrency(summary.monthly_income)}
-              trend={summary.income_change >= 0 ? 'up' : 'down'}
-              trendValue={`${Math.abs(summary.income_change).toFixed(1)}%`}
-              icon={TrendingUp}
-              color="emerald"
-              className="hover-glow-emerald"
-            />
-            <StatsCard
-              title="Monthly Expenses"
-              value={formatCurrency(summary.monthly_expenses)}
-              trend={summary.expenses_change >= 0 ? 'up' : 'down'}
-              trendValue={`${Math.abs(summary.expenses_change).toFixed(1)}%`}
-              icon={ArrowUpRight}
-              color="rose"
-              className="hover-glow-rose"
-            />
-          </div>
+        {/* ── Right Intelligence Sidebar (4 cols) ── */}
+        <aside className="xl:col-span-4 space-y-6">
 
-          {/* ── Main Content: 2-column grid ── */}
-          <div id="desktop-main" className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Safe-to-Spend Runway Analysis */}
+          <SafeToSpendCard stats={summary.safe_to_spend_stats} />
 
-            {/* LEFT — Main Feed (2/3) */}
-            <div className="xl:col-span-2 space-y-6">
+          {/* Smart Calendar Bridge: Upcoming Commitments */}
+          <UpcomingCommitmentsCard maxItems={4} />
 
-              {/* Tab selector */}
-              <div className="flex gap-2 rounded-2xl border border-white/10 bg-black/25 p-2 backdrop-blur-lg">
-                <TabButton
-                  label="Overview"
-                  isActive={desktopTab === 'overview'}
-                  onClick={() => setDesktopTab('overview')}
-                />
-                <TabButton
-                  label="Timeline"
-                  isActive={desktopTab === 'timeline'}
-                  onClick={() => setDesktopTab('timeline')}
-                />
-              </div>
+          {/* Financial Health Score & Diagnosis */}
+          <FinancialHealthScore
+            score={summary.health_score?.score}
+            message={summary.health_score?.message}
+            color={summary.health_score?.color}
+          />
+        </aside>
 
-              {/* Tab content */}
-              <div key={desktopTab} className="animate-fade-in">
-                {desktopTab === 'overview' && (
-                  <div className="space-y-6">
-                    {triage?.actions?.length > 0 ? (
-                      <ActionCenter actions={triage.actions} onAction={handleActionClick} />
-                    ) : null}
-
-                    {/* Unified Chart Card */}
-                    <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-md overflow-hidden relative">
-                      <div className="flex justify-between items-center px-5 pt-5 pb-2">
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wider">Visual Flow Analysis</h3>
-                        <div className="flex rounded-xl bg-zinc-800/60 p-1 border border-white/5">
-                          <button
-                            onClick={() => setActiveChart('sankey')}
-                            className={cn(
-                              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all",
-                              activeChart === 'sankey' 
-                                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10" 
-                                : "text-zinc-400 hover:text-white"
-                            )}
-                          >
-                            Cash Flow
-                          </button>
-                          <button
-                            onClick={() => setActiveChart('trend')}
-                            className={cn(
-                              "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all",
-                              activeChart === 'trend' 
-                                ? "bg-violet-600 text-white shadow-md shadow-violet-600/10" 
-                                : "text-zinc-400 hover:text-white"
-                            )}
-                          >
-                            Spending Trend
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="p-5 pt-2">
-                        {activeChart === 'sankey' ? (
-                          <SankeyFlow summary={summary} />
-                        ) : (
-                          <SpendingChart
-                            data={summary.spending_chart}
-                            range={chartRange}
-                            onRangeChange={setChartRange}
-                          />
-                        )}
-                      </div>
-                    </Card>
-
-                    <RecentActivity transactions={summary.recent_transactions} />
-                  </div>
-                )}
-
-                {desktopTab === 'timeline' && (
-                  <TimelineView />
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT — Utility Sidebar (1/3) */}
-            <div className="xl:col-span-1 space-y-6 sticky top-8 self-start">
-              <SafeToSpendCard stats={summary.safe_to_spend_stats} />
-            </div>
-          </div>
-        </>
-      )}
+      </div>
     </div>
   );
 }

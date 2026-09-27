@@ -14,9 +14,12 @@ from app.models.savings import SavingsGoal
 from app.services.health_score import HealthScoreService
 from app.services.financial_triage import FinancialTriageService
 from app.services.autopilot import AutopilotService
+from app.services.financial_planning import FinancialPlanningService
 from app.schemas.triage import FinancialTriageResponse
+from app.schemas.commitment_vault import CommitmentVaultSnapshot
 from pydantic import BaseModel
 from decimal import Decimal
+from typing import Optional
 
 router = APIRouter()
 
@@ -33,6 +36,7 @@ class DashboardStats(BaseModel):
     spending_chart: List[dict]
     category_chart: List[dict]
     safe_to_spend_stats: dict
+    commitment_vault: Optional[CommitmentVaultSnapshot] = None
 
 @router.get("/summary", response_model=DashboardStats)
 async def get_dashboard_summary(
@@ -110,7 +114,7 @@ async def get_dashboard_summary(
     # Calculate total savings from goals
     savings_query = select(func.sum(SavingsGoal.current_amount)).filter(SavingsGoal.user_id == current_user.id)
     savings_res = await db.execute(savings_query)
-    total_savings = savings_res.scalar() or Decimal(0)
+    total_savings = _to_decimal(savings_res.scalar() or 0)
 
     # 2. Monthly Stats
     monthly_income, monthly_expenses = await _sum_income_expenses(start=start_of_month, end=now)
@@ -253,6 +257,11 @@ async def get_dashboard_summary(
     planning_overview = await AutopilotService.calculate_comprehensive_overview(db, current_user.id)
     safe_to_spend_stats = planning_overview["safe_to_spend_stats"]
 
+    # 8. Commitment Vault snapshot
+    vault_snapshot = await FinancialPlanningService.get_commitment_vault_snapshot(
+        db, current_user.id, now=now
+    )
+
     return {
         "total_balance": total_balance,
         "balance_change": balance_change,
@@ -265,7 +274,8 @@ async def get_dashboard_summary(
         "recent_transactions": recent_mapped,
         "spending_chart": chart_data,
         "category_chart": category_chart,
-        "safe_to_spend_stats": safe_to_spend_stats
+        "safe_to_spend_stats": safe_to_spend_stats,
+        "commitment_vault": vault_snapshot,
     }
 
 
