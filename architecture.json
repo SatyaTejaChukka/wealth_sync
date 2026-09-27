@@ -1,110 +1,79 @@
 {
   "nodes": [
     { "id": "end_user", "label": "End User", "group": "actor", "column": 1 },
-    
-    { "id": "react_app", "label": "React Frontend", "group": "client", "column": 2 },
-    { "id": "dashboard_ui", "label": "Dashboard UI", "group": "client", "column": 2 },
-    { "id": "transaction_form", "label": "Transaction Form", "group": "client", "column": 2 },
-    { "id": "autopilot_ui", "label": "Autopilot Settings", "group": "client", "column": 2 },
-
-    { "id": "auth_api", "label": "Auth API (/auth)", "group": "api", "column": 3 },
-    { "id": "dashboard_api", "label": "Dashboard API", "group": "api", "column": 3 },
-    { "id": "transactions_api", "label": "Transactions API", "group": "api", "column": 3 },
-    { "id": "budgets_api", "label": "Budgets API", "group": "api", "column": 3 },
-    { "id": "autopilot_api", "label": "Autopilot API", "group": "api", "column": 3 },
-
-    { "id": "health_score_service", "label": "Health Score Svc", "group": "service", "column": 4 },
-    { "id": "budget_engine", "label": "Budget Engine", "group": "service", "column": 4 },
+    { "id": "react_app", "label": "React SPA", "group": "client", "column": 2 },
+    { "id": "dashboard_ui", "label": "Dashboard and Timeline", "group": "client", "column": 2 },
+    { "id": "finance_ui", "label": "Finance Management Pages", "group": "client", "column": 2 },
+    { "id": "auth_api", "label": "Auth and User APIs", "group": "api", "column": 3 },
+    { "id": "finance_api", "label": "Finance Resource APIs", "group": "api", "column": 3 },
+    { "id": "dashboard_api", "label": "Dashboard and Autopilot APIs", "group": "api", "column": 3 },
+    { "id": "electricity_api", "label": "Electricity API", "group": "api", "column": 3 },
+    { "id": "planning_service", "label": "Financial Planning Service", "group": "service", "column": 4 },
     { "id": "autopilot_service", "label": "Autopilot Service", "group": "service", "column": 4 },
-    { "id": "financial_triage", "label": "Financial Triage", "group": "service", "column": 4 },
-
+    { "id": "triage_service", "label": "Financial Triage Service", "group": "service", "column": 4 },
+    { "id": "electricity_service", "label": "Electricity Service", "group": "service", "column": 4 },
     { "id": "celery_worker", "label": "Celery Worker", "group": "worker", "column": 4 },
-    { "id": "bill_automation_task", "label": "Bill Automation Task", "group": "worker", "column": 4 },
-
-    { "id": "db_user", "label": "User Table", "group": "database", "column": 5 },
-    { "id": "db_transaction", "label": "Transaction Table", "group": "database", "column": 5 },
-    { "id": "db_budget", "label": "Budget Category/Rule", "group": "database", "column": 5 },
-    { "id": "db_autopilot", "label": "Autopilot Payment", "group": "database", "column": 5 },
-    { "id": "db_notification", "label": "Notification Table", "group": "database", "column": 5 }
+    { "id": "ledger_db", "label": "Ledger and Planning Tables", "group": "database", "column": 5 },
+    { "id": "autopilot_db", "label": "Autopilot Payment Tables", "group": "database", "column": 5 },
+    { "id": "electricity_db", "label": "Electricity Tables", "group": "database", "column": 5 }
   ],
   "edges": [
-    { "id": "e_user_react", "source": "end_user", "target": "react_app", "label": "Opens app" },
-    { "id": "e_react_auth", "source": "react_app", "target": "auth_api", "label": "Login/Signup req" },
-    { "id": "e_auth_db", "source": "auth_api", "target": "db_user", "label": "Verify/Create User" },
-    
-    { "id": "e_user_dash", "source": "end_user", "target": "dashboard_ui", "label": "Views Dashboard" },
-    { "id": "e_dash_api", "source": "dashboard_ui", "target": "dashboard_api", "label": "Fetch Summary" },
-    { "id": "e_dash_health", "source": "dashboard_api", "target": "health_score_service", "label": "Calc Score" },
-    { "id": "e_dash_db_txn", "source": "dashboard_api", "target": "db_transaction", "label": "Fetch Txns" },
-    
-    { "id": "e_user_txn", "source": "end_user", "target": "transaction_form", "label": "Adds Transaction" },
-    { "id": "e_txn_api", "source": "transaction_form", "target": "transactions_api", "label": "POST /transactions" },
-    { "id": "e_txn_db", "source": "transactions_api", "target": "db_transaction", "label": "Save Txn" },
-    { "id": "e_txn_budget_check", "source": "transactions_api", "target": "db_budget", "label": "Verify Category" },
-
-    { "id": "e_user_auto", "source": "end_user", "target": "autopilot_ui", "label": "Configures Rules" },
-    { "id": "e_auto_ui_api", "source": "autopilot_ui", "target": "autopilot_api", "label": "Salary Engine Req" },
-    { "id": "e_auto_api_svc", "source": "autopilot_api", "target": "autopilot_service", "label": "Calc Splits" },
-    { "id": "e_auto_svc_db", "source": "autopilot_service", "target": "db_autopilot", "label": "Save Orders" },
-    
-    { "id": "e_celery_task", "source": "celery_worker", "target": "bill_automation_task", "label": "Runs Daily" },
-    { "id": "e_task_auto_svc", "source": "bill_automation_task", "target": "autopilot_service", "label": "Trigger Due Bills" },
-    { "id": "e_svc_db_pay", "source": "autopilot_service", "target": "db_autopilot", "label": "Mark Executed" },
-    { "id": "e_task_notif", "source": "bill_automation_task", "target": "db_notification", "label": "Create Alert" }
+    { "id": "e_user_react", "source": "end_user", "target": "react_app", "label": "Uses web app" },
+    { "id": "e_user_dashboard", "source": "end_user", "target": "dashboard_ui", "label": "Views financial picture" },
+    { "id": "e_user_finance", "source": "end_user", "target": "finance_ui", "label": "Manages finance records" },
+    { "id": "e_react_auth", "source": "react_app", "target": "auth_api", "label": "JWT auth and profile" },
+    { "id": "e_finance_api", "source": "finance_ui", "target": "finance_api", "label": "Resource CRUD" },
+    { "id": "e_dashboard_api", "source": "dashboard_ui", "target": "dashboard_api", "label": "Summary, timeline, payments" },
+    { "id": "e_electricity_api", "source": "finance_ui", "target": "electricity_api", "label": "Accounts and bills" },
+    { "id": "e_dashboard_planning", "source": "dashboard_api", "target": "planning_service", "label": "Calculate allocations" },
+    { "id": "e_dashboard_auto", "source": "dashboard_api", "target": "autopilot_service", "label": "Timeline and payment state" },
+    { "id": "e_dashboard_triage", "source": "dashboard_api", "target": "triage_service", "label": "Prioritized actions" },
+    { "id": "e_electricity_service", "source": "electricity_api", "target": "electricity_service", "label": "Provider workflow" },
+    { "id": "e_finance_ledger", "source": "finance_api", "target": "ledger_db", "label": "Persist records" },
+    { "id": "e_services_ledger", "source": "planning_service", "target": "ledger_db", "label": "Read finance data" },
+    { "id": "e_auto_payments", "source": "autopilot_service", "target": "autopilot_db", "label": "Manage payment orders" },
+    { "id": "e_electricity_db", "source": "electricity_service", "target": "electricity_db", "label": "Persist account bills" },
+    { "id": "e_worker_auto", "source": "celery_worker", "target": "autopilot_service", "label": "Prepare and execute due orders" }
   ],
   "flows": [
     {
-      "id": "signup_flow",
-      "name": "User Signup Flow",
-      "description": "A new user registers an account.",
-      "steps": [
-        { "edgeId": "e_user_react", "description": "User opens the web app." },
-        { "edgeId": "e_react_auth", "description": "Frontend sends credentials to /auth/signup." },
-        { "edgeId": "e_auth_db", "description": "API hashes password and inserts into Users table." }
-      ]
-    },
-    {
       "id": "dashboard_load",
-      "name": "Dashboard Load & Health Score",
-      "description": "User opens dashboard, aggregating data and calculating health score.",
+      "name": "Dashboard Summary",
+      "description": "An authenticated user loads totals, recent activity, planning data, and triage actions.",
       "steps": [
-        { "edgeId": "e_user_dash", "description": "User navigates to Dashboard." },
-        { "edgeId": "e_dash_api", "description": "Frontend requests /dashboard/summary." },
-        { "edgeId": "e_dash_db_txn", "description": "API aggregates monthly incomes & expenses from DB." },
-        { "edgeId": "e_dash_health", "description": "API passes totals to HealthScoreService to determine status." }
+        { "edgeId": "e_user_dashboard", "description": "User opens the dashboard." },
+        { "edgeId": "e_dashboard_api", "description": "React requests dashboard summary and triage data." },
+        { "edgeId": "e_dashboard_planning", "description": "The planning service calculates safe-to-spend and salary allocation data." },
+        { "edgeId": "e_dashboard_triage", "description": "The triage service returns prioritized cleanup actions." }
       ]
     },
     {
-      "id": "add_transaction",
-      "name": "Add Expense Transaction",
-      "description": "User logs a new expense.",
+      "id": "transaction_create",
+      "name": "Transaction Creation",
+      "description": "A user records an income or expense transaction through the finance UI.",
       "steps": [
-        { "edgeId": "e_user_txn", "description": "User fills out transaction form." },
-        { "edgeId": "e_txn_api", "description": "Submits to /transactions API." },
-        { "edgeId": "e_txn_budget_check", "description": "API verifies the user owns the selected Category." },
-        { "edgeId": "e_txn_db", "description": "Transaction is committed to database." }
+        { "edgeId": "e_user_finance", "description": "User enters a finance record." },
+        { "edgeId": "e_finance_api", "description": "The frontend submits the authenticated resource request." },
+        { "edgeId": "e_finance_ledger", "description": "The API validates ownership and persists the transaction." }
       ]
     },
     {
-      "id": "autopilot_salary",
-      "name": "Salary Rule Engine (Autopilot)",
-      "description": "User checks how upcoming salary will be split.",
+      "id": "payment_workflow",
+      "name": "Autopilot Payment Workflow",
+      "description": "The application tracks payment order preparation, approval, execution, cancellation, and history.",
       "steps": [
-        { "edgeId": "e_user_auto", "description": "User opens Autopilot view." },
-        { "edgeId": "e_auto_ui_api", "description": "Requests /autopilot/salary-rule-engine." },
-        { "edgeId": "e_auto_api_svc", "description": "API calls AutopilotService.calculate_salary_rule_split." },
-        { "edgeId": "e_auto_svc_db", "description": "Service fetches rules, bills, goals from DB to calculate allocation." }
+        { "edgeId": "e_dashboard_api", "description": "User requests payment order data or an action." },
+        { "edgeId": "e_dashboard_auto", "description": "Autopilot validates permitted state transitions." },
+        { "edgeId": "e_auto_payments", "description": "The current payment order state is stored with history." }
       ]
     },
     {
       "id": "daily_automation",
-      "name": "Daily Bill Automation (Cron)",
-      "description": "Background worker processes upcoming bills and executes payments.",
+      "name": "Daily Bill Automation",
+      "description": "Celery runs the existing daily bill, subscription, loan, electricity, and Autopilot preparation workflow.",
       "steps": [
-        { "edgeId": "e_celery_task", "description": "Celery beat triggers check_and_create_pending_bills daily." },
-        { "edgeId": "e_task_auto_svc", "description": "Task invokes AutopilotService to process approved due payments." },
-        { "edgeId": "e_svc_db_pay", "description": "Service updates status of executed AutopilotPayments in DB." },
-        { "edgeId": "e_task_notif", "description": "Task also creates Notifications for upcoming manual bills." }
+        { "edgeId": "e_worker_auto", "description": "The worker invokes Autopilot preparation and due-order execution." },
+        { "edgeId": "e_auto_payments", "description": "Payment order state is updated with idempotency and history." }
       ]
     }
   ]
