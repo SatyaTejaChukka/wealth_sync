@@ -21,9 +21,10 @@ jobs:
           java-version: "21"
           cache: "gradle"
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Android SDK Licenses & Prepare SDK 36
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || yes | sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" 2>/dev/null || sdkmanager "platforms;android-36" 2>/dev/null || true
 
       - name: Set up Node.js 22 (LTS)
         uses: actions/setup-node@v4
