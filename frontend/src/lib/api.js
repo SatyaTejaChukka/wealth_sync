@@ -13,6 +13,12 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const customUrl = localStorage.getItem('custom_api_base_url');
+    if (customUrl) {
+      config.baseURL = customUrl;
+    }
+  }
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

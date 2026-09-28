@@ -31,9 +31,13 @@ import { useToast } from '../../components/ui/Toast.jsx';
 
 import { lentService } from '../../services/lent.js';
 import { categoryService } from '../../services/categories.js';
+import { useMediaQuery } from '../../hooks/useMediaQuery.js';
+import { MobileDetailDrawer } from '../../components/mobile/MobileDetailDrawer.jsx';
+import { PaymentTimelineFeed } from '../../components/mobile/PaymentTimelineFeed.jsx';
 
 export default function Lent() {
   const toast = useToast();
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'settled'
   const [records, setRecords] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -59,6 +63,8 @@ export default function Lent() {
     lent_at: new Date().toISOString().split('T')[0],
     due_date: '',
     category_id: '',
+    payment_source: 'bank', // 'bank' or 'cash'
+    track_in_transactions: true,
     notes: ''
   });
 
@@ -119,6 +125,8 @@ export default function Lent() {
         lent_at: formData.lent_at,
         due_date: formData.due_date || null,
         category_id: formData.category_id || null,
+        payment_source: formData.payment_source || 'bank',
+        track_in_transactions: formData.payment_source === 'cash' ? false : formData.track_in_transactions,
         notes: formData.notes || null
       };
 
@@ -187,6 +195,8 @@ export default function Lent() {
       lent_at: new Date().toISOString().split('T')[0],
       due_date: '',
       category_id: '',
+      payment_source: 'bank',
+      track_in_transactions: true,
       notes: ''
     });
     setIsCreatingCategory(false);
@@ -218,6 +228,125 @@ export default function Lent() {
 
   // Calculations for summary stats header
   const totalPrincipalLent = records.reduce((sum, r) => sum + parseFloat(r.principal_amount), 0);
+
+  const renderLentDetailsContent = (details, onClose) => {
+    const principal = parseFloat(details.lent_record.principal_amount) || 0;
+    const accrued = parseFloat(details.accrued_interest) || 0;
+    const totalExpected = principal + accrued;
+    const totalRepayments = parseFloat(details.total_repayments) || 0;
+    const repaidPct = totalExpected > 0 ? Math.min(100, Math.round((totalRepayments / totalExpected) * 100)) : 0;
+    const outstanding = parseFloat(details.outstanding_balance) || 0;
+    const isActive = details.lent_record.status === 'active';
+
+    return (
+      <div className="space-y-5">
+        {/* Repayment Progress Meter */}
+        <div>
+          <div className="flex justify-between text-xs text-zinc-400 mb-1.5">
+            <span>Repayment Progress</span>
+            <span className="font-bold text-violet-400">{repaidPct}%</span>
+          </div>
+          <Progress
+            value={repaidPct}
+            className="h-2.5 bg-zinc-800"
+            indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
+          />
+        </div>
+
+        {/* Stats Breakdown Grid */}
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5">
+            <p className="text-zinc-500 font-medium text-[11px]">Lending Duration</p>
+            <p className="text-sm sm:text-base font-bold text-white mt-1">
+              {details.elapsed_duration.years > 0 ? `${details.elapsed_duration.years}y ` : ''}
+              {details.elapsed_duration.months > 0 ? `${details.elapsed_duration.months}m ` : ''}
+              {details.elapsed_duration.days}d
+            </p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5">
+            <p className="text-zinc-500 font-medium text-[11px]">Interest Accrued</p>
+            <p className="text-sm sm:text-base font-bold text-emerald-400 mt-1">
+              + ₹{Math.round(accrued).toLocaleString('en-IN')}
+            </p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5">
+            <p className="text-zinc-500 font-medium text-[11px]">Total Repayments</p>
+            <p className="text-sm sm:text-base font-bold text-white mt-1">
+              ₹{Math.round(totalRepayments).toLocaleString('en-IN')}
+            </p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
+            <p className="text-violet-400 font-semibold text-[11px]">Net Outstanding</p>
+            <p className="text-sm sm:text-base font-extrabold text-white mt-1">
+              ₹{Math.round(outstanding).toLocaleString('en-IN')}
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Settle Action */}
+        {isActive && outstanding > 0 && (
+          <div className="pt-1">
+            <Button
+              onClick={() => {
+                if (onClose) onClose();
+                setRepayData({
+                  amount: String(outstanding.toFixed(2)),
+                  notes: 'Full settlement repayment'
+                });
+                setShowRepayModal(true);
+              }}
+              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs sm:text-sm font-bold py-3 h-11 rounded-xl text-white border-0 shadow-lg shadow-emerald-500/10 active:scale-98 transition-all"
+            >
+              Settle Outstanding (₹{Math.round(outstanding).toLocaleString('en-IN')})
+            </Button>
+          </div>
+        )}
+
+        {/* Transaction Logs Feed */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center text-xs text-zinc-400">
+            <span className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-[11px] text-zinc-500">
+              <Receipt size={14} className="text-zinc-500" />
+              Ledger Transactions ({details.transactions.length})
+            </span>
+          </div>
+
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {details.transactions.length === 0 ? (
+              <div className="p-4 text-center text-zinc-600 text-xs rounded-xl bg-white/[0.02] border border-white/5">
+                No ledger activity yet
+              </div>
+            ) : (
+              details.transactions.map((tx) => {
+                const isIncome = tx.type === 'INCOME';
+                return (
+                  <div
+                    key={tx.id}
+                    className="p-3 rounded-xl border border-white/5 bg-white/[0.02] flex justify-between items-center text-xs"
+                  >
+                    <div>
+                      <p className="font-semibold text-white">
+                        {tx.description || (isIncome ? 'Repayment Received' : 'Principal Disbursed')}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">
+                        {new Date(tx.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <span className={cn(
+                      "font-bold text-sm",
+                      isIncome ? "text-emerald-400" : "text-rose-400"
+                    )}>
+                      {isIncome ? '+' : '-'} ₹{parseFloat(tx.amount).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -276,7 +405,7 @@ export default function Lent() {
                 {activeTab === 'active' ? 'Total Outstanding Principal' : 'Total Settled Principal'}
               </p>
               <h3 className="text-2xl font-bold text-white mt-1">
-                INR {totalPrincipalLent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{totalPrincipalLent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-violet-600/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
@@ -303,83 +432,115 @@ export default function Lent() {
             ) : (
               records.map((rec) => {
                 const isActive = rec.status === 'active';
+                const isSelected = selectedDetails?.lent_record?.id === rec.id;
+                const initials = (rec.borrower_name || 'B')
+                  .split(' ')
+                  .map(p => p[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase();
+
                 return (
                   <Card
                     key={rec.id}
                     onClick={() => fetchRecordDetails(rec.id)}
                     className={cn(
-                      "p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
-                      selectedDetails?.lent_record?.id === rec.id && "border-violet-500/40 bg-violet-500/5"
+                      "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
+                      isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
                     )}
                   >
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2.5">
-                          <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                            <User size={16} className="text-zinc-500" />
-                            {rec.borrower_name}
-                          </h3>
-                          <span className={cn(
-                            "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                            isActive
-                              ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
-                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          )}>
-                            {rec.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-zinc-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar size={12} className="text-zinc-500" />
-                            Lent {new Date(rec.lent_at).toLocaleDateString()}
+                    <div className="flex flex-col gap-3">
+                      {/* Top Header */}
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-300 font-bold text-xs shrink-0 mt-0.5 shadow-sm">
+                            {initials}
                           </div>
-                          <div className="flex items-center gap-1 font-medium text-violet-300">
-                            {rec.interest_rate_type === 'percentage' ? (
-                              <span>{parseFloat(rec.interest_rate_val)}% {rec.interest_frequency}</span>
-                            ) : (
-                              <span>INR {parseFloat(rec.interest_rate_val)} for every {parseFloat(rec.interest_rate_basis)} {rec.interest_frequency}</span>
-                            )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-bold text-white text-base sm:text-lg truncate">{rec.borrower_name}</h3>
+                              <span className={cn(
+                                "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                                isActive
+                                  ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                                  : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              )}>
+                                {rec.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-zinc-400 mt-1 flex-wrap">
+                              <div className="flex items-center gap-1 text-zinc-400">
+                                <Calendar size={12} className="text-zinc-500" />
+                                <span>{new Date(rec.lent_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              </div>
+                              <span className="text-zinc-600">•</span>
+                              <span className="text-violet-300 font-medium">
+                                {rec.interest_rate_type === 'percentage' ? (
+                                  `${parseFloat(rec.interest_rate_val)}% ${rec.interest_frequency}`
+                                ) : (
+                                  `₹${parseFloat(rec.interest_rate_val)} / ₹${parseFloat(rec.interest_rate_basis)} ${rec.interest_frequency}`
+                                )}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-zinc-500 uppercase font-semibold">Principal Lent</p>
-                        <p className="text-xl font-extrabold text-white mt-0.5">
-                          INR {parseFloat(rec.principal_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex justify-between items-center pt-4 mt-4 border-t border-white/5 text-sm">
-                      <span className="text-zinc-500 text-xs truncate max-w-xs sm:max-w-md">
-                        {rec.notes ? `"${rec.notes}"` : 'No description'}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {isActive && (
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] text-zinc-500 uppercase font-semibold">Principal</p>
+                          <p className="text-base sm:text-xl font-extrabold text-white mt-0.5">
+                            ₹{parseFloat(rec.principal_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Notes preview if any */}
+                      {rec.notes && (
+                        <p className="text-xs text-zinc-400 italic bg-white/[0.02] px-3 py-1.5 rounded-lg border border-white/5 truncate">
+                          "{rec.notes}"
+                        </p>
+                      )}
+
+                      {/* Thumb Action Tray */}
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchRecordDetails(rec.id);
+                          }}
+                          className="text-xs font-semibold text-violet-400 hover:text-violet-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-violet-500/10 transition-colors"
+                        >
+                          <span>View Ledger & Math</span>
+                          <ChevronRight size={14} />
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          {isActive && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDetails(null);
+                                fetchRecordDetails(rec.id).then(() => setShowRepayModal(true));
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 text-xs font-bold text-violet-400 border-violet-500/30 hover:bg-violet-500/10 active:scale-95 transition-all"
+                            >
+                              Add Repayment
+                            </Button>
+                          )}
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedDetails(null);
-                              fetchRecordDetails(rec.id).then(() => setShowRepayModal(true));
+                              setShowDeleteDialog(rec.id);
                             }}
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs font-bold text-violet-400 border-violet-500/20 hover:bg-violet-500/10"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-zinc-500 hover:text-red-400 active:scale-95 transition-all"
                           >
-                            Add Repayment
+                            <Trash2 size={15} />
                           </Button>
-                        )}
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteDialog(rec.id);
-                          }}
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                        >
-                          <Trash2 size={15} />
-                        </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -389,10 +550,10 @@ export default function Lent() {
           </div>
         </div>
 
-        {/* Detailed Side Panel */}
-        <div className="lg:col-span-1">
+        {/* Desktop-Only Side Details Panel */}
+        <div className="hidden lg:block lg:col-span-1">
           {selectedDetails ? (
-            <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md space-y-6 animate-fade-in">
+            <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md space-y-6 animate-fade-in sticky top-6">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-bold text-white text-lg">{selectedDetails.lent_record.borrower_name}</h3>
@@ -409,107 +570,7 @@ export default function Lent() {
                   Close
                 </Button>
               </div>
-
-              {/* Repayment Progress Meter */}
-              <div>
-                <div className="flex justify-between text-xs text-zinc-400 mb-1">
-                  <span>Balance Repaid</span>
-                  <span className="font-bold text-violet-400">
-                    {selectedDetails.lent_record.principal_amount > 0
-                      ? `${Math.round((parseFloat(selectedDetails.total_repayments) / (parseFloat(selectedDetails.lent_record.principal_amount) + parseFloat(selectedDetails.accrued_interest))) * 100)}%`
-                      : '0%'}
-                  </span>
-                </div>
-                <Progress
-                  value={
-                    ((parseFloat(selectedDetails.total_repayments) / 
-                      (parseFloat(selectedDetails.lent_record.principal_amount) + parseFloat(selectedDetails.accrued_interest))) * 100) || 0
-                  }
-                  className="h-2 bg-zinc-800"
-                  indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
-                />
-              </div>
-
-              {/* Stats Breakdown Grid */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-zinc-500 font-medium">Lending Duration</p>
-                  <p className="text-sm font-bold text-white mt-1">
-                    {selectedDetails.elapsed_duration.years > 0 ? `${selectedDetails.elapsed_duration.years}y ` : ''}
-                    {selectedDetails.elapsed_duration.months > 0 ? `${selectedDetails.elapsed_duration.months}m ` : ''}
-                    {selectedDetails.elapsed_duration.days}d elapsed
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-zinc-500 font-medium">Interest Accrued</p>
-                  <p className="text-sm font-bold text-emerald-400 mt-1">
-                    + INR {parseFloat(selectedDetails.accrued_interest).toLocaleString('en-IN')}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-zinc-500 font-medium">Total Repayments</p>
-                  <p className="text-sm font-bold text-white mt-1">
-                    INR {parseFloat(selectedDetails.total_repayments).toLocaleString('en-IN')}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-violet-500/20 bg-violet-500/5">
-                  <p className="text-violet-400 font-semibold">Net Outstanding</p>
-                  <p className="text-sm font-extrabold text-white mt-1">
-                    INR {parseFloat(selectedDetails.outstanding_balance).toLocaleString('en-IN')}
-                  </p>
-                </div>
-              </div>
-              
-              {selectedDetails.lent_record.status === 'active' && (
-                <div className="pt-1">
-                  <Button
-                    onClick={() => {
-                      setRepayData({
-                        amount: String(parseFloat(selectedDetails.outstanding_balance).toFixed(2)),
-                        notes: 'Full settlement repayment'
-                      });
-                      setShowRepayModal(true);
-                    }}
-                    className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-bold py-2 h-9 rounded-xl text-white border-0"
-                  >
-                    Settle Outstanding Balance (INR {parseFloat(selectedDetails.outstanding_balance).toLocaleString('en-IN')})
-                  </Button>
-                </div>
-              )}
-
-              {/* Transactions History */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs text-zinc-400">
-                  <span className="flex items-center gap-1.5">
-                    <Receipt size={14} className="text-zinc-500" />
-                    Transaction Logs
-                  </span>
-                  <span className="text-[10px] text-zinc-600">Lending & Payments</span>
-                </div>
-                <div className="max-h-48 overflow-y-auto rounded-xl border border-white/5 divide-y divide-white/5 text-xs text-zinc-300">
-                  {selectedDetails.transactions.length === 0 ? (
-                    <div className="p-4 text-center text-zinc-600">No transactions found</div>
-                  ) : (
-                    selectedDetails.transactions.map((tx) => {
-                      const isIncome = tx.type === 'INCOME';
-                      return (
-                        <div key={tx.id} className="p-3 flex justify-between items-center hover:bg-white/2 transition-all">
-                          <div>
-                            <p className="font-semibold text-white">{tx.description || (isIncome ? 'Repayment Received' : 'Principal Disbursed')}</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">{new Date(tx.occurred_at).toLocaleDateString()}</p>
-                          </div>
-                          <span className={cn(
-                            "font-bold text-sm",
-                            isIncome ? "text-emerald-400" : "text-rose-400"
-                          )}>
-                            {isIncome ? '+' : '-'} INR {parseFloat(tx.amount).toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              {renderLentDetailsContent(selectedDetails, () => setSelectedDetails(null))}
             </Card>
           ) : (
             <Card className="p-8 text-center border-white/5 bg-zinc-900/10 text-zinc-500 flex flex-col items-center justify-center gap-2 h-full">
@@ -522,6 +583,28 @@ export default function Lent() {
           )}
         </div>
       </div>
+
+      {/* Mobile-Only Bottom Sheet Detail Drawer */}
+      {isMobile && selectedDetails && (
+        <MobileDetailDrawer
+          isOpen={Boolean(selectedDetails)}
+          onClose={() => setSelectedDetails(null)}
+          title={selectedDetails.lent_record.borrower_name}
+          subtitle={`${selectedDetails.lent_record.interest_type === 'compound' ? 'Compounding' : 'Simple'} Interest • ₹${parseFloat(selectedDetails.lent_record.principal_amount).toLocaleString('en-IN')}`}
+          badge={
+            <span className={cn(
+              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              selectedDetails.lent_record.status === 'active'
+                ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            )}>
+              {selectedDetails.lent_record.status}
+            </span>
+          }
+        >
+          {renderLentDetailsContent(selectedDetails, () => setSelectedDetails(null))}
+        </MobileDetailDrawer>
+      )}
 
       {/* LEND MONEY MODAL */}
       <Modal
@@ -663,48 +746,85 @@ export default function Lent() {
                 />
               </div>
             )}
+            {/* Funding Source & Accounting Link */}
             <div>
-              <label className="block text-sm font-semibold text-zinc-300 mb-2">Ledger Category Mapping</label>
-              {!isCreatingCategory ? (
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Select
-                      options={[
-                        { value: '', label: 'Select category' },
-                        ...categories.map(cat => ({ value: cat.id, label: cat.name }))
-                      ]}
-                      value={formData.category_id}
-                      onChange={(value) => setFormData({ ...formData, category_id: value })}
-                    />
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 px-3"
-                    onClick={() => setIsCreatingCategory(true)}
-                  >
-                    <Plus size={16} />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2 animate-fade-in">
-                  <Input 
-                    value={newCategoryName} 
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="New category name..."
-                    autoFocus
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                  <Button type="button" className="bg-linear-to-r from-violet-600 to-indigo-600 px-3" onClick={handleCreateCategory}>
-                    <Check size={16} />
-                  </Button>
-                  <Button type="button" variant="ghost" className="text-zinc-400 hover:text-white px-2" onClick={() => setIsCreatingCategory(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              )}
-              <p className="text-[10px] text-zinc-500 mt-1">Lent items are logged as EXPENSES in your activity history; link a category to balance your monthly reports.</p>
+              <label className="block text-sm font-semibold text-zinc-300 mb-2">Funding Source</label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, payment_source: 'bank', track_in_transactions: true })}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    formData.payment_source === 'bank'
+                      ? 'border-violet-500 bg-violet-500/15 text-white shadow-sm shadow-violet-500/10'
+                      : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700'
+                  }`}
+                >
+                  <p className="text-xs font-semibold flex items-center gap-1.5">
+                    <span>🏦</span> Bank / Netbanking
+                  </p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Deducted from tracked bank balance</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, payment_source: 'cash', track_in_transactions: false })}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    formData.payment_source === 'cash'
+                      ? 'border-emerald-500 bg-emerald-500/15 text-white shadow-sm shadow-emerald-500/10'
+                      : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700'
+                  }`}
+                >
+                  <p className="text-xs font-semibold flex items-center gap-1.5">
+                    <span>💵</span> Physical Cash
+                  </p>
+                  <p className="text-[10px] text-zinc-400 mt-1">In-hand cash; leaves bank balance intact</p>
+                </button>
+              </div>
             </div>
+
+            {formData.payment_source === 'bank' && (
+              <div>
+                <label className="block text-sm font-semibold text-zinc-300 mb-2">Ledger Category Mapping</label>
+                {!isCreatingCategory ? (
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Select
+                        options={[
+                          { value: '', label: 'Select category' },
+                          ...categories.map(cat => ({ value: cat.id, label: cat.name }))
+                        ]}
+                        value={formData.category_id}
+                        onChange={(value) => setFormData({ ...formData, category_id: value })}
+                      />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="border-dashed border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 px-3 cursor-pointer"
+                      onClick={() => setIsCreatingCategory(true)}
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 animate-fade-in">
+                    <Input 
+                      value={newCategoryName} 
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="New category name..."
+                      autoFocus
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                    <Button type="button" className="bg-linear-to-r from-violet-600 to-indigo-600 px-3 cursor-pointer" onClick={handleCreateCategory}>
+                      <Check size={16} />
+                    </Button>
+                    <Button type="button" variant="ghost" className="text-zinc-400 hover:text-white px-2 cursor-pointer" onClick={() => setIsCreatingCategory(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+                <p className="text-[10px] text-zinc-500 mt-1">Bank lending logs an activity transaction. Deleting this lending profile will automatically purge linked transactions to preserve true wealth.</p>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-semibold text-zinc-300 mb-2">Memo / Notes</label>
               <Input
@@ -765,7 +885,7 @@ export default function Lent() {
             <Input
               value={repayData.notes}
               onChange={(e) => setRepayData({ ...repayData, notes: e.target.value })}
-              placeholder="e.g. Part payment received via cash"
+              placeholder="e.g. Part payment received"
               className="bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
@@ -793,7 +913,7 @@ export default function Lent() {
       <ConfirmDialog
         isOpen={Boolean(showDeleteDialog)}
         title="Remove Lending Profile"
-        description="Are you sure you want to delete this lending tracker? This will cease active interest calculations, but associated transaction ledger entries will remain. This cannot be undone."
+        description="Are you sure you want to delete this lending tracker? This will remove the lending record and purge any auto-generated transactions tied to it, preserving your true wealth and bank ledger integrity. This cannot be undone."
         confirmText="Delete Profile"
         cancelText="Cancel"
         variant="destructive"

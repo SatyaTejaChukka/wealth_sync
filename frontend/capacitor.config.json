@@ -1,0 +1,21 @@
+{
+  "appId": "com.wealthsync.app",
+  "appName": "WealthSync",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#09090b"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#09090b",
+      "androidScaleType": "CENTER_CROP"
+    }
+  }
+}

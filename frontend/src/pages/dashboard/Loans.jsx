@@ -30,9 +30,13 @@ import { useToast } from '../../components/ui/Toast.jsx';
 
 import { loanService } from '../../services/loans.js';
 import { categoryService } from '../../services/categories.js';
+import { useMediaQuery } from '../../hooks/useMediaQuery.js';
+import { MobileDetailDrawer } from '../../components/mobile/MobileDetailDrawer.jsx';
+import { PaymentTimelineFeed } from '../../components/mobile/PaymentTimelineFeed.jsx';
 
 export default function Loans() {
   const toast = useToast();
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const [activeTab, setActiveTab] = useState('my-loans'); // 'my-loans' or 'calculator'
   const [loans, setLoans] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -290,6 +294,110 @@ export default function Loans() {
   const monthlyEMIs = activeLoans.reduce((sum, l) => sum + parseFloat(l.emi_amount), 0);
   const totalPrincipal = activeLoans.reduce((sum, l) => sum + parseFloat(l.principal_amount), 0);
 
+  const renderLoanDetailsContent = (details, onClose) => (
+    <div className="space-y-5">
+      {/* Progress Bar & Header */}
+      <div>
+        <div className="flex justify-between text-xs text-zinc-400 mb-1.5">
+          <span>Principal Repaid</span>
+          <span className="font-bold text-violet-400">
+            {Math.round((parseFloat(details.total_principal_paid) / parseFloat(details.loan.principal_amount)) * 100)}%
+          </span>
+        </div>
+        <Progress
+          value={(parseFloat(details.total_principal_paid) / parseFloat(details.loan.principal_amount)) * 100}
+          className="h-2.5 bg-zinc-800"
+          indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
+        />
+      </div>
+
+      {/* 4 Metric Boxes */}
+      <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+          <p className="text-zinc-500 font-medium text-[11px]">Outstanding Balance</p>
+          <p className="text-sm sm:text-base font-bold text-white mt-1">
+            ₹{Math.round(parseFloat(details.outstanding_principal)).toLocaleString('en-IN')}
+          </p>
+        </div>
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+          <p className="text-zinc-500 font-medium text-[11px]">Total Interest Paid</p>
+          <p className="text-sm sm:text-base font-bold text-white mt-1">
+            ₹{Math.round(parseFloat(details.total_interest_paid)).toLocaleString('en-IN')}
+          </p>
+        </div>
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+          <p className="text-zinc-500 font-medium text-[11px]">Remaining Tenure</p>
+          <p className="text-sm sm:text-base font-bold text-white mt-1">
+            {details.remaining_tenure_months} months left
+          </p>
+        </div>
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+          <p className="text-zinc-500 font-medium text-[11px]">Next Due Date</p>
+          <p className="text-sm sm:text-base font-bold text-white mt-1">
+            {details.next_due_date ? new Date(details.next_due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+          </p>
+        </div>
+      </div>
+
+      {/* Amortization Curve Chart */}
+      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3 space-y-2">
+        <p className="text-xs text-zinc-400 font-semibold">Amortization Curve (Balance over Time)</p>
+        <div className="h-44 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={details.amortization_schedule}
+              margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
+            >
+              <XAxis dataKey="month" tick={{ fill: '#71717a', fontSize: 10 }} />
+              <YAxis tick={{ fill: '#71717a', fontSize: 10 }} />
+              <RechartsTooltip
+                contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                labelStyle={{ color: '#fff', fontSize: '12px' }}
+                formatter={(val) => [`₹${Math.round(val).toLocaleString('en-IN')}`, 'Remaining Balance']}
+              />
+              <Area
+                type="monotone"
+                dataKey="remaining_principal"
+                stroke="#8b5cf6"
+                fill="url(#colorLoanCurve)"
+                strokeWidth={2}
+                name="Remaining Balance"
+              />
+              <defs>
+                <linearGradient id="colorLoanCurve" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02}/>
+                </linearGradient>
+              </defs>
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Payment Timeline Feed */}
+      <PaymentTimelineFeed
+        type="loan"
+        items={details.amortization_schedule}
+        paidMonthsCount={details.loan.tenure_months - details.remaining_tenure_months}
+      />
+
+      {/* Quick Pay Action inside Drawer */}
+      {details.loan.status === 'active' && (
+        <div className="pt-2">
+          <Button
+            onClick={() => {
+              if (onClose) onClose();
+              handlePayEMI(details.loan.id);
+            }}
+            className="w-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-sm font-bold py-3 h-11 rounded-xl text-white shadow-lg shadow-violet-500/20 active:scale-98 transition-all"
+          >
+            Pay Next EMI (₹{parseFloat(details.loan.emi_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-slide-up">
       {/* Header */}
@@ -349,7 +457,7 @@ export default function Loans() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Monthly EMI Outflow</p>
                   <h3 className="text-2xl font-bold text-white mt-1">
-                    INR {monthlyEMIs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{monthlyEMIs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-violet-600/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
@@ -360,7 +468,7 @@ export default function Loans() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Active Debt Portfolio</p>
                   <h3 className="text-2xl font-bold text-white mt-1">
-                    INR {totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₹{totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
@@ -387,88 +495,120 @@ export default function Loans() {
               ) : (
                 loans.map((loan) => {
                   const isActive = loan.status === 'active';
+                  const isSelected = selectedLoanDetails?.loan?.id === loan.id;
+
                   return (
                     <Card
                       key={loan.id}
                       onClick={() => fetchLoanDetails(loan.id)}
                       className={cn(
-                        "p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
-                        selectedLoanDetails?.loan?.id === loan.id && "border-violet-500/40 bg-violet-500/5"
+                        "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
+                        isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
                       )}
                     >
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2.5">
-                            <h3 className="font-bold text-white text-lg">{loan.name}</h3>
-                            <span className={cn(
-                              "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                              isActive
-                                ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
-                                : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
-                            )}>
-                              {loan.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs text-zinc-400">
-                            {loan.category && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: loan.category.color }} />
-                                {loan.category.name}
+                      <div className="flex flex-col gap-3">
+                        {/* Top Header */}
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0 mt-0.5">
+                              <Landmark size={20} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-bold text-white text-base sm:text-lg truncate">{loan.name}</h3>
+                                <span className={cn(
+                                  "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                                  isActive
+                                    ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                                    : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                )}>
+                                  {loan.status}
+                                </span>
                               </div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <Percent size={12} className="text-zinc-500" />
-                              {parseFloat(loan.interest_rate)}% p.a.
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock size={12} className="text-zinc-500" />
-                              {loan.tenure_months} months
+                              <div className="flex items-center gap-2 text-xs text-zinc-400 mt-1 flex-wrap">
+                                {loan.category && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: loan.category.color }} />
+                                    <span className="text-zinc-300">{loan.category.name}</span>
+                                  </div>
+                                )}
+                                <span className="text-zinc-600">•</span>
+                                <div className="flex items-center gap-1">
+                                  <Percent size={12} className="text-zinc-500" />
+                                  <span>{parseFloat(loan.interest_rate)}% p.a.</span>
+                                </div>
+                                <span className="text-zinc-600">•</span>
+                                <div className="flex items-center gap-1">
+                                  <Clock size={12} className="text-zinc-500" />
+                                  <span>{loan.tenure_months}m</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-zinc-500 uppercase font-semibold">Monthly EMI</p>
-                          <p className="text-xl font-extrabold text-white mt-0.5">
-                            INR {parseFloat(loan.emi_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Repayment details summary */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 mt-4 border-t border-white/5 text-sm">
-                        <div>
-                          <p className="text-xs text-zinc-500">Original Principal</p>
-                          <p className="font-semibold text-zinc-300 mt-0.5">INR {parseFloat(loan.principal_amount).toLocaleString('en-IN')}</p>
+                          <div className="text-right shrink-0">
+                            <p className="text-[10px] text-zinc-500 uppercase font-semibold">Monthly EMI</p>
+                            <p className="text-base sm:text-xl font-extrabold text-white mt-0.5">
+                              ₹{parseFloat(loan.emi_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-zinc-500">EMI Due Day</p>
-                          <p className="font-semibold text-zinc-300 mt-0.5">Day {loan.due_day} of month</p>
+
+                        {/* Quick Details Row */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-3 border-t border-white/5 text-xs">
+                          <div>
+                            <span className="text-zinc-500 text-[11px] block">Principal</span>
+                            <span className="font-semibold text-zinc-300">₹{parseFloat(loan.principal_amount).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 text-[11px] block">EMI Due Day</span>
+                            <span className="font-semibold text-zinc-300">Day {loan.due_day} of month</span>
+                          </div>
+                          <div className="col-span-2 sm:col-span-1 flex items-center sm:justify-end text-zinc-400 text-[11px]">
+                            <span className="capitalize">{loan.interest_type === 'simple' ? 'Simple Interest' : 'Reducing Balance'}</span>
+                          </div>
                         </div>
-                        <div className="col-span-2 sm:col-span-1 text-right flex items-center justify-end gap-2">
-                          {isActive && (
+
+                        {/* Thumb Action Tray */}
+                        <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fetchLoanDetails(loan.id);
+                            }}
+                            className="text-xs font-semibold text-violet-400 hover:text-violet-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-violet-500/10 transition-colors"
+                          >
+                            <span>View Amortization</span>
+                            <ChevronRight size={14} />
+                          </button>
+
+                          <div className="flex items-center gap-2">
+                            {isActive && (
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePayEMI(loan.id);
+                               }}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3 text-xs font-bold text-violet-400 border-violet-500/30 hover:bg-violet-500/10 active:scale-95 transition-all"
+                              >
+                                Pay EMI
+                              </Button>
+                            )}
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePayEMI(loan.id);
+                                setShowDeleteDialog(loan.id);
                               }}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs font-bold text-violet-400 border-violet-500/20 hover:bg-violet-500/10"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-zinc-500 hover:text-red-400 active:scale-95 transition-all"
                             >
-                              Pay EMI
+                              <Trash2 size={15} />
                             </Button>
-                          )}
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowDeleteDialog(loan.id);
-                            }}
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                          >
-                            <Trash2 size={15} />
-                          </Button>
+                          </div>
                         </div>
                       </div>
                     </Card>
@@ -478,10 +618,10 @@ export default function Loans() {
             </div>
           </div>
 
-          {/* Details & Schedule Side Panel */}
-          <div className="lg:col-span-1">
+          {/* Desktop-Only Side Details Panel */}
+          <div className="hidden lg:block lg:col-span-1">
             {selectedLoanDetails ? (
-              <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md space-y-6 animate-fade-in">
+              <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md space-y-6 animate-fade-in sticky top-6">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-white text-lg">{selectedLoanDetails.loan.name}</h3>
@@ -498,108 +638,7 @@ export default function Loans() {
                     Close
                   </Button>
                 </div>
-
-                {/* Progress Circle & Metrics */}
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs text-zinc-400 mb-1">
-                      <span>Principal Repaid</span>
-                      <span className="font-bold text-violet-400">
-                        {Math.round((parseFloat(selectedLoanDetails.total_principal_paid) / parseFloat(selectedLoanDetails.loan.principal_amount)) * 100)}%
-                      </span>
-                    </div>
-                    <Progress
-                      value={(parseFloat(selectedLoanDetails.total_principal_paid) / parseFloat(selectedLoanDetails.loan.principal_amount)) * 100}
-                      className="h-2 bg-zinc-800"
-                      indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-2 text-xs">
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                      <p className="text-zinc-500 font-medium">Outstanding Balance</p>
-                      <p className="text-sm font-bold text-white mt-1">
-                        INR {parseFloat(selectedLoanDetails.outstanding_principal).toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                      <p className="text-zinc-500 font-medium">Total Interest Paid</p>
-                      <p className="text-sm font-bold text-white mt-1">
-                        INR {parseFloat(selectedLoanDetails.total_interest_paid).toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                      <p className="text-zinc-500 font-medium">Remaining Tenure</p>
-                      <p className="text-sm font-bold text-white mt-1">
-                        {selectedLoanDetails.remaining_tenure_months} months left
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                      <p className="text-zinc-500 font-medium">Next Due Date</p>
-                      <p className="text-sm font-bold text-white mt-1">
-                        {selectedLoanDetails.next_due_date ? new Date(selectedLoanDetails.next_due_date).toLocaleDateString() : '-'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amortization Chart */}
-                <div className="h-40 relative">
-                  <p className="text-xs text-zinc-500 font-medium mb-2">Amortization Curve (Remaining Principal)</p>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={selectedLoanDetails.amortization_schedule}
-                      margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="month" tick={{ fill: '#71717a', fontSize: 10 }} />
-                      <YAxis tick={{ fill: '#71717a', fontSize: 10 }} />
-                      <RechartsTooltip
-                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}
-                        labelStyle={{ color: '#fff', fontSize: '12px' }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="remaining_principal"
-                        stroke="#8b5cf6"
-                        fill="url(#colorUv)"
-                        name="Remaining Balance"
-                      />
-                      <defs>
-                        <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Amortization Table Preview */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-xs text-zinc-400">
-                    <span>Payment Schedule</span>
-                    <span className="text-zinc-600 font-medium">Scrollable</span>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto rounded-xl border border-white/5 divide-y divide-white/5 text-xs text-zinc-300">
-                    <div className="grid grid-cols-4 p-2 bg-white/5 font-semibold text-zinc-400">
-                      <span>Mo.</span>
-                      <span>Principal</span>
-                      <span>Interest</span>
-                      <span className="text-right">Balance</span>
-                    </div>
-                    {selectedLoanDetails.amortization_schedule.map((row) => (
-                      <div key={row.month} className={cn(
-                        "grid grid-cols-4 p-2.5",
-                        row.month <= selectedLoanDetails.loan.tenure_months - selectedLoanDetails.remaining_tenure_months && "bg-violet-500/5 text-violet-300"
-                      )}>
-                        <span>Month {row.month}</span>
-                        <span>{parseFloat(row.principal_paid).toLocaleString('en-IN')}</span>
-                        <span>{parseFloat(row.interest_paid).toLocaleString('en-IN')}</span>
-                        <span className="text-right">{parseFloat(row.remaining_principal).toLocaleString('en-IN')}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {renderLoanDetailsContent(selectedLoanDetails, () => setSelectedLoanDetails(null))}
               </Card>
             ) : (
               <Card className="p-8 text-center border-white/5 bg-zinc-900/10 text-zinc-500 flex flex-col items-center justify-center gap-2 h-full">
@@ -610,6 +649,28 @@ export default function Loans() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Mobile-Only Bottom Sheet Detail Drawer */}
+      {isMobile && selectedLoanDetails && (
+        <MobileDetailDrawer
+          isOpen={Boolean(selectedLoanDetails)}
+          onClose={() => setSelectedLoanDetails(null)}
+          title={selectedLoanDetails.loan.name}
+          subtitle={`${selectedLoanDetails.loan.interest_type === 'simple' ? 'Simple (Flat)' : 'Reducing'} Interest • ₹${parseFloat(selectedLoanDetails.loan.emi_amount).toLocaleString('en-IN')}/mo`}
+          badge={
+            <span className={cn(
+              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              selectedLoanDetails.loan.status === 'active'
+                ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            )}>
+              {selectedLoanDetails.loan.status}
+            </span>
+          }
+        >
+          {renderLoanDetailsContent(selectedLoanDetails, () => setSelectedLoanDetails(null))}
+        </MobileDetailDrawer>
       )}
 
       {/* TAB 2: EMI PROJECTION CALCULATOR */}
