@@ -11,7 +11,13 @@ os.environ.setdefault("ENVIRONMENT", "test")
 
 from app.main import app
 from app.core.database import Base, get_db
+from app.core.middleware import limiter
 from pathlib import Path
+
+# Disable rate limiting for integration test suite
+limiter.enabled = False
+if hasattr(app.state, "limiter"):
+    app.state.limiter.enabled = False
 
 # Keep tests isolated from local/dev/prod databases.
 TEST_DB_PATH = Path(__file__).resolve().parent / "test_wealth_sync.db"

@@ -204,6 +204,12 @@ async def test_lent_money_delete(client: AsyncClient):
     del_res = await client.delete(f"/api/v1/lent/{lent_id}", headers=headers)
     assert del_res.status_code == 200, f"Delete failed: {del_res.status_code} {del_res.text}"
 
+    # Verify transactions tied to lent_id were deleted (no orphan transactions left behind)
+    tx_res = await client.get("/api/v1/transactions/", headers=headers)
+    assert tx_res.status_code == 200
+    user_txs = tx_res.json()
+    assert not any(tx.get("lent_id") == lent_id for tx in user_txs)
+
     # 5. Test deletion with category_id = None
     lent_payload_no_cat = {
         "borrower_name": "Delete Me No Cat",
@@ -220,4 +226,31 @@ async def test_lent_money_delete(client: AsyncClient):
 
     del_res2 = await client.delete(f"/api/v1/lent/{lent_id2}", headers=headers)
     assert del_res2.status_code == 200, f"Delete failed: {del_res2.status_code} {del_res2.text}"
+
+
+@pytest.mark.asyncio
+async def test_lent_money_cash_source(client: AsyncClient):
+    token = await signup_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Lending with cash source and track_in_transactions=False should NOT create an Expense transaction
+    lent_payload = {
+        "borrower_name": "Cash Friend",
+        "principal_amount": 2500.0,
+        "interest_rate_type": "percentage",
+        "interest_rate_val": 0.0,
+        "interest_frequency": "monthly",
+        "lent_at": date.today().isoformat(),
+        "payment_source": "cash",
+        "track_in_transactions": False
+    }
+    create_res = await client.post("/api/v1/lent/", json=lent_payload, headers=headers)
+    assert create_res.status_code == 201
+    lent = create_res.json()
+
+    # Verify no transaction was created for this lending
+    tx_res = await client.get("/api/v1/transactions/", headers=headers)
+    assert tx_res.status_code == 200
+    user_txs = tx_res.json()
+    assert not any(tx.get("lent_id") == lent["id"] for tx in user_txs)
 

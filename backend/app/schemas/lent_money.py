@@ -22,6 +22,9 @@ class LentMoneyBase(BaseModel):
 
 
 class LentMoneyCreate(LentMoneyBase):
+    payment_source: Optional[str] = Field(default="bank", pattern="^(bank|cash)$")
+    track_in_transactions: bool = True
+
     @model_validator(mode="after")
     def validate_rate_basis(self) -> "LentMoneyCreate":
         if self.interest_rate_type == "rupees_per_amount":

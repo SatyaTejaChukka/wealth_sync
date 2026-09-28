@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, update
+from sqlalchemy import func, update, delete
 from sqlalchemy.orm import selectinload
 from uuid import uuid4
 from datetime import datetime, date
@@ -50,9 +50,12 @@ async def create_lent_record(
     db: Annotated[AsyncSession, Depends(get_db)]
 ) -> Any:
     """
-    Create a new lending profile and automatically log the initial cash outflow in the ledger.
+    Create a new lending profile and optionally log the initial cash/bank outflow in the ledger.
     """
     lent_data = lent_in.model_dump()
+    payment_source = lent_data.pop("payment_source", "bank")
+    track_in_transactions = lent_data.pop("track_in_transactions", True)
+
     lent = LentMoney(
         id=str(uuid4()),
         user_id=current_user.id,
@@ -60,20 +63,21 @@ async def create_lent_record(
     )
     db.add(lent)
     
-    # Auto-log the cash outflow transaction representing the principal lent
-    lent_date_dt = datetime.combine(lent.lent_at, datetime.min.time())
-    transaction = Transaction(
-        id=str(uuid4()),
-        user_id=current_user.id,
-        category_id=lent.category_id,
-        amount=lent.principal_amount,
-        type="EXPENSE",
-        description=f"Lent Principal: {lent.borrower_name}",
-        occurred_at=lent_date_dt,
-        status="completed",
-        lent_id=lent.id
-    )
-    db.add(transaction)
+    # Auto-log the bank outflow transaction representing the principal lent if requested
+    if track_in_transactions and payment_source != "cash":
+        lent_date_dt = datetime.combine(lent.lent_at, datetime.min.time())
+        transaction = Transaction(
+            id=str(uuid4()),
+            user_id=current_user.id,
+            category_id=lent.category_id,
+            amount=lent.principal_amount,
+            type="EXPENSE",
+            description=f"Lent Principal: {lent.borrower_name}",
+            occurred_at=lent_date_dt,
+            status="completed",
+            lent_id=lent.id
+        )
+        db.add(transaction)
 
     await db.commit()
     await db.refresh(lent, ["category"])
@@ -154,11 +158,10 @@ async def delete_lent_record(
 
     response_data = LentMoneyResponse.model_validate(lent)
 
-    # Unlink any transactions referencing this lending record
+    # Delete any transactions directly tied to this lending record so we don't leave phantom debits/credits
     await db.execute(
-        update(Transaction)
+        delete(Transaction)
         .where(Transaction.lent_id == lent_id)
-        .values(lent_id=None)
     )
 
     await db.delete(lent)
