@@ -45,8 +45,8 @@ export default function Analytics() {
   return (
     <div className="space-y-8 animate-slide-up">
        <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Analytics</h1>
-        <p className="text-zinc-400 mt-1">Deep dive into your financial habits with real-time data.</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Analytics</h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">Deep dive into your financial habits with real-time data.</p>
       </div>
 
       <div className="grid gap-6">

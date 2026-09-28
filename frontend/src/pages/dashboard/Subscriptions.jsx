@@ -153,8 +153,8 @@ export default function Subscriptions() {
     <div className="space-y-6 animate-slide-up">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Subscriptions</h1>
-          <p className="text-zinc-400 mt-1">Manage your recurring subscriptions</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Subscriptions</h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage your recurring subscriptions</p>
         </div>
         <Button
           onClick={() => {

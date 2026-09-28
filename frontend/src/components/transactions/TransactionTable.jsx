@@ -560,7 +560,7 @@ export function TransactionTable({ refreshTrigger }) {
               <span className="text-zinc-500 text-sm mb-1">Amount</span>
               <span
                 className={cn(
-                  'text-4xl font-bold',
+                  'text-2xl sm:text-3xl font-black font-display tracking-tight tabular-nums',
                   viewingTransaction.type === 'INCOME' ? 'text-emerald-400' : 'text-white'
                 )}
               >

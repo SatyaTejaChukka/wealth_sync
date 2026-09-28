@@ -202,8 +202,8 @@ export default function Bills() {
       {/* Header with dual actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Bills & Utilities</h1>
-          <p className="text-zinc-400 mt-1">Manage recurring bills & live electricity connections</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Bills & Utilities</h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage recurring bills & live electricity connections</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button

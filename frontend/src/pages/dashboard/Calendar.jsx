@@ -249,9 +249,9 @@ export default function Calendar() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">Financial Calendar</h1>
-        <p className="text-zinc-400 text-sm">Visualize due dates, EMIs, and repayments to stay ahead of your schedule.</p>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Financial Calendar</h1>
+        <p className="text-zinc-400 text-xs sm:text-sm">Visualize due dates, EMIs, and repayments to stay ahead of your schedule.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

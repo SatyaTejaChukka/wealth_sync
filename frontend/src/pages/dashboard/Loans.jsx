@@ -403,8 +403,8 @@ export default function Loans() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Loans & EMIs</h1>
-          <p className="text-zinc-400 mt-1">Track repayments, schedules, and run what-if EMI projections</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Loans & EMIs</h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Track repayments, schedules, and run what-if EMI projections</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
@@ -790,7 +790,7 @@ export default function Loans() {
                     
                     <div className="p-5 rounded-2xl bg-linear-to-tr from-violet-600 to-indigo-600 shadow-xl shadow-violet-500/10 text-white flex flex-col items-center justify-center text-center">
                       <p className="text-xs uppercase tracking-wider font-semibold text-white/70">Calculated Monthly EMI</p>
-                      <h2 className="text-3xl font-extrabold mt-1">INR {calcResult.emi.toLocaleString('en-IN')}</h2>
+                      <h2 className="text-2xl sm:text-3xl font-black mt-1 font-display tabular-nums tracking-tight">₹{calcResult.emi.toLocaleString('en-IN')}</h2>
                     </div>
 
                     <div className="divide-y divide-white/5 text-sm">

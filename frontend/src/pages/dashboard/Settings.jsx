@@ -98,8 +98,8 @@ export default function Settings() {
   return (
     <div className="space-y-8 animate-slide-up">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
-        <p className="text-zinc-400 mt-1">Manage your account preferences and settings.</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Settings</h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage your account preferences and settings.</p>
       </div>
 
       {message.text && (

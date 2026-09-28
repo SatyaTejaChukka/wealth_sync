@@ -324,7 +324,7 @@ export function SafeToSpendOrb() {
               aria-label={`Safe to spend ${viewMode}: ${formatCurrency(primaryAmount)}. ${statusText}`}
             >
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">{viewMode === 'daily' ? 'Today' : 'This month'}</p>
-              <p className="text-4xl leading-none font-bold text-white mt-2 tabular-nums">
+              <p className="text-2xl sm:text-3xl lg:text-4xl leading-none font-black text-white mt-2 tabular-nums font-display tracking-tight">
                 {(() => {
                   const { symbol, amount, isNegative } = splitCurrency(formatCurrency(displayAmount).replace('.00', ''));
                   return (

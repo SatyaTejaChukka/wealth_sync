@@ -49,8 +49,8 @@ export function FinancialHealthScore({ score = 0, message, color }) {
         </div>
         
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[20%] text-center">
-            <span className="text-4xl font-bold text-white block">{normalizedScore}</span>
-            <span className="text-xs text-zinc-500">OUT OF 100</span>
+            <span className="text-2xl sm:text-3xl font-black text-white block font-display tracking-tight tabular-nums">{normalizedScore}</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500">OUT OF 100</span>
         </div>
 
         <div className="text-center mt-[-20px] pb-4 px-4">

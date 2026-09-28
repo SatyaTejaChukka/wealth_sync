@@ -29,8 +29,8 @@ export default function Transactions() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Transactions</h1>
-          <p className="text-zinc-400 mt-1">Manage and view your transaction history.</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Transactions</h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage and view your transaction history.</p>
         </div>
         <Button
             onClick={() => setIsModalOpen(true)}

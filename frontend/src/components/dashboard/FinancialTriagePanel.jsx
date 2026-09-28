@@ -101,8 +101,8 @@ export function FinancialTriagePanel({ triage }) {
         <CardContent className="space-y-4">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-zinc-500 text-sm">Current stress score</p>
-              <p className={`text-3xl font-bold ${style.accent}`}>{score}</p>
+              <p className="text-zinc-400 text-xs sm:text-sm font-medium">Current stress score</p>
+              <p className={`text-2xl sm:text-3xl font-black font-display tracking-tight tabular-nums ${style.accent}`}>{score}</p>
             </div>
             <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${style.panel} ${style.accent}`}>
               {style.label}
@@ -140,8 +140,8 @@ export function FinancialTriagePanel({ triage }) {
       <CardContent className="space-y-5">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-zinc-500 text-sm">Current stress score</p>
-            <p className={`text-3xl font-bold ${style.accent}`}>{score}</p>
+            <p className="text-zinc-400 text-xs sm:text-sm font-medium">Current stress score</p>
+            <p className={`text-2xl sm:text-3xl font-black font-display tracking-tight tabular-nums ${style.accent}`}>{score}</p>
           </div>
           <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${style.panel} ${style.accent}`}>
             {style.label}

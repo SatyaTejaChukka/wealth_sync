@@ -362,8 +362,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl xl:text-3xl font-extrabold text-white tracking-tight font-display">
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-xl sm:text-2xl xl:text-3xl font-black text-white tracking-tight font-display tabular-nums">
                 {healthScoreVal}
               </span>
               <span className="text-xs text-zinc-500 font-semibold">/ 100</span>

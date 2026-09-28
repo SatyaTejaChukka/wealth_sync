@@ -353,8 +353,8 @@ export default function Lent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Peer-to-Peer lending</h1>
-          <p className="text-zinc-400 mt-1">Track money lent to others, interest accruals, and repayments</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Peer-to-Peer Lending</h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Track money lent to others, interest accruals, and repayments</p>
         </div>
         <Button
           onClick={() => setShowAddModal(true)}
@@ -399,12 +399,12 @@ export default function Lent() {
         {/* Main List Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Summary Stat */}
-          <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md flex items-center justify-between">
+          <Card className="p-4 sm:p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md flex items-center justify-between rounded-2xl">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 {activeTab === 'active' ? 'Total Outstanding Principal' : 'Total Settled Principal'}
               </p>
-              <h3 className="text-2xl font-bold text-white mt-1">
+              <h3 className="text-xl sm:text-2xl font-black text-white mt-1 font-display tabular-nums tracking-tight">
                 ₹{totalPrincipalLent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
             </div>

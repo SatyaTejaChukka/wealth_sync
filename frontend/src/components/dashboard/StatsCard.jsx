@@ -53,10 +53,10 @@ export function StatsCard({
 
           <h3 
             className={cn(
-              "font-extrabold text-white tracking-tight leading-none font-display truncate",
+              "font-extrabold text-white tracking-tight leading-none font-display truncate tabular-nums",
               isHero 
-                ? "text-[1.65rem] sm:text-2xl xl:text-3xl mt-0.5" 
-                : "text-[1.2rem] sm:text-2xl xl:text-3xl"
+                ? "text-xl sm:text-2xl xl:text-3xl mt-0.5" 
+                : "text-lg sm:text-xl xl:text-2xl"
             )}
             title={value}
           >

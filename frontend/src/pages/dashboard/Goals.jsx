@@ -149,8 +149,8 @@ export default function Goals() {
 	<div className="space-y-8 animate-slide-up">
 	   <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
 		<div>
-		  <h1 className="text-3xl font-bold text-white tracking-tight">Savings Goals</h1>
-		  <p className="text-zinc-400 mt-1">Visualize and track your financial targets.</p>
+		  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Savings Goals</h1>
+		  <p className="text-xs sm:text-sm text-zinc-400 mt-1">Visualize and track your financial targets.</p>
 		</div>
 		<Button
 			onClick={() => {
@@ -352,11 +352,11 @@ export default function Goals() {
            {viewingGoal && (
                <div className="space-y-6">
                    <div className="text-center">
-                        <div className="text-4xl font-bold text-white mb-1">
-                            ${parseFloat(viewingGoal.current_amount).toFixed(0)}
+                        <div className="text-2xl sm:text-3xl font-black text-white mb-1 font-display tabular-nums tracking-tight">
+                            {formatCurrency(viewingGoal.current_amount)}
                         </div>
-                        <div className="text-zinc-500 text-sm">
-                            of ${parseFloat(viewingGoal.target_amount).toFixed(0)} Goal
+                        <div className="text-zinc-400 text-xs sm:text-sm font-medium">
+                            of {formatCurrency(viewingGoal.target_amount)} Goal
                         </div>
                    </div>
 
