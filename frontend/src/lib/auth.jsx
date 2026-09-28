@@ -9,6 +9,7 @@ import {
   onIdTokenChanged,
   updateProfile 
 } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { auth, googleProvider, isFirebaseConfigured } from './firebase.js';
 import api from './api.js';
 
@@ -113,6 +114,9 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = useCallback(async (redirectTo = '/dashboard') => {
     if (!isFirebaseConfigured) {
       throw new Error('Firebase credentials not configured in frontend/.env');
+    }
+    if (Capacitor.isNativePlatform()) {
+      throw new Error('Google Sign-In via popup is not supported in the mobile app. Please use your Email and Password to sign in or create an account.');
     }
     const cred = await signInWithPopup(auth, googleProvider);
     const token = await cred.user.getIdToken();
