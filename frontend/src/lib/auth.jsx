@@ -86,18 +86,61 @@ export function AuthProvider({ children }) {
 
   // 1. Email + Password Login
   const loginWithEmail = useCallback(async (email, password, redirectTo = '/dashboard') => {
-    if (isFirebaseConfigured) {
-      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-      const token = await cred.user.getIdToken();
-      localStorage.setItem('token', token);
-      const res = await api.get('/auth/me');
-      setUser(res.data);
-      navigate(redirectTo, { replace: true });
-      return res.data;
+    if (isFirebaseConfigured && auth) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+        const token = await cred.user.getIdToken();
+        localStorage.setItem('token', token);
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+        navigate(redirectTo, { replace: true });
+        return res.data;
+      } catch (fbErr) {
+        // If Firebase says user not found or invalid credential, try Supabase database auth
+        const fbCode = fbErr?.code;
+        if (
+          fbCode === 'auth/user-not-found' || 
+          fbCode === 'auth/invalid-credential' || 
+          fbCode === 'auth/wrong-password' ||
+          fbCode === 'auth/invalid-email'
+        ) {
+          try {
+            const formData = new URLSearchParams();
+            formData.append('username', email.trim());
+            formData.append('password', password);
+            const res = await api.post('/auth/login', formData, {
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            localStorage.setItem('token', res.data.access_token);
+            const userRes = await api.get('/auth/me');
+            setUser(userRes.data);
+
+            // Auto-sync into Firebase in background so subsequent logins work via Firebase
+            try {
+              const newCred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+              if (userRes.data?.full_name) {
+                await updateProfile(newCred.user, { displayName: userRes.data.full_name });
+              }
+              const newIdToken = await newCred.user.getIdToken();
+              localStorage.setItem('token', newIdToken);
+              await api.get('/auth/me');
+            } catch (autoRegErr) {
+              console.warn('Auto-sync to Firebase skipped:', autoRegErr?.message);
+            }
+
+            navigate(redirectTo, { replace: true });
+            return userRes.data;
+          } catch {
+            // If backend also rejected credentials, throw the original error
+            throw fbErr;
+          }
+        }
+        throw fbErr;
+      }
     } else {
       // Fallback to legacy local auth if Firebase not configured
       const formData = new URLSearchParams();
-      formData.append('username', email);
+      formData.append('username', email.trim());
       formData.append('password', password);
       const res = await api.post('/auth/login', formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
