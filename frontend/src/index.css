@@ -332,7 +332,7 @@
     }
   }
 
-  /* Timeline Event Fade In */
+  /* Event Fade In */
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -362,9 +362,6 @@
     }
   }
 
-  .timeline-date-focus {
-    filter: saturate(1.12);
-  }
 
   .animate-approval-ritual {
     animation: approval-ritual 0.65s ease-out;

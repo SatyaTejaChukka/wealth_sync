@@ -98,13 +98,19 @@ async def get_calendar_events(
 
     # 3. Fetch Subscriptions
     subs_res = await db.execute(
-        select(Subscription).filter(Subscription.user_id == current_user.id)
+        select(Subscription).filter(
+            Subscription.user_id == current_user.id,
+            Subscription.is_active == True
+        )
     )
     subs = subs_res.scalars().all()
     for sub in subs:
-        # If renewal is monthly, renewal date is in the selected month
-        # We can use sub.created_at day as the billing day
-        billing_day = min(sub.created_at.day if sub.created_at else 1, last_day)
+        if sub.billing_cycle == "yearly":
+            # For yearly subscriptions, only display in their billing month
+            if sub.next_billing_date and sub.next_billing_date.month != month:
+                continue
+
+        billing_day = min(sub.next_billing_date.day if sub.next_billing_date else 1, last_day)
         event_date = date(year, month, billing_day)
         
         events.append(CalendarEventResponse(

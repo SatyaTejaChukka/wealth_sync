@@ -59,6 +59,30 @@ export default function Calendar() {
     loadEvents();
   }, [currentDate]);
 
+  useEffect(() => {
+    const handleEventsChanged = () => {
+      loadEvents();
+    };
+
+    window.addEventListener('bills:changed', handleEventsChanged);
+    window.addEventListener('transactions:changed', handleEventsChanged);
+    window.addEventListener('loans:changed', handleEventsChanged);
+    window.addEventListener('subscriptions:changed', handleEventsChanged);
+
+    return () => {
+      window.removeEventListener('bills:changed', handleEventsChanged);
+      window.removeEventListener('transactions:changed', handleEventsChanged);
+      window.removeEventListener('loans:changed', handleEventsChanged);
+      window.removeEventListener('subscriptions:changed', handleEventsChanged);
+    };
+  }, [year, month]);
+
+  useEffect(() => {
+    if (selectedDateStr) {
+      setSelectedDayEvents(events.filter((e) => e.due_date === selectedDateStr));
+    }
+  }, [events, selectedDateStr]);
+
   // Calendar calculations
   const firstDayIndex = new Date(year, currentDate.getMonth(), 1).getDay(); // 0 = Sunday
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -156,6 +180,8 @@ export default function Calendar() {
     try {
       await api.post(`/bills/${billId}/mark-paid`);
       toast.success('Bill successfully marked as paid!');
+      window.dispatchEvent(new CustomEvent('bills:changed'));
+      window.dispatchEvent(new CustomEvent('transactions:changed'));
       
       // Update local events and drawer state
       const updatedEvents = await calendarService.getEvents(year, month);
@@ -172,6 +198,8 @@ export default function Calendar() {
     try {
       await api.post(`/loans/${loanId}/pay`);
       toast.success('EMI Payment successfully recorded!');
+      window.dispatchEvent(new CustomEvent('loans:changed'));
+      window.dispatchEvent(new CustomEvent('transactions:changed'));
       
       const updatedEvents = await calendarService.getEvents(year, month);
       setEvents(updatedEvents);
@@ -189,6 +217,7 @@ export default function Calendar() {
         params: { amount, notes: 'Repayment recorded via Calendar Quick-Settle' }
       });
       toast.success('Lent amount settled successfully!');
+      window.dispatchEvent(new CustomEvent('transactions:changed'));
       
       const updatedEvents = await calendarService.getEvents(year, month);
       setEvents(updatedEvents);
@@ -204,6 +233,8 @@ export default function Calendar() {
     try {
       await api.post(`/electricity/bills/${billId}/pay`, {});
       toast.success('Electricity bill payment recorded & logged as expense!');
+      window.dispatchEvent(new CustomEvent('bills:changed'));
+      window.dispatchEvent(new CustomEvent('transactions:changed'));
 
       const updatedEvents = await calendarService.getEvents(year, month);
       setEvents(updatedEvents);
@@ -220,7 +251,7 @@ export default function Calendar() {
       {/* Top Banner */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-extrabold text-white tracking-tight">Financial Calendar</h1>
-        <p className="text-zinc-400 text-sm">Visualize due dates, EMIs, and repayments to stay ahead of your timeline.</p>
+        <p className="text-zinc-400 text-sm">Visualize due dates, EMIs, and repayments to stay ahead of your schedule.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

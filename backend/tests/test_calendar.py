@@ -58,6 +58,21 @@ async def test_calendar_events_endpoint(client: AsyncClient):
     )
     assert loan_res.status_code == 201
 
+    # 3b. Create a Subscription due on day 20
+    sub_res = await client.post(
+        "/api/v1/subscriptions/",
+        json={
+            "name": "Cloud Storage",
+            "amount": 250.0,
+            "billing_cycle": "monthly",
+            "next_billing_date": "2026-07-20T00:00:00",
+            "is_active": True,
+            "category_id": category_id,
+        },
+        headers=headers
+    )
+    assert sub_res.status_code == 201
+
     # 4. Fetch Calendar Events for July 2026
     events_res = await client.get(
         "/api/v1/calendar/events?year=2026&month=7",
@@ -66,14 +81,14 @@ async def test_calendar_events_endpoint(client: AsyncClient):
     assert events_res.status_code == 200
     events = events_res.json()
 
-    # We should have at least 2 events: the Bill and the Loan EMI
-    # Note: Default seeded categories might also produce events if linked (which they aren't yet)
-    # We should also have subscription events if created
+    # We should have events for Bill, Loan, and Subscription
     bill_events = [e for e in events if e["type"] == "bill"]
     loan_events = [e for e in events if e["type"] == "loan"]
+    sub_events = [e for e in events if e["type"] == "subscription"]
 
     assert len(bill_events) >= 1
     assert len(loan_events) >= 1
+    assert len(sub_events) >= 1
 
     # Check dates and details
     assert bill_events[0]["title"] == "Electricity Bill"
@@ -84,6 +99,10 @@ async def test_calendar_events_endpoint(client: AsyncClient):
     assert "EMI: Personal Loan" in loan_events[0]["title"]
     assert loan_events[0]["due_date"] == "2026-07-15"
     assert loan_events[0]["status"] == "unpaid"
+
+    assert sub_events[0]["title"] == "Sub: Cloud Storage"
+    assert sub_events[0]["due_date"] == "2026-07-20"
+    assert sub_events[0]["amount"] == 250.0
 
     # 5. Fetch Calendar Events for December 2025 (before Loan start date)
     before_res = await client.get(

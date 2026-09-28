@@ -1,5 +1,6 @@
 import logging
 import os
+# WealthSync Application Entrypoint - Local Dev
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -52,8 +53,12 @@ app.add_middleware(RequestContextMiddleware)
 # Trusted hosts (Host header protection)
 if settings.ALLOWED_HOSTS:
     allowed_hosts = list(settings.ALLOWED_HOSTS)
-    if "*.onrender.com" not in allowed_hosts and "*" not in allowed_hosts:
-        allowed_hosts.extend(["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com"])
+    if "*" not in allowed_hosts:
+        if "*.onrender.com" not in allowed_hosts:
+            allowed_hosts.extend(["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com"])
+        for dev_host in ["localhost", "127.0.0.1", "*.localhost", "testserver"]:
+            if dev_host not in allowed_hosts:
+                allowed_hosts.append(dev_host)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # CORS

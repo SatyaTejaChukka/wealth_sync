@@ -3,7 +3,7 @@ from typing import Any, List, Union
 import json
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from pydantic import PostgresDsn, ValidationInfo, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict, PydanticBaseSettingsSource
 
 BACKEND_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
@@ -11,7 +11,20 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=str(BACKEND_ENV_FILE),
+        extra="ignore",
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        # Prioritize .env file when present so local edits take immediate effect
+        return (dotenv_settings, env_settings, init_settings, file_secret_settings)
 
     PROJECT_NAME: str = "WealthSync"
     API_V1_STR: str = "/api/v1"
@@ -80,6 +93,10 @@ class Settings(BaseSettings):
     PASSWORD_MIN_LENGTH: int = 8
     RATE_LIMIT_LOGIN: str = "5/minute"
     RATE_LIMIT_SIGNUP: str = "3/minute"
+
+    # Firebase Authentication
+    FIREBASE_PROJECT_ID: str | None = None
+    FIREBASE_CREDENTIALS_PATH: str | None = None
 
     # Database
     POSTGRES_SERVER: str = "db"

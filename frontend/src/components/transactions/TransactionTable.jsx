@@ -158,6 +158,23 @@ export function TransactionTable({ refreshTrigger }) {
     void loadReferences();
   }, [loadReferences]);
 
+  useEffect(() => {
+    const handleSync = () => {
+      void loadTransactions();
+      void loadReferences();
+    };
+    window.addEventListener('transactions:changed', handleSync);
+    window.addEventListener('bills:changed', handleSync);
+    window.addEventListener('loans:changed', handleSync);
+    window.addEventListener('subscriptions:changed', handleSync);
+    return () => {
+      window.removeEventListener('transactions:changed', handleSync);
+      window.removeEventListener('bills:changed', handleSync);
+      window.removeEventListener('loans:changed', handleSync);
+      window.removeEventListener('subscriptions:changed', handleSync);
+    };
+  }, [loadTransactions, loadReferences]);
+
   const handleUpdate = async (payload) => {
     try {
       await transactionService.update(editingTransaction.id, payload);
