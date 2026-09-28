@@ -57,6 +57,7 @@ async def create_user(
         user = User(
             email=user_in.email,
             password_hash=security.get_password_hash(user_in.password),
+            full_name=user_in.full_name,
             is_active=True
         )
         db.add(user)

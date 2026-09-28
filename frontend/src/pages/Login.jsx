@@ -1,23 +1,43 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import api from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.jsx';
+import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal.jsx';
 import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
+
+function mapAuthError(err) {
+  const code = err?.code || '';
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Access temporarily disabled due to multiple failed login attempts. You can reset your password or try again later.';
+  }
+  if (code === 'auth/popup-closed-by-user') {
+    return 'Google sign-in was cancelled.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Network error. Please check your internet connection.';
+  }
+  return err?.response?.data?.detail || err?.message || 'Login failed. Please check your credentials.';
+}
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
-  const { login } = useAuth();
+  const { loginWithEmail, loginWithGoogle, isFirebaseConfigured } = useAuth();
   const location = useLocation();
 
   const redirectTo = useMemo(() => {
@@ -31,27 +51,23 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-
-      const response = await api.post('/auth/login', formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      await login(response.data.access_token, redirectTo);
+      await loginWithEmail(email, password, redirectTo);
     } catch (err) {
-      const status = err?.response?.status;
-      const detail = err?.response?.data?.detail;
-      if (status === 401) {
-        setError('Your session expired. Please sign in again.');
-      } else {
-        setError(detail || 'Login failed. Please check your credentials.');
-      }
+      setError(mapAuthError(err));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsGoogleLoading(true);
+    try {
+      await loginWithGoogle(redirectTo);
+    } catch (err) {
+      setError(mapAuthError(err));
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -72,16 +88,35 @@ export default function Login() {
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Welcome back!</h1>
-          <p className="text-zinc-400">Sign in to continue</p>
+          <p className="text-zinc-400 text-sm">Sign in to manage your wealth & commitments</p>
         </div>
 
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-linear-to-r from-violet-600 to-indigo-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000" />
 
-          <div className="relative bg-zinc-900/70 backdrop-blur-xl rounded-2xl shadow-2xl p-8 sm:p-10 border border-zinc-800/50 animate-fadeIn">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+          <div className="relative bg-zinc-900/70 backdrop-blur-xl rounded-2xl shadow-2xl p-8 sm:p-10 border border-zinc-800/50 animate-fadeIn space-y-6">
+            {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
+            {/* 1-Click Google Sign-In */}
+            {isFirebaseConfigured && (
+              <>
+                <GoogleSignInButton 
+                  onClick={handleGoogleSignIn} 
+                  isLoading={isGoogleLoading} 
+                  disabled={isLoading}
+                  text="Continue with Google"
+                />
+
+                <div className="relative flex items-center justify-center">
+                  <div className="border-t border-zinc-800 w-full" />
+                  <span className="bg-zinc-900 px-3 text-xs uppercase tracking-wider text-zinc-500 font-semibold absolute">
+                    or with email
+                  </span>
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-2">
                   Email Address
@@ -101,9 +136,18 @@ export default function Login() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-2">
-                  Password
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label htmlFor="password" className="block text-sm font-semibold text-zinc-300">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors focus:outline-none"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
                   <Input
@@ -113,7 +157,7 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
-                    placeholder="********"
+                    placeholder="••••••••"
                     required
                     className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
                   />
@@ -128,7 +172,7 @@ export default function Login() {
                   </button>
                 </div>
                 {isPasswordFocused && (
-                  <p className="mt-2 text-sm text-zinc-400">
+                  <p className="mt-2 text-xs text-zinc-400">
                     Password must be at least {MIN_PASSWORD_LENGTH} characters.
                   </p>
                 )}
@@ -140,6 +184,7 @@ export default function Login() {
                 size="lg"
                 fullWidth
                 isLoading={isLoading}
+                disabled={isGoogleLoading}
                 icon={<ArrowRight size={20} />}
                 iconPosition="right"
               >
@@ -147,7 +192,7 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="text-center pt-2">
               <p className="text-sm text-zinc-400">
                 Don&apos;t have an account?{' '}
                 <Link to="/signup" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
@@ -158,11 +203,17 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-center text-sm text-zinc-500 mt-6">
-          By continuing, you agree to our Terms and Privacy Policy
+        <p className="text-center text-xs text-zinc-500 mt-6">
+          Protected by Google Firebase Authentication & Commitment Vault.
         </p>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordOpen}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }
-

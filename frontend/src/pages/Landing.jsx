@@ -44,9 +44,9 @@ const solutionBlocks = [
       'Calculates how to allocate monthly income into fixed commitments, planned category budgets, and savings goals by priority.',
   },
   {
-    title: 'Cash Flow Timeline',
+    title: 'Financial Calendar & Commitments',
     description:
-      'Displays a chronological view of past transactions and upcoming bills, subscriptions, and goal deposits.',
+      'Displays an interactive calendar of upcoming bills, loan EMIs, subscriptions, and goal deposits.',
   },
   {
     title: 'Prioritized Actions',
@@ -59,7 +59,7 @@ const outcomes = [
   'Consolidate bills, subscriptions, and savings targets in one place.',
   'Calculate true safe-to-spend runway from live transaction data.',
   'Set category budget limits and track monthly spending.',
-  'View upcoming payment timeline to prepare before due dates.',
+  'View upcoming bills and payments on an interactive calendar.',
 ];
 
 export default function Landing() {

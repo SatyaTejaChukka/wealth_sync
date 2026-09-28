@@ -14,6 +14,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=settings.PASSWORD_MIN_LENGTH, max_length=128)
+    full_name: Optional[str] = None
 
 class UserResponse(UserBase):
     id: str

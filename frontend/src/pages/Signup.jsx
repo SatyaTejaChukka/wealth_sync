@@ -1,55 +1,45 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../lib/api.js';
 import { useAuth } from '../lib/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
-import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.jsx';
+import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, User } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
 
-function formatApiError(detail, fallbackMessage) {
-  if (typeof detail === 'string' && detail.trim()) {
-    return detail;
+function mapAuthError(err) {
+  const code = err?.code || '';
+  if (code === 'auth/email-already-in-use') {
+    return 'An account with this email already exists. Please sign in instead.';
   }
-
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) => {
-        if (typeof item === 'string') {
-          return item;
-        }
-
-        if (item && typeof item === 'object') {
-          return item.msg || item.message || item.detail || JSON.stringify(item);
-        }
-
-        return String(item);
-      })
-      .filter(Boolean)
-      .join(', ');
+  if (code === 'auth/weak-password') {
+    return 'Password is too weak. Please use at least 8 characters with numbers or symbols.';
   }
-
-  if (detail && typeof detail === 'object') {
-    return detail.message || detail.detail || fallbackMessage;
+  if (code === 'auth/invalid-email') {
+    return 'Please enter a valid email address.';
   }
-
-  return fallbackMessage;
+  if (code === 'auth/popup-closed-by-user') {
+    return 'Google sign-up was cancelled.';
+  }
+  return err?.response?.data?.detail || err?.message || 'Registration failed. Please try again.';
 }
 
 export default function Signup() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { login } = useAuth();
+  const { signupWithEmail, loginWithGoogle, isFirebaseConfigured } = useAuth();
   const hasConfirmPasswordValue = confirmPassword.length > 0;
   const passwordsMatch = password === confirmPassword;
 
@@ -70,13 +60,23 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/auth/signup', { email, password });
-      await login(res.data.access_token, '/dashboard');
+      await signupWithEmail(email, password, fullName, '/dashboard');
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(formatApiError(detail, 'Signup failed. Please try again.'));
+      setError(mapAuthError(err));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError('');
+    setIsGoogleLoading(true);
+    try {
+      await loginWithGoogle('/dashboard');
+    } catch (err) {
+      setError(mapAuthError(err));
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -97,18 +97,55 @@ export default function Signup() {
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>
-          <p className="text-zinc-400">Start managing your finances</p>
+          <p className="text-zinc-400 text-sm">Start protecting commitments & growing your wealth</p>
         </div>
 
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-linear-to-r from-violet-600 to-indigo-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000" />
 
-          <div className="relative bg-zinc-900/70 backdrop-blur-xl rounded-2xl shadow-2xl p-8 sm:p-10 border border-zinc-800/50 animate-fadeIn">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+          <div className="relative bg-zinc-900/70 backdrop-blur-xl rounded-2xl shadow-2xl p-8 sm:p-10 border border-zinc-800/50 animate-fadeIn space-y-6">
+            {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+
+            {/* 1-Click Google Sign-Up */}
+            {isFirebaseConfigured && (
+              <>
+                <GoogleSignInButton
+                  onClick={handleGoogleSignUp}
+                  isLoading={isGoogleLoading}
+                  disabled={isLoading}
+                  text="Sign up with Google"
+                />
+
+                <div className="relative flex items-center justify-center">
+                  <div className="border-t border-zinc-800 w-full" />
+                  <span className="bg-zinc-900 px-3 text-xs uppercase tracking-wider text-zinc-500 font-semibold absolute">
+                    or with email
+                  </span>
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-semibold text-zinc-300 mb-1.5">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="John Doe"
+                    required
+                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                  />
+                </div>
+              </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
@@ -120,13 +157,13 @@ export default function Signup() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -138,9 +175,9 @@ export default function Signup() {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setIsPasswordFocused(true)}
                     onBlur={() => setIsPasswordFocused(false)}
-                    placeholder="********"
+                    placeholder="••••••••"
                     required
-                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
                   />
                   <button
                     type="button"
@@ -153,14 +190,14 @@ export default function Signup() {
                   </button>
                 </div>
                 {isPasswordFocused && (
-                  <p className="mt-2 text-sm text-zinc-400">
+                  <p className="mt-1 text-xs text-zinc-400">
                     Password must be at least {MIN_PASSWORD_LENGTH} characters.
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-zinc-300 mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-zinc-300 mb-1.5">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -172,9 +209,9 @@ export default function Signup() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onFocus={() => setIsConfirmPasswordFocused(true)}
                     onBlur={() => setIsConfirmPasswordFocused(false)}
-                    placeholder="********"
+                    placeholder="••••••••"
                     required
-                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
                   />
                   <button
                     type="button"
@@ -186,27 +223,30 @@ export default function Signup() {
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                {isConfirmPasswordFocused && hasConfirmPasswordValue && (
-                  <p className={`mt-2 text-sm ${passwordsMatch ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {passwordsMatch ? 'Passwords match.' : 'Passwords do not match.'}
+                {isConfirmPasswordFocused && hasConfirmPasswordValue && !passwordsMatch && (
+                  <p className="mt-1 text-xs text-rose-400">
+                    Passwords do not match.
                   </p>
                 )}
               </div>
 
-              <Button
-                type="submit"
-                variant="gradient"
-                size="lg"
-                fullWidth
-                isLoading={isLoading}
-                icon={<ArrowRight size={20} />}
-                iconPosition="right"
-              >
-                Create Account
-              </Button>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="gradient"
+                  size="lg"
+                  fullWidth
+                  isLoading={isLoading}
+                  disabled={isGoogleLoading}
+                  icon={<ArrowRight size={20} />}
+                  iconPosition="right"
+                >
+                  Create Account
+                </Button>
+              </div>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="text-center pt-2">
               <p className="text-sm text-zinc-400">
                 Already have an account?{' '}
                 <Link to="/login" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
@@ -217,11 +257,10 @@ export default function Signup() {
           </div>
         </div>
 
-        <p className="text-center text-sm text-zinc-500 mt-6">
-          By continuing, you agree to our Terms and Privacy Policy
+        <p className="text-center text-xs text-zinc-500 mt-6">
+          By signing up, you agree to our Terms and Privacy Policy.
         </p>
       </div>
     </div>
   );
 }
-
