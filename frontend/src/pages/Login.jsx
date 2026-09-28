@@ -6,7 +6,8 @@ import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.jsx';
 import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal.jsx';
-import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { ServerConnectionModal } from '../components/common/ServerConnectionModal.jsx';
+import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, Server } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -36,6 +37,7 @@ export default function Login() {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
   const { loginWithEmail, loginWithGoogle, isFirebaseConfigured } = useAuth();
   const location = useLocation();
@@ -206,6 +208,17 @@ export default function Login() {
         <p className="text-center text-xs text-zinc-500 mt-6">
           Protected by Google Firebase Authentication & Commitment Vault.
         </p>
+
+        <div className="flex justify-center mt-3">
+          <button
+            type="button"
+            onClick={() => setIsServerModalOpen(true)}
+            className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 py-1 px-3 rounded-full border border-zinc-800 bg-zinc-900/60 transition-colors cursor-pointer"
+          >
+            <Server size={12} className="text-violet-400" />
+            <span>Server Connection</span>
+          </button>
+        </div>
       </div>
 
       {/* Forgot Password Modal */}
@@ -213,6 +226,12 @@ export default function Login() {
         isOpen={isForgotPasswordOpen}
         onClose={() => setIsForgotPasswordOpen(false)}
         initialEmail={email}
+      />
+
+      {/* Server Connection Modal for Mobile & Custom Environments */}
+      <ServerConnectionModal
+        isOpen={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
       />
     </div>
   );

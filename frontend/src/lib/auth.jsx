@@ -72,7 +72,7 @@ export function AuthProvider({ children }) {
     const onUnauthorized = () => {
       localStorage.removeItem('token');
       setUser(null);
-      if (isFirebaseConfigured) {
+      if (isFirebaseConfigured && auth) {
         signOut(auth).catch(() => {});
       }
     };
@@ -160,7 +160,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     localStorage.removeItem('token');
     setUser(null);
-    if (isFirebaseConfigured) {
+    if (isFirebaseConfigured && auth) {
       try {
         await signOut(auth);
       } catch (err) {

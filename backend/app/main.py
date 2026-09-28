@@ -56,7 +56,7 @@ if settings.ALLOWED_HOSTS:
     if "*" not in allowed_hosts:
         if "*.onrender.com" not in allowed_hosts:
             allowed_hosts.extend(["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com"])
-        for dev_host in ["localhost", "127.0.0.1", "*.localhost", "testserver"]:
+        for dev_host in ["localhost", "127.0.0.1", "*.localhost", "testserver", "192.168.*", "10.*", "172.*"]:
             if dev_host not in allowed_hosts:
                 allowed_hosts.append(dev_host)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
@@ -66,6 +66,9 @@ cors_origins = list(settings.BACKEND_CORS_ORIGINS) if settings.BACKEND_CORS_ORIG
 for default_origin in [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "capacitor://localhost",
     "https://wealthsync-lemon.vercel.app",
 ]:
     if default_origin not in cors_origins:
@@ -74,7 +77,7 @@ for default_origin in [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
+    allow_origin_regex=r"^(https?://.*\.vercel\.app|https?://localhost.*|capacitor://.*|https?://192\.168\..*|https?://10\..*|https?://172\..*)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

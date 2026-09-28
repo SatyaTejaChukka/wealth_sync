@@ -2,25 +2,31 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'wealthsync-demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'wealthsync-demo',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'wealthsync-demo.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1234567890',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1234567890:web:abcdef',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'wealthsync-app-b24c1.firebaseapp.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'wealthsync-app-b24c1',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'wealthsync-app-b24c1.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '773706147941',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:773706147941:web:dd0605169928135c7fbe8c',
 };
 
 // Check if Firebase keys are configured
 export const isFirebaseConfigured = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID
+  firebaseConfig.apiKey &&
+  firebaseConfig.projectId &&
+  firebaseConfig.apiKey !== 'demo-api-key'
 );
 
-// Initialize Firebase once
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Initialize Firebase safely only when configured
+export const app = isFirebaseConfigured
+  ? (getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0])
+  : null;
+export const auth = app ? getAuth(app) : null;
+export const googleProvider = app ? new GoogleAuthProvider() : null;
 
 // Default prompt for account selection on Google sign-in
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+if (googleProvider) {
+  googleProvider.setCustomParameters({
+    prompt: 'select_account'
+  });
+}

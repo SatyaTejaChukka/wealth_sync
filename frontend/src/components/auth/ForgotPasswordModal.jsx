@@ -22,7 +22,7 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }) {
       return;
     }
 
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth) {
       setError('Firebase is not yet configured. Please add your Firebase credentials in frontend/.env');
       return;
     }

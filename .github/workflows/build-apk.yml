@@ -39,6 +39,14 @@ jobs:
 
       - name: Build Web Production Bundle
         working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://wealth-sync.onrender.com/api/v1
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN || 'wealthsync-app-b24c1.firebaseapp.com' }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'wealthsync-app-b24c1' }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET || 'wealthsync-app-b24c1.firebasestorage.app' }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID || '773706147941' }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID || '1:773706147941:web:dd0605169928135c7fbe8c' }}
         run: npm run build
 
       - name: Sync Capacitor Android Native Layer
