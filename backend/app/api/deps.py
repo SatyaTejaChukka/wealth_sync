@@ -12,8 +12,13 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-import firebase_admin
-from firebase_admin import auth as firebase_auth, credentials
+try:
+    import firebase_admin
+    from firebase_admin import auth as firebase_auth, credentials
+except ImportError:
+    firebase_admin = None
+    firebase_auth = None
+    credentials = None
 
 from app.core import security
 from app.core.config import settings
@@ -64,13 +69,16 @@ def get_firebase_app():
     Safely initialize or retrieve Firebase Admin app singleton.
     """
     global _firebase_initialized
+    if firebase_admin is None:
+        return None
+
     if _firebase_initialized:
         try:
             return firebase_admin.get_app()
         except Exception:
             _firebase_initialized = False
 
-    if firebase_admin._apps:
+    if getattr(firebase_admin, "_apps", None):
         _firebase_initialized = True
         return firebase_admin.get_app()
 
@@ -140,7 +148,7 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
 
     # 2. Fallback to Firebase Admin SDK if service account is configured
     app = get_firebase_app()
-    if app:
+    if app and firebase_auth:
         try:
             return firebase_auth.verify_id_token(token, check_revoked=False)
         except Exception as e:

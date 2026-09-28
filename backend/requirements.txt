@@ -18,3 +18,4 @@ slowapi
 python-dotenv
 sentry-sdk[fastapi]
 python-json-logger
+firebase-admin
