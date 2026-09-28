@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -50,16 +51,16 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 md:items-center md:p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 md:items-center md:p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col border border-white/10 bg-[#09090b] shadow-2xl rounded-t-[1.75rem] md:rounded-2xl overflow-hidden">
+      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col border border-white/10 bg-[#09090b] shadow-[0_-16px_40px_rgba(0,0,0,0.8)] rounded-t-[2rem] md:rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
@@ -124,7 +125,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto p-6 space-y-6 max-h-[calc(92vh-180px)]">
+        <div className="overflow-y-auto p-4 sm:p-6 space-y-6 max-h-[calc(92vh-160px)] pb-[calc(env(safe-area-inset-bottom,0px)+3.5rem)]">
           {/* TAB 1: PROTECTED */}
           {activeTab === 'protected' && (
             <div className="space-y-4">
@@ -365,6 +366,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

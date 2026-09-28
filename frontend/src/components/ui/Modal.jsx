@@ -6,12 +6,12 @@ export function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 md:items-center md:p-4">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 md:items-center md:p-4">
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" 
+        className="absolute inset-0 bg-black/75 backdrop-blur-md animate-fade-in" 
         onClick={onClose}
       />
-      <div className="relative flex max-h-[92vh] w-full flex-col border border-white/10 bg-[#09090b] shadow-2xl rounded-t-[1.75rem] md:max-w-lg md:max-h-[90vh] md:rounded-2xl">
+      <div className="relative flex max-h-[92vh] w-full flex-col border border-white/10 bg-[#09090b] shadow-[0_-16px_40px_rgba(0,0,0,0.8)] rounded-t-[2rem] md:max-w-lg md:max-h-[90vh] md:rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-white/5 p-4 shrink-0 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">{title}</h2>
           <button 
@@ -21,7 +21,7 @@ export function Modal({ isOpen, onClose, title, children }) {
             <X size={20} />
           </button>
         </div>
-        <div className="overflow-y-auto p-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] sm:p-6">
+        <div className="overflow-y-auto p-4 pb-[calc(env(safe-area-inset-bottom,0px)+2.5rem)] sm:p-6">
           {children}
         </div>
       </div>

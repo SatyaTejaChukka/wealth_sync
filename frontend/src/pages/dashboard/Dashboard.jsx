@@ -210,22 +210,49 @@ export default function Dashboard() {
       {/* Ambient Financial Climate Backdrop */}
       <MoneyWeatherBackdrop stats={summary.safe_to_spend_stats} />
 
-      {/* ── Executive Header ── */}
+      {/* ── Executive Mobile-Native Header ── */}
       <header className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div className="space-y-1.5 min-w-0">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              <span>{getTimeGreeting()},{' '}</span>
-              <span className="bg-linear-to-r from-violet-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
-                {user?.full_name || user?.email?.split('@')[0] || 'User'}
-              </span>
-            </h1>
+        <div className="space-y-3 min-w-0">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* User Avatar Initial Capsule */}
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-600/30 via-indigo-600/20 to-cyan-500/20 border border-violet-500/30 text-white font-extrabold text-base sm:text-lg shadow-lg shadow-violet-500/10 shrink-0">
+                {(user?.full_name || user?.email || 'User')[0].toUpperCase()}
+              </div>
 
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  {getTimeGreeting()}
+                </p>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white truncate font-display">
+                  <span className="bg-linear-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent">
+                    {user?.full_name || user?.email?.split('@')[0] || 'User'}
+                  </span>
+                </h1>
+              </div>
+            </div>
+
+            {/* Mobile Top-Right Actions */}
+            <div className="flex items-center gap-2 shrink-0 md:hidden">
+              <Button
+                onClick={() => navigate('/dashboard/calendar')}
+                variant="outline"
+                className="h-9 w-9 p-0 rounded-xl border-white/10 bg-zinc-900/60 hover:bg-white/10 text-zinc-300"
+                aria-label="Open Calendar"
+              >
+                <CalendarDays size={16} />
+              </Button>
+              <NotificationBell />
+            </div>
+          </div>
+
+          {/* Climate & Autopilot Status Capsule */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             {weatherState && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/80 px-2.5 py-1 text-xs font-semibold text-zinc-300 backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/80 px-3 py-1 text-xs font-semibold text-zinc-300 backdrop-blur-md self-start shrink-0">
                 <span
                   className={cn(
-                    'h-1.5 w-1.5 rounded-full',
+                    'h-2 w-2 rounded-full animate-pulse',
                     weatherState === 'calm'
                       ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
                       : weatherState === 'balanced'
@@ -236,14 +263,14 @@ export default function Dashboard() {
                 Climate: <span className="capitalize font-bold text-white">{weatherState}</span>
               </span>
             )}
+            <p className="text-xs sm:text-sm font-medium text-zinc-400 leading-relaxed truncate">
+              {autopilotStatusText}
+            </p>
           </div>
-          <p className="max-w-2xl text-xs sm:text-sm font-medium text-zinc-400 leading-relaxed">
-            {autopilotStatusText}
-          </p>
         </div>
 
-        {/* Header Action Buttons */}
-        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+        {/* Desktop Header Action Buttons */}
+        <div className="hidden md:flex items-center gap-2.5 shrink-0 self-end">
           <Button
             onClick={() => navigate('/dashboard/calendar')}
             variant="outline"
@@ -263,6 +290,26 @@ export default function Dashboard() {
           </Button>
 
           <NotificationBell />
+        </div>
+
+        {/* Mobile Quick Action Pill Bar */}
+        <div className="flex md:hidden items-center gap-2.5 pt-1">
+          <Button
+            onClick={() => navigate('/dashboard/transactions')}
+            variant="gradient"
+            icon={<Plus size={16} />}
+            className="flex-1 h-10 text-xs font-bold shadow-lg shadow-violet-500/20 active:scale-98 transition-all"
+          >
+            Add Transaction
+          </Button>
+          <Button
+            onClick={() => navigate('/dashboard/calendar')}
+            variant="outline"
+            icon={<CalendarDays size={15} />}
+            className="h-10 px-3.5 text-xs font-semibold border-white/10 bg-zinc-900/60 active:scale-98 transition-all"
+          >
+            Calendar
+          </Button>
         </div>
       </header>
 

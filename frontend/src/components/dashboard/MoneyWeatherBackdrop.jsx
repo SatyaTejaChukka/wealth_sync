@@ -39,21 +39,27 @@ export function MoneyWeatherBackdrop({ stats }) {
   const particleCount = isMobile ? 8 : 16;
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
       <div
-        className="absolute inset-0 opacity-90 transition-all duration-700"
+        className="absolute inset-0 opacity-95 transition-all duration-1000"
         style={{ backgroundImage: palette.gradient }}
       />
 
       <div
         className={cn(
-          'absolute -left-20 top-16 h-56 w-56 rounded-full blur-[90px] animate-money-weather-drift',
+          'absolute -left-16 -top-12 h-80 w-80 rounded-full blur-[120px] animate-money-weather-drift',
           palette.mist
         )}
       />
       <div
         className={cn(
-          'absolute -right-12 bottom-24 h-72 w-72 rounded-full blur-[110px] animate-money-weather-drift-reverse',
+          'absolute -right-16 top-1/3 h-96 w-96 rounded-full blur-[140px] animate-money-weather-drift-reverse',
+          palette.mist
+        )}
+      />
+      <div
+        className={cn(
+          'absolute left-1/4 bottom-10 h-72 w-72 rounded-full blur-[120px] opacity-60 animate-money-weather-drift',
           palette.mist
         )}
       />

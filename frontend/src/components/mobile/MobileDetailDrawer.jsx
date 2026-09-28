@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 
@@ -54,11 +55,11 @@ export function MobileDetailDrawer({
     setCurrentY(0);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden">
-      {/* Backdrop */}
+  return createPortal(
+    <div className="fixed inset-0 z-[60] lg:hidden">
+      {/* Backdrop covering entire screen including bottom nav */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -71,7 +72,7 @@ export function MobileDetailDrawer({
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[88vh] rounded-t-[2rem] border-t border-white/10 bg-[#09090b]/98 shadow-2xl backdrop-blur-xl animate-slide-up",
+          "fixed inset-x-0 bottom-0 z-[60] flex flex-col max-h-[90vh] rounded-t-[2.25rem] border-t border-white/10 bg-[#09090b] shadow-[0_-16px_40px_rgba(0,0,0,0.8)] backdrop-blur-2xl animate-slide-up",
           className
         )}
       >
@@ -106,11 +107,12 @@ export function MobileDetailDrawer({
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto px-5 py-4 space-y-5 flex-1 overscroll-contain pb-10">
+        {/* Scrollable Content with ample bottom padding to clear gesture bars and bottom nav */}
+        <div className="overflow-y-auto px-5 py-4 space-y-5 flex-1 overscroll-contain pb-[calc(env(safe-area-inset-bottom,0px)+6.5rem)]">
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
