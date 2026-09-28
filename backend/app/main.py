@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
 import sentry_sdk
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
 from app.core.errors import ErrorCode
@@ -54,11 +55,12 @@ app.add_middleware(RequestContextMiddleware)
 if settings.ALLOWED_HOSTS:
     allowed_hosts = list(settings.ALLOWED_HOSTS)
     if "*" not in allowed_hosts:
-        if "*.onrender.com" not in allowed_hosts:
-            allowed_hosts.extend(["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com"])
-        for dev_host in ["localhost", "127.0.0.1", "*.localhost", "testserver", "192.168.*", "10.*", "172.*"]:
-            if dev_host not in allowed_hosts:
-                allowed_hosts.append(dev_host)
+        for host in ["*.onrender.com", "wealth-sync.onrender.com", "wealthsync.onrender.com", "localhost", "127.0.0.1", "testserver"]:
+            if host not in allowed_hosts:
+                allowed_hosts.append(host)
+        # Starlette TrustedHostMiddleware strictly requires wildcards to start with '*.' (e.g. '*.onrender.com')
+        # Filter out invalid patterns like '192.168.*' which cause an AssertionError
+        allowed_hosts = [h for h in allowed_hosts if h == "*" or h.startswith("*.") or "*" not in h]
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # CORS
@@ -107,6 +109,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "detail": exc.errors(),
             "body": str(exc.body),
         },
+    )
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None)
     )
 
 @app.exception_handler(Exception)
