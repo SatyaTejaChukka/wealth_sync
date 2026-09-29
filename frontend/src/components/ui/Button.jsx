@@ -27,11 +27,11 @@ const Button = React.forwardRef(({
   }
 
   const sizes = {
-    default: "h-11 px-4 py-2 sm:h-10",
-    sm: "h-10 rounded-md px-3 text-xs sm:h-8",
-    xs: "h-9 rounded-md px-2.5 text-[11px] sm:h-7",
-    lg: "h-12 rounded-md px-8",
-    icon: "h-11 w-11 sm:h-10 sm:w-10",
+    default: "h-9 px-3.5 py-1.5 text-xs rounded-xl sm:h-10 sm:px-4 sm:py-2 sm:text-sm",
+    sm: "h-8 rounded-lg px-2.5 text-xs sm:h-8.5 sm:px-3 sm:rounded-md",
+    xs: "h-7 rounded-md px-2 text-[11px] sm:h-7.5 sm:px-2.5",
+    lg: "h-10.5 rounded-xl px-5 text-sm sm:h-12 sm:rounded-xl sm:px-8 sm:text-base",
+    icon: "h-8.5 w-8.5 rounded-lg sm:h-10 sm:w-10 sm:rounded-xl",
   }
 
   return (

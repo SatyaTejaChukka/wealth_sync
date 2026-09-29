@@ -13,7 +13,7 @@ import { categoryService } from '../../services/categories.js';
 import { useToast } from '../../components/ui/Toast.jsx';
 import { ElectricityCard } from '../../components/bills/ElectricityCard.jsx';
 import { LinkElectricityModal } from '../../components/bills/LinkElectricityModal.jsx';
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
@@ -153,23 +153,20 @@ export default function Bills() {
   };
 
   const handleDelete = async (id) => {
-    // Confirmed via the in-app dialog.
-      // Optimistic update — remove from UI immediately
-      setBills((prev) => prev.filter((bill) => bill.id !== id));
-      try {
-        await billService.delete(id);
-        toast.success('Bill deleted successfully');
-      } catch (err) {
-        console.error('Failed to delete bill', err);
-        toast.error('Failed to delete bill. Reverting...');
-        loadBills();
-      }
-    //
+    setBills((prev) => prev.filter((bill) => bill.id !== id));
+    try {
+      await billService.delete(id);
+      toast.success('Bill deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete bill', err);
+      toast.error('Failed to delete bill. Reverting...');
+      loadBills();
+    }
   };
+
   const handleTogglePaid = async (bill) => {
     const currentlyPaid = Boolean(bill.last_paid_at);
 
-    // Optimistic update first so the UI reacts instantly.
     setBills((prev) =>
       prev.map((item) =>
         item.id === bill.id
@@ -198,71 +195,75 @@ export default function Bills() {
     : null;
 
   return (
-    <div className="space-y-8 animate-slide-up">
+    <div className="space-y-6 sm:space-y-8 animate-slide-up">
       {/* Header with dual actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight font-display">Bills & Utilities</h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage recurring bills & live electricity connections</p>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">Manage recurring bills & live electricity connections</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <Button
+            size="sm"
             onClick={() => setShowElectricityModal(true)}
-            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold border-none shadow-lg shadow-amber-500/20"
-            icon={<Zap size={18} className="fill-zinc-950" />}
+            className="w-full sm:w-auto h-9 px-3 text-xs bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold border-none shadow-md shadow-amber-500/20"
+            icon={<Zap size={14} className="fill-zinc-950 shrink-0" />}
           >
-            Link Electricity Bill
+            <span className="sm:hidden truncate">Link Power</span>
+            <span className="hidden sm:inline">Link Electricity Bill</span>
           </Button>
           <Button
+            size="sm"
             onClick={() => {
               setEditingBill(null);
               setFormData({ name: '', amount: '', due_day: '', category_id: '', autopay_enabled: false });
               setShowModal(true);
             }}
             variant="gradient"
-            icon={<Plus size={18} />}
-            className="w-full sm:w-auto"
+            icon={<Plus size={14} className="shrink-0" />}
+            className="w-full sm:w-auto h-9 px-3 text-xs font-bold"
           >
-            Add Manual Bill
+            <span className="sm:hidden truncate">Add Bill</span>
+            <span className="hidden sm:inline">Add Manual Bill</span>
           </Button>
         </div>
       </div>
 
       {/* Section 1: Linked Electricity Connections (Live Auto-Fetch) */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
-              <Zap className="h-4 w-4 fill-amber-400/40" />
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <Zap className="h-3.5 w-3.5 fill-amber-400/40" />
             </div>
-            <h2 className="text-lg font-semibold text-white tracking-tight">Linked Electricity Connections</h2>
-            <span className="text-xs bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full font-medium">
+            <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Linked Electricity Connections</h2>
+            <span className="text-[10px] sm:text-xs bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full font-medium">
               Live Auto-Fetch
             </span>
           </div>
         </div>
 
         {loadingElectricity ? (
-          <div className="p-8 text-center text-zinc-500 rounded-2xl border border-white/5 bg-zinc-900/30">
+          <div className="p-6 text-center text-xs sm:text-sm text-zinc-500 rounded-2xl border border-white/5 bg-zinc-900/30">
             Checking electricity connections...
           </div>
         ) : electricityAccounts.length === 0 ? (
-          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-zinc-900/40 to-zinc-900/20 p-6 backdrop-blur-md">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-linear-to-r from-amber-500/10 via-zinc-900/40 to-zinc-900/20 p-4 sm:p-5 backdrop-blur-md card-specular">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-1">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-400" />
-                  Auto-fetch your real monthly electricity bill
+                <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>Auto-fetch your real monthly electricity bill</span>
                 </h3>
-                <p className="text-xs text-zinc-400 max-w-xl">
+                <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
                   Link your APSPDCL, BESCOM, or state electricity connection once with your Service Number. WealthSync will automatically poll generated bills, track units consumed, and alert you before due dates.
                 </p>
               </div>
               <Button
                 size="sm"
                 onClick={() => setShowElectricityModal(true)}
-                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shrink-0"
-                icon={<Zap size={14} />}
+                className="h-8 px-3 text-xs bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shrink-0"
+                icon={<Zap size={13} className="fill-zinc-950" />}
               >
                 Connect Provider
               </Button>
@@ -309,19 +310,19 @@ export default function Bills() {
                   handleEdit(bill);
                 }
               }}
-              className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 backdrop-blur-md space-y-3 cursor-pointer"
+              className="rounded-xl border border-white/5 bg-zinc-900/40 p-3.5 backdrop-blur-md space-y-2.5 cursor-pointer card-specular"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-medium text-white">{bill.name}</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
-                    <Calendar size={12} />
+                  <h3 className="text-sm font-semibold text-white">{bill.name}</h3>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1">
+                    <Calendar size={11} className="text-zinc-500" />
                     Due day {bill.due_day}
                   </p>
                 </div>
-                <span className="text-lg font-bold text-white">{formatCurrency(bill.amount_estimated)}</span>
+                <MoneyValue value={bill.amount_estimated} className="text-base font-bold text-white font-display tabular-nums" />
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 {bill.category && (
                   <div className="flex items-center gap-1.5 text-xs text-zinc-300">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: bill.category.color }} />
@@ -333,7 +334,7 @@ export default function Bills() {
                     <CheckCircle size={10} /> Autopay
                   </span>
                 ) : null}
-                <span className="text-xs text-zinc-500">
+                <span className="text-[11px] text-zinc-500">
                   {bill.last_paid_at ? `Paid ${new Date(bill.last_paid_at).toLocaleDateString()}` : 'Never paid'}
                 </span>
               </div>
@@ -342,12 +343,12 @@ export default function Bills() {
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-8 px-3 flex-1 font-bold",
+                    "h-7.5 px-3 flex-1 font-bold text-xs",
                     bill.last_paid_at
                       ? 'text-emerald-400 hover:bg-emerald-500/10'
                       : 'text-rose-400 hover:bg-rose-500/10'
                   )}
-                  icon={bill.last_paid_at ? <CheckCircle size={14} /> : <CircleX size={14} />}
+                  icon={bill.last_paid_at ? <CheckCircle size={13} /> : <CircleX size={13} />}
                   iconPosition="left"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -359,13 +360,13 @@ export default function Bills() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-zinc-500 hover:text-red-400"
+                  className="h-7.5 w-7.5 text-zinc-500 hover:text-red-400"
                   onClick={(event) => {
                     event.stopPropagation();
                     setPendingDeleteBillId(bill.id);
                   }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                 </Button>
               </div>
             </div>
@@ -374,7 +375,7 @@ export default function Bills() {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block rounded-2xl border border-white/5 bg-zinc-900/30 overflow-hidden backdrop-blur-md">
+      <div className="hidden md:block rounded-2xl border border-white/5 bg-zinc-900/30 overflow-hidden backdrop-blur-md card-specular">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-white/5 border-b border-white/5 text-zinc-400">
@@ -409,7 +410,9 @@ export default function Bills() {
                     className="hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <td className="p-6 font-medium text-white">{bill.name}</td>
-                    <td className="p-6 text-white font-bold">{formatCurrency(bill.amount_estimated)}</td>
+                    <td className="p-6 text-white font-bold">
+                      <MoneyValue value={bill.amount_estimated} className="font-display tabular-nums" />
+                    </td>
                     <td className="p-6 text-zinc-300">
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-zinc-500" />

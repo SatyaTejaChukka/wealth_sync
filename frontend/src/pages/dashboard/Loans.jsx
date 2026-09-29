@@ -411,10 +411,11 @@ export default function Loans() {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
+            size="sm"
             onClick={() => setShowAddModal(true)}
             variant="gradient"
-            icon={<Plus size={18} />}
-            className="w-full sm:w-auto"
+            icon={<Plus size={14} />}
+            className="w-full sm:w-auto font-bold"
           >
             Add Loan
           </Button>

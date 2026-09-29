@@ -379,10 +379,11 @@ export default function Lent() {
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">Track money lent to others, interest accruals, and repayments</p>
         </div>
         <Button
+          size="sm"
           onClick={() => setShowAddModal(true)}
           variant="gradient"
-          icon={<Plus size={18} />}
-          className="w-full sm:w-auto"
+          icon={<Plus size={14} />}
+          className="w-full sm:w-auto font-bold"
         >
           Lend Money
         </Button>

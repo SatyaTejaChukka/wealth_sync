@@ -33,9 +33,11 @@ export default function Transactions() {
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage and view your transaction history.</p>
         </div>
         <Button
+            size="sm"
             onClick={() => setIsModalOpen(true)}
             variant="gradient"
-            icon={<Plus size={18} />}
+            icon={<Plus size={14} />}
+            className="w-full sm:w-auto font-bold"
         >
           Add Transaction
         </Button>

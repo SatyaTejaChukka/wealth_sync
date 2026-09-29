@@ -157,14 +157,15 @@ export default function Subscriptions() {
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage your recurring subscriptions</p>
         </div>
         <Button
+          size="sm"
           onClick={() => {
             setEditingSub(null);
             setFormData({ name: '', amount: '', billing_cycle: 'monthly', is_active: true, category_id: '' });
             setShowModal(true);
           }}
           variant="gradient"
-          icon={<Plus size={18} />}
-          className="w-full sm:w-auto"
+          icon={<Plus size={14} />}
+          className="w-full sm:w-auto font-bold"
         >
           Add Subscription
         </Button>
