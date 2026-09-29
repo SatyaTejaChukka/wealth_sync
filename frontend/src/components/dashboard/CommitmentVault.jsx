@@ -14,7 +14,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { CommitmentVaultDetails } from './CommitmentVaultDetails.jsx';
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
 import { autopilotService } from '../../services/autopilot.js';
 
@@ -76,7 +76,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
 
   return (
     <>
-      <div className="relative isolate overflow-hidden rounded-3xl border border-white/[0.08] bg-linear-to-b from-zinc-900/80 via-zinc-900/50 to-zinc-950/90 p-4 sm:p-6 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
+      <div className="relative isolate overflow-hidden rounded-3xl border border-white/[0.08] bg-linear-to-b from-zinc-900/80 via-zinc-900/50 to-zinc-950/90 p-4 sm:p-6 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
         {/* Glow ambient background inside hero surface */}
         <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-violet-600/15 blur-3xl" />
         <div className="pointer-events-none absolute -left-12 -bottom-12 h-56 w-56 rounded-full bg-cyan-600/10 blur-3xl" />
@@ -113,7 +113,8 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             {integrity_state === 'shortfall' && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-300 shadow-sm">
                 <AlertTriangle size={12} />
-                Shortfall: {formatCurrency(shortfall_amount)}
+                <span>Shortfall:</span>
+                <MoneyValue value={shortfall_amount} symbolClassName="text-[0.65em] font-medium text-rose-300/60 mr-0.5 select-none" />
               </span>
             )}
             {integrity_state === 'incomplete' && (
@@ -137,9 +138,10 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
         <div className="py-4 space-y-2.5">
           <div className="flex justify-between items-baseline">
             <span className="text-xs font-medium text-zinc-400">Tracked Ledger Balance</span>
-            <span className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">
-              {formatCurrency(tracked_balance)}
-            </span>
+            <MoneyValue
+              value={tracked_balance}
+              className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display"
+            />
           </div>
 
           {/* Proportional illuminated allocation bar */}
@@ -163,7 +165,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
         </div>
 
         {/* ── Mobile View: Sleek Segmented Glass List (Eliminates bulky nested boxes) ── */}
-        <div className="sm:hidden mt-2 rounded-2xl border border-white/[0.08] bg-black/40 divide-y divide-white/[0.06] overflow-hidden backdrop-blur-md">
+        <div className="sm:hidden mt-2 segmented-deck divide-y divide-white/[0.04]">
           {/* 1. Protected Row */}
           <button
             type="button"
@@ -180,9 +182,10 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-extrabold text-white">
-                {formatCurrency(protected_amount)}
-              </span>
+              <MoneyValue
+                value={protected_amount}
+                className="text-sm font-extrabold text-white font-display"
+              />
               <ChevronRight size={14} className="text-zinc-500" />
             </div>
           </button>
@@ -203,9 +206,10 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-extrabold text-white">
-                {formatCurrency(future_amount)}
-              </span>
+              <MoneyValue
+                value={future_amount}
+                className="text-sm font-extrabold text-white font-display"
+              />
               <ChevronRight size={14} className="text-zinc-500" />
             </div>
           </button>
@@ -226,9 +230,11 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-extrabold text-emerald-400">
-                {formatCurrency(free_amount)}
-              </span>
+              <MoneyValue
+                value={free_amount}
+                className="text-sm font-extrabold text-emerald-400 font-display"
+                symbolClassName="text-[0.65em] font-medium text-emerald-400/60 mr-0.5 select-none"
+              />
               <ChevronRight size={14} className="text-zinc-500" />
             </div>
           </button>
@@ -240,7 +246,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('protected')}
-            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-violet-500/40 hover:bg-violet-500/5 cursor-pointer shadow-sm"
+            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-violet-500/40 hover:bg-violet-500/5 cursor-pointer shadow-sm card-specular"
           >
             <div className="flex items-center justify-between w-full">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-300">
@@ -252,9 +258,10 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </span>
             </div>
             <div className="mt-3">
-              <div className="text-base sm:text-lg font-extrabold text-white">
-                {formatCurrency(protected_amount)}
-              </div>
+              <MoneyValue
+                value={protected_amount}
+                className="text-base sm:text-lg font-extrabold text-white font-display"
+              />
               <div className="text-[11px] text-zinc-400 mt-0.5">
                 Bills, EMIs &amp; Subscriptions
               </div>
@@ -265,7 +272,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('future')}
-            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer shadow-sm"
+            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer shadow-sm card-specular"
           >
             <div className="flex items-center justify-between w-full">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-cyan-300">
@@ -277,9 +284,10 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </span>
             </div>
             <div className="mt-3">
-              <div className="text-base sm:text-lg font-extrabold text-white">
-                {formatCurrency(future_amount)}
-              </div>
+              <MoneyValue
+                value={future_amount}
+                className="text-base sm:text-lg font-extrabold text-white font-display"
+              />
               <div className="text-[11px] text-zinc-400 mt-0.5">
                 Active Goal Planned Reserves
               </div>
@@ -290,7 +298,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('free')}
-            className="group relative flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-left transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer shadow-sm"
+            className="group relative flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-left transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-500/10 cursor-pointer shadow-sm card-specular"
           >
             <div className="flex items-center justify-between w-full">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
@@ -302,9 +310,11 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
               </span>
             </div>
             <div className="mt-3">
-              <div className="text-base sm:text-lg font-extrabold text-emerald-400">
-                {formatCurrency(free_amount)}
-              </div>
+              <MoneyValue
+                value={free_amount}
+                className="text-base sm:text-lg font-extrabold text-emerald-400 font-display"
+                symbolClassName="text-[0.65em] font-medium text-emerald-400/60 mr-0.5 select-none"
+              />
               <div className="text-[11px] text-zinc-400 mt-0.5">
                 Unencumbered after reserves
               </div>

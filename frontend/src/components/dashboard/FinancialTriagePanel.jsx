@@ -3,7 +3,7 @@ import { AlertTriangle, CircleDollarSign, Gauge, ReceiptText, ShieldAlert } from
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { CollapsibleCard } from '../mobile/CollapsibleCard.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
-import { formatCurrency, formatPercent } from '../../lib/format.js';
+import { formatCurrency, formatPercent, MoneyValue } from '../../lib/format.js';
 
 const levelStyles = {
   low: {
@@ -37,7 +37,7 @@ export function FinancialTriagePanel({ triage }) {
 
   if (!triage) {
     return (
-      <Card className="bg-zinc-900/40 border-white/5">
+      <Card className="bg-zinc-900/40 border-white/5 card-specular">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-zinc-800 rounded w-48" />
@@ -52,37 +52,37 @@ export function FinancialTriagePanel({ triage }) {
   const style = levelStyles[triage.stress_level] || levelStyles.moderate;
   const score = Math.min(100, Math.max(0, Number(triage.stress_score || 0)));
   const detailGrid = (
-    <div className={isMobile ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-2 gap-3'}>
-      <div className="rounded-xl border border-white/5 bg-black/20 p-3">
-        <div className="flex items-center gap-2 text-zinc-400 text-xs uppercase tracking-wide">
-          <Gauge size={13} />
+    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+      <div className="rounded-xl border border-white/[0.06] bg-black/35 p-3 card-specular">
+        <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wide">
+          <Gauge size={12} />
           Burn Rate
         </div>
-        <p className="text-white font-semibold mt-1">{formatPercent(triage.burn_rate_pct, 1)}</p>
+        <p className="text-white font-semibold font-display tabular-nums mt-1 text-xs sm:text-sm">{formatPercent(triage.burn_rate_pct, 1)}</p>
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-black/20 p-3">
-        <div className="flex items-center gap-2 text-zinc-400 text-xs uppercase tracking-wide">
-          <CircleDollarSign size={13} />
+      <div className="rounded-xl border border-white/[0.06] bg-black/35 p-3 card-specular">
+        <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wide">
+          <CircleDollarSign size={12} />
           Fixed Costs
         </div>
-        <p className="text-white font-semibold mt-1">{formatCurrency(triage.monthly_fixed_costs)}</p>
+        <MoneyValue value={triage.monthly_fixed_costs} className="text-white font-semibold font-display tabular-nums mt-1 text-xs sm:text-sm block" />
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-black/20 p-3">
-        <div className="flex items-center gap-2 text-zinc-400 text-xs uppercase tracking-wide">
-          <AlertTriangle size={13} />
+      <div className="rounded-xl border border-white/[0.06] bg-black/35 p-3 card-specular">
+        <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wide">
+          <AlertTriangle size={12} />
           Buffer
         </div>
-        <p className="text-white font-semibold mt-1">{triage.liquidity_buffer_days} day(s)</p>
+        <p className="text-white font-semibold font-display tabular-nums mt-1 text-xs sm:text-sm">{triage.liquidity_buffer_days} day(s)</p>
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-black/20 p-3">
-        <div className="flex items-center gap-2 text-zinc-400 text-xs uppercase tracking-wide">
-          <ReceiptText size={13} />
+      <div className="rounded-xl border border-white/[0.06] bg-black/35 p-3 card-specular">
+        <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wide">
+          <ReceiptText size={12} />
           Data Cleanup
         </div>
-        <p className="text-white font-semibold mt-1">
+        <p className="text-white font-semibold font-display tabular-nums mt-1 text-xs sm:text-sm">
           {triage.pending_transaction_count + triage.uncategorized_expense_count} item(s)
         </p>
       </div>
@@ -91,7 +91,7 @@ export function FinancialTriagePanel({ triage }) {
 
   if (isMobile) {
     return (
-      <Card className={`bg-zinc-900/75 border ${style.panel}`}>
+      <Card className={`bg-zinc-900/75 border ${style.panel} card-specular`}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <ShieldAlert size={18} className={style.accent} />
@@ -130,7 +130,7 @@ export function FinancialTriagePanel({ triage }) {
   }
 
   return (
-    <Card className={`bg-zinc-900/75 border ${style.panel}`}>
+    <Card className={`bg-zinc-900/75 border ${style.panel} card-specular`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <ShieldAlert size={18} className={style.accent} />

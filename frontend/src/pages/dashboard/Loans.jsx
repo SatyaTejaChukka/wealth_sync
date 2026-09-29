@@ -33,6 +33,7 @@ import { categoryService } from '../../services/categories.js';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { MobileDetailDrawer } from '../../components/mobile/MobileDetailDrawer.jsx';
 import { PaymentTimelineFeed } from '../../components/mobile/PaymentTimelineFeed.jsx';
+import { MoneyValue } from '../../lib/format.js';
 
 export default function Loans() {
   const toast = useToast();
@@ -313,17 +314,19 @@ export default function Loans() {
 
       {/* 4 Metric Boxes */}
       <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5 card-specular">
           <p className="text-zinc-500 font-medium text-[11px]">Outstanding Balance</p>
-          <p className="text-sm sm:text-base font-bold text-white mt-1">
-            ₹{Math.round(parseFloat(details.outstanding_principal)).toLocaleString('en-IN')}
-          </p>
+          <MoneyValue
+            value={details.outstanding_principal}
+            className="text-sm sm:text-base font-bold text-white mt-1 font-display tabular-nums block"
+          />
         </div>
-        <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+        <div className="p-3 rounded-xl bg-white/5 border border-white/5 card-specular">
           <p className="text-zinc-500 font-medium text-[11px]">Total Interest Paid</p>
-          <p className="text-sm sm:text-base font-bold text-white mt-1">
-            ₹{Math.round(parseFloat(details.total_interest_paid)).toLocaleString('en-IN')}
-          </p>
+          <MoneyValue
+            value={details.total_interest_paid}
+            className="text-sm sm:text-base font-bold text-white mt-1 font-display tabular-nums block"
+          />
         </div>
         <div className="p-3 rounded-xl bg-white/5 border border-white/5">
           <p className="text-zinc-500 font-medium text-[11px]">Remaining Tenure</p>
@@ -502,7 +505,7 @@ export default function Loans() {
                       key={loan.id}
                       onClick={() => fetchLoanDetails(loan.id)}
                       className={cn(
-                        "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
+                        "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
                         isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
                       )}
                     >
@@ -548,9 +551,10 @@ export default function Loans() {
 
                           <div className="text-right shrink-0">
                             <p className="text-[10px] text-zinc-500 uppercase font-semibold">Monthly EMI</p>
-                            <p className="text-base sm:text-xl font-extrabold text-white mt-0.5">
-                              ₹{parseFloat(loan.emi_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
+                            <MoneyValue
+                              value={loan.emi_amount}
+                              className="text-base sm:text-xl font-extrabold text-white mt-0.5 font-display tabular-nums block"
+                            />
                           </div>
                         </div>
 
@@ -558,7 +562,10 @@ export default function Loans() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-3 border-t border-white/5 text-xs">
                           <div>
                             <span className="text-zinc-500 text-[11px] block">Principal</span>
-                            <span className="font-semibold text-zinc-300">₹{parseFloat(loan.principal_amount).toLocaleString('en-IN')}</span>
+                            <MoneyValue
+                              value={loan.principal_amount}
+                              className="font-semibold text-zinc-300 font-display tabular-nums block"
+                            />
                           </div>
                           <div>
                             <span className="text-zinc-500 text-[11px] block">EMI Due Day</span>

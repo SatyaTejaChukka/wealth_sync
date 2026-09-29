@@ -14,7 +14,8 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card.jsx';
 import { Button } from '../ui/Button.jsx';
 import { calendarService } from '../../services/calendar.js';
-import { formatCurrency, formatDate } from '../../lib/format.js';
+import { formatDate } from '../../lib/format.js';
+import { MoneyValue } from '../ui/MoneyValue.jsx';
 import { cn } from '../../lib/utils.js';
 
 const TYPE_CONFIG = {
@@ -116,7 +117,7 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
   const displayedEvents = events.slice(0, maxItems);
 
   return (
-    <Card className={cn("bg-zinc-900/40 border-white/5 backdrop-blur-xl relative overflow-hidden", className)}>
+    <Card className={cn("bg-zinc-900/40 border-white/5 backdrop-blur-xl relative overflow-hidden card-specular", className)}>
       <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-semibold flex items-center gap-2 text-white">
           <CalendarDays size={16} className="text-violet-400" />
@@ -141,7 +142,7 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
             <p className="text-xs text-zinc-500 mt-0.5">You have no scheduled bills due in the near future.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="segmented-deck divide-y divide-white/[0.04] overflow-hidden">
             {displayedEvents.map((item, idx) => {
               const cfg = TYPE_CONFIG[item.type] || TYPE_CONFIG.bill;
               const Icon = cfg.icon;
@@ -152,7 +153,7 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
               return (
                 <div
                   key={`${item.linked_id || item.title}-${idx}`}
-                  className="group flex items-center justify-between gap-3 p-2.5 rounded-xl border border-white/5 bg-black/20 hover:border-white/15 hover:bg-white/[0.02] transition-all"
+                  className="group flex items-center justify-between gap-3 p-3 hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border shrink-0", cfg.bg)}>
@@ -181,9 +182,10 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-bold text-white">
-                      {formatCurrency(item.amount)}
-                    </p>
+                    <MoneyValue
+                      value={item.amount}
+                      className="text-xs sm:text-sm font-bold text-white font-display tabular-nums"
+                    />
                   </div>
                 </div>
               );

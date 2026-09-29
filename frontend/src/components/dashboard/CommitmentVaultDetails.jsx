@@ -16,7 +16,7 @@ import {
   TrendingDown,
   X,
 } from 'lucide-react';
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
 
 export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'protected' }) {
@@ -129,12 +129,13 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {/* TAB 1: PROTECTED */}
           {activeTab === 'protected' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/20 rounded-xl p-3.5">
+              <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/20 rounded-xl p-3.5 card-specular">
                 <div>
                   <div className="text-xs text-violet-300 font-medium">Total Protected Obligations</div>
-                  <div className="text-xl font-extrabold text-white">
-                    {formatCurrency(protectedVault.amount)}
-                  </div>
+                  <MoneyValue
+                    value={protectedVault.amount}
+                    className="text-xl font-extrabold text-white font-display tabular-nums"
+                  />
                 </div>
                 <div className="text-right">
                   <span className="inline-flex items-center rounded-lg bg-violet-500/20 px-2.5 py-1 text-xs font-medium text-violet-200">
@@ -148,11 +149,11 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                   No upcoming unpaid bills, EMIs, or subscriptions within this horizon.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="segmented-deck divide-y divide-white/[0.04] overflow-hidden">
                   {protectedVault.items.map((item, idx) => (
                     <div
                       key={item.source_id || idx}
-                      className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/50 p-3 hover:border-white/10 transition-colors"
+                      className="flex items-center justify-between p-3.5 hover:bg-white/[0.03] transition-colors"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -182,9 +183,10 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-white">
-                          {formatCurrency(item.amount)}
-                        </span>
+                        <MoneyValue
+                          value={item.amount}
+                          className="text-sm font-bold text-white font-display tabular-nums"
+                        />
                         <button
                           onClick={() => handleRoute(getSourceRoute(item.source_type))}
                           title="View source details"
@@ -203,12 +205,13 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {/* TAB 2: FUTURE */}
           {activeTab === 'future' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3.5">
+              <div className="flex items-center justify-between bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3.5 card-specular">
                 <div>
                   <div className="text-xs text-cyan-300 font-medium">Total Future Reserves</div>
-                  <div className="text-xl font-extrabold text-white">
-                    {formatCurrency(futureVault.amount)}
-                  </div>
+                  <MoneyValue
+                    value={futureVault.amount}
+                    className="text-xl font-extrabold text-white font-display tabular-nums"
+                  />
                 </div>
                 <div className="text-right">
                   <span className="inline-flex items-center rounded-lg bg-cyan-500/20 px-2.5 py-1 text-xs font-medium text-cyan-200">
@@ -222,11 +225,11 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                   No active savings goals with planned contributions.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="segmented-deck divide-y divide-white/[0.04] overflow-hidden">
                   {futureVault.items.map((item, idx) => (
                     <div
                       key={item.goal_id || idx}
-                      className="rounded-xl border border-white/5 bg-zinc-900/50 p-3 hover:border-white/10 transition-colors space-y-2"
+                      className="p-3.5 hover:bg-white/[0.03] transition-colors space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -234,9 +237,14 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                           <span className="text-sm font-semibold text-white">{item.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-cyan-300">
-                            {formatCurrency(item.reserved_amount)} reserved
-                          </span>
+                          <div className="flex items-baseline gap-1 text-sm font-bold text-cyan-300">
+                            <MoneyValue
+                              value={item.reserved_amount}
+                              className="font-display tabular-nums text-cyan-300"
+                              symbolClassName="text-[0.65em] font-medium text-cyan-300/60 mr-0.5 select-none"
+                            />
+                            <span className="text-xs font-normal text-cyan-300/80">reserved</span>
+                          </div>
                           <button
                             onClick={() => handleRoute('/dashboard/goals')}
                             title="Go to Goals"
@@ -248,11 +256,20 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400 pt-1 border-t border-white/5">
-                        <div>
-                          Planned monthly: <span className="text-zinc-200 font-medium">{formatCurrency(item.planned_amount)}</span>
+                        <div className="flex items-baseline gap-1">
+                          <span>Planned monthly:</span>
+                          <MoneyValue
+                            value={item.planned_amount}
+                            className="text-zinc-200 font-medium font-display tabular-nums"
+                          />
                         </div>
-                        <div>
-                          Saved this cycle: <span className="text-emerald-400 font-medium">{formatCurrency(item.completed_amount)}</span>
+                        <div className="flex items-baseline gap-1">
+                          <span>Saved this cycle:</span>
+                          <MoneyValue
+                            value={item.completed_amount}
+                            className="text-emerald-400 font-medium font-display tabular-nums"
+                            symbolClassName="text-[0.65em] font-medium text-emerald-400/60 mr-0.5 select-none"
+                          />
                         </div>
                       </div>
                     </div>
@@ -266,28 +283,53 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {activeTab === 'free' && (
             <div className="space-y-4">
               {/* Formula card */}
-              <div className="rounded-xl border border-white/10 bg-zinc-950 p-4 space-y-3">
+              <div className="rounded-xl border border-white/10 bg-zinc-950 p-4 space-y-3 card-specular">
                 <h3 className="text-xs uppercase font-bold tracking-wider text-zinc-400">
                   Allocation Math (Ledger Basis)
                 </h3>
                 <div className="space-y-2 text-sm font-medium">
                   <div className="flex justify-between items-center text-zinc-200">
                     <span>Tracked Balance (Completed Ledger)</span>
-                    <span className="font-bold text-white">+{formatCurrency(vault.tracked_balance)}</span>
+                    <div className="flex items-baseline gap-0.5 font-bold text-white">
+                      <span>+</span>
+                      <MoneyValue value={vault.tracked_balance} className="font-display tabular-nums text-white" />
+                    </div>
                   </div>
                   <div className="flex justify-between items-center text-violet-400">
                     <span>- Protected Reserves (Bills, EMIs, Subs)</span>
-                    <span className="font-bold">-{formatCurrency(protectedVault.amount)}</span>
+                    <div className="flex items-baseline gap-0.5 font-bold text-violet-400">
+                      <span>-</span>
+                      <MoneyValue
+                        value={protectedVault.amount}
+                        className="font-display tabular-nums text-violet-400"
+                        symbolClassName="text-[0.65em] font-medium text-violet-400/60 mr-0.5 select-none"
+                      />
+                    </div>
                   </div>
                   <div className="flex justify-between items-center text-cyan-400">
                     <span>- Future Goal Reserves (Active Goals)</span>
-                    <span className="font-bold">-{formatCurrency(futureVault.amount)}</span>
+                    <div className="flex items-baseline gap-0.5 font-bold text-cyan-400">
+                      <span>-</span>
+                      <MoneyValue
+                        value={futureVault.amount}
+                        className="font-display tabular-nums text-cyan-400"
+                        symbolClassName="text-[0.65em] font-medium text-cyan-400/60 mr-0.5 select-none"
+                      />
+                    </div>
                   </div>
                   <div className="border-t border-white/10 pt-2 flex justify-between items-center text-base">
                     <span className="font-bold text-white">Truly Free Amount</span>
-                    <span className={cn('font-extrabold', freeVault.amount > 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                      {formatCurrency(freeVault.amount)}
-                    </span>
+                    <MoneyValue
+                      value={freeVault.amount}
+                      className={cn(
+                        'font-extrabold font-display tabular-nums',
+                        freeVault.amount > 0 ? 'text-emerald-400' : 'text-rose-400'
+                      )}
+                      symbolClassName={cn(
+                        'text-[0.65em] font-medium mr-0.5 select-none',
+                        freeVault.amount > 0 ? 'text-emerald-400/60' : 'text-rose-400/60'
+                      )}
+                    />
                   </div>
                 </div>
 
@@ -295,7 +337,13 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                   <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 p-2.5 flex items-center gap-2 text-xs text-rose-300">
                     <AlertTriangle size={14} className="shrink-0" />
                     <span>
-                      Tracked balance has a shortfall of {formatCurrency(integrity.shortfall_amount)} to fully cover scheduled commitments.
+                      Tracked balance has a shortfall of{' '}
+                      <MoneyValue
+                        value={integrity.shortfall_amount}
+                        className="font-bold text-rose-300 font-display tabular-nums inline"
+                        symbolClassName="text-[0.65em] font-medium text-rose-300/60 mr-0.5 select-none"
+                      />{' '}
+                      to fully cover scheduled commitments.
                     </span>
                   </div>
                 )}
@@ -303,17 +351,21 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
 
               {/* Daily context */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3.5 space-y-1">
+                <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3.5 space-y-1 card-specular">
                   <div className="text-xs text-zinc-400">Daily Free Pace</div>
-                  <div className="text-lg font-bold text-white">
-                    {formatCurrency(freeVault.daily_amount)} <span className="text-xs text-zinc-500 font-normal">/ day</span>
+                  <div className="text-lg font-bold text-white flex items-baseline gap-1">
+                    <MoneyValue
+                      value={freeVault.daily_amount}
+                      className="font-display tabular-nums text-white"
+                    />
+                    <span className="text-xs text-zinc-500 font-normal">/ day</span>
                   </div>
                   <p className="text-[11px] text-zinc-500">
                     Context pacing over remaining {freeVault.days_remaining} days
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3.5 space-y-1">
+                <div className="rounded-xl border border-white/5 bg-zinc-900/50 p-3.5 space-y-1 card-specular">
                   <div className="text-xs text-zinc-400">Planning Horizon</div>
                   <div className="text-lg font-bold text-white">
                     {freeVault.days_remaining} days

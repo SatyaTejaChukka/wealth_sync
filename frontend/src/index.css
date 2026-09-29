@@ -174,11 +174,21 @@
 
 @layer utilities {
   .glass {
-    @apply bg-zinc-950/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-zinc-950/70 backdrop-blur-2xl border border-white/[0.08];
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 16px 36px -8px rgba(0, 0, 0, 0.7);
   }
 
   .glass-card {
-    @apply bg-linear-to-br from-zinc-900/40 to-zinc-900/20 backdrop-blur-2xl border border-white/5;
+    @apply bg-linear-to-b from-zinc-900/50 via-zinc-900/30 to-zinc-950/60 backdrop-blur-2xl border border-white/[0.07];
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 16px 36px -8px rgba(0, 0, 0, 0.7);
+  }
+
+  .card-specular {
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 16px 36px -8px rgba(0, 0, 0, 0.7);
+  }
+
+  .segmented-deck {
+    @apply rounded-2xl bg-black/35 border border-white/[0.05] divide-y divide-white/[0.04] overflow-hidden backdrop-blur-md;
   }
 
 

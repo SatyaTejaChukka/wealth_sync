@@ -21,7 +21,7 @@ export function FinancialHealthScore({ score = 0, message, color }) {
   ];
 
   return (
-    <Card className="h-full bg-zinc-900/40 border-white/5">
+    <Card className="h-full bg-zinc-900/40 border-white/5 card-specular">
       <CardHeader>
         <CardTitle>Financial Health</CardTitle>
       </CardHeader>

@@ -34,6 +34,7 @@ import { categoryService } from '../../services/categories.js';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { MobileDetailDrawer } from '../../components/mobile/MobileDetailDrawer.jsx';
 import { PaymentTimelineFeed } from '../../components/mobile/PaymentTimelineFeed.jsx';
+import { MoneyValue } from '../../lib/format.js';
 
 export default function Lent() {
   const toast = useToast();
@@ -263,23 +264,27 @@ export default function Lent() {
               {details.elapsed_duration.days}d
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5">
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 card-specular">
             <p className="text-zinc-500 font-medium text-[11px]">Interest Accrued</p>
-            <p className="text-sm sm:text-base font-bold text-emerald-400 mt-1">
-              + ₹{Math.round(accrued).toLocaleString('en-IN')}
-            </p>
+            <MoneyValue
+              value={accrued}
+              className="text-sm sm:text-base font-bold text-emerald-400 mt-1 font-display tabular-nums block"
+              symbolClassName="text-[0.65em] font-medium text-emerald-400/60 mr-0.5 select-none"
+            />
           </div>
-          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5">
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/5 card-specular">
             <p className="text-zinc-500 font-medium text-[11px]">Total Repayments</p>
-            <p className="text-sm sm:text-base font-bold text-white mt-1">
-              ₹{Math.round(totalRepayments).toLocaleString('en-IN')}
-            </p>
+            <MoneyValue
+              value={totalRepayments}
+              className="text-sm sm:text-base font-bold text-white mt-1 font-display tabular-nums block"
+            />
           </div>
-          <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
+          <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20 card-specular">
             <p className="text-violet-400 font-semibold text-[11px]">Net Outstanding</p>
-            <p className="text-sm sm:text-base font-extrabold text-white mt-1">
-              ₹{Math.round(outstanding).toLocaleString('en-IN')}
-            </p>
+            <MoneyValue
+              value={outstanding}
+              className="text-sm sm:text-base font-extrabold text-white mt-1 font-display tabular-nums block"
+            />
           </div>
         </div>
 
@@ -295,9 +300,11 @@ export default function Lent() {
                 });
                 setShowRepayModal(true);
               }}
-              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs sm:text-sm font-bold py-3 h-11 rounded-xl text-white border-0 shadow-lg shadow-emerald-500/10 active:scale-98 transition-all"
+              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs sm:text-sm font-bold py-3 h-11 rounded-xl text-white border-0 shadow-lg shadow-emerald-500/10 active:scale-98 transition-all flex items-center justify-center gap-1.5"
             >
-              Settle Outstanding (₹{Math.round(outstanding).toLocaleString('en-IN')})
+              <span>Settle Outstanding (</span>
+              <MoneyValue value={outstanding} className="text-white font-bold" />
+              <span>)</span>
             </Button>
           </div>
         )}
@@ -311,36 +318,51 @@ export default function Lent() {
             </span>
           </div>
 
-          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <div className="max-h-56 overflow-y-auto pr-1">
             {details.transactions.length === 0 ? (
               <div className="p-4 text-center text-zinc-600 text-xs rounded-xl bg-white/[0.02] border border-white/5">
                 No ledger activity yet
               </div>
             ) : (
-              details.transactions.map((tx) => {
-                const isIncome = tx.type === 'INCOME';
-                return (
-                  <div
-                    key={tx.id}
-                    className="p-3 rounded-xl border border-white/5 bg-white/[0.02] flex justify-between items-center text-xs"
-                  >
-                    <div>
-                      <p className="font-semibold text-white">
-                        {tx.description || (isIncome ? 'Repayment Received' : 'Principal Disbursed')}
-                      </p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">
-                        {new Date(tx.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
+              <div className="segmented-deck divide-y divide-white/[0.04] overflow-hidden">
+                {details.transactions.map((tx) => {
+                  const isIncome = tx.type === 'INCOME';
+                  return (
+                    <div
+                      key={tx.id}
+                      className="p-3 flex justify-between items-center text-xs hover:bg-white/[0.03] transition-colors"
+                    >
+                      <div>
+                        <p className="font-semibold text-white">
+                          {tx.description || (isIncome ? 'Repayment Received' : 'Principal Disbursed')}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">
+                          {new Date(tx.occurred_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <div className="flex items-baseline gap-0.5">
+                        <span className={cn(
+                          "font-bold text-xs select-none",
+                          isIncome ? "text-emerald-400" : "text-rose-400"
+                        )}>
+                          {isIncome ? '+' : '-'}
+                        </span>
+                        <MoneyValue
+                          value={parseFloat(tx.amount)}
+                          className={cn(
+                            "font-bold text-sm font-display tabular-nums",
+                            isIncome ? "text-emerald-400" : "text-rose-400"
+                          )}
+                          symbolClassName={cn(
+                            "text-[0.65em] font-medium mr-0.5 select-none",
+                            isIncome ? "text-emerald-400/60" : "text-rose-400/60"
+                          )}
+                        />
+                      </div>
                     </div>
-                    <span className={cn(
-                      "font-bold text-sm",
-                      isIncome ? "text-emerald-400" : "text-rose-400"
-                    )}>
-                      {isIncome ? '+' : '-'} ₹{parseFloat(tx.amount).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -445,7 +467,7 @@ export default function Lent() {
                     key={rec.id}
                     onClick={() => fetchRecordDetails(rec.id)}
                     className={cn(
-                      "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden",
+                      "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
                       isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
                     )}
                   >
@@ -487,9 +509,10 @@ export default function Lent() {
 
                         <div className="text-right shrink-0">
                           <p className="text-[10px] text-zinc-500 uppercase font-semibold">Principal</p>
-                          <p className="text-base sm:text-xl font-extrabold text-white mt-0.5">
-                            ₹{parseFloat(rec.principal_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
+                          <MoneyValue
+                            value={rec.principal_amount}
+                            className="text-base sm:text-xl font-extrabold text-white mt-0.5 font-display tabular-nums block"
+                          />
                         </div>
                       </div>
 

@@ -15,7 +15,7 @@ export default function SankeyFlow({ summary }) {
   // If there is no income and no expenses, show a placeholder
   if (monthlyIncome === 0 && monthlyExpenses === 0) {
     return (
-      <Card className="p-6 bg-zinc-900/30 border-white/5 backdrop-blur-md text-center text-zinc-500 h-64 flex flex-col items-center justify-center gap-2">
+      <Card className="p-6 bg-zinc-900/30 border-white/5 backdrop-blur-md text-center text-zinc-500 h-64 flex flex-col items-center justify-center gap-2 card-specular">
         <TrendingDown size={24} className="text-zinc-700 animate-pulse" />
         <p className="text-sm font-semibold">No flow data available</p>
         <p className="text-xs text-zinc-600">Transactions logged this month will populate the flow chart.</p>
@@ -129,7 +129,7 @@ export default function SankeyFlow({ summary }) {
 
   return (
     <div className="relative overflow-hidden w-full">
-      <div className="relative w-full flex justify-center bg-black/10 rounded-xl p-2 border border-white/2">
+      <div className="relative w-full flex justify-center bg-black/25 rounded-2xl p-2 border border-white/[0.05] card-specular">
         <svg 
           viewBox={`0 0 ${width} ${height}`} 
           className="w-full max-w-[600px] h-auto overflow-visible select-none"

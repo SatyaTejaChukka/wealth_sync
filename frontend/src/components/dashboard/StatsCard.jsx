@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '../ui/Card.jsx';
 import { cn } from '../../lib/utils';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { splitCurrency } from '../../lib/format';
+import { MoneyValue } from '../ui/MoneyValue.jsx';
 
 
 export function StatsCard({ 
@@ -22,8 +22,6 @@ export function StatsCard({
     amber: "from-amber-500 to-orange-500 shadow-amber-500/20",
     blue: "from-blue-500 to-cyan-500 shadow-blue-500/20",
   };
-  
-  const { symbol, amount, isNegative } = splitCurrency(value);
 
   return (
     <Card className={cn(
@@ -51,19 +49,16 @@ export function StatsCard({
             </div>
           </div>
 
-          <h3 
+          <MoneyValue
+            value={value}
             className={cn(
-              "font-extrabold text-white tracking-tight leading-none font-display truncate tabular-nums",
+              "font-extrabold text-white tracking-tight leading-none font-display truncate tabular-nums block",
               isHero 
                 ? "text-xl sm:text-2xl xl:text-3xl mt-0.5" 
                 : "text-lg sm:text-xl xl:text-2xl"
             )}
-            title={value}
-          >
-            {isNegative && <span className="text-rose-400 font-bold mr-0.5 select-none">-</span>}
-            <span className="text-[0.6em] font-medium text-white/30 mr-1 select-none">{symbol}</span>
-            {amount}
-          </h3>
+            title={String(value)}
+          />
         </div>
 
         {trendValue && (

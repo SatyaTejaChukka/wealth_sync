@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, TriangleAlert } from 'lucide-react';
 
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
 
@@ -10,7 +10,7 @@ function RuleProgressBar({ label, amount, percent, tone }) {
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
         <span className="text-zinc-400">{label}</span>
-        <span className="tabular-nums text-zinc-300">{formatCurrency(amount)}</span>
+        <MoneyValue value={amount} className="tabular-nums text-zinc-300 font-display" />
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
         <div
@@ -58,7 +58,7 @@ export function SalaryRuleEnginePanel({ engine }) {
         : 'Manual override';
 
   return (
-    <Card className="border-white/5 bg-zinc-900/40">
+    <Card className="border-white/5 bg-zinc-900/40 card-specular">
       <CardHeader className="pb-3">
         <CardTitle>Salary Rule Engine</CardTitle>
         <p className="text-sm text-zinc-400">
@@ -68,7 +68,7 @@ export function SalaryRuleEnginePanel({ engine }) {
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="rounded-xl border border-white/10 bg-black/25 p-4 card-specular">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Current Basis</p>
@@ -77,9 +77,10 @@ export function SalaryRuleEnginePanel({ engine }) {
             </div>
             <div className="text-right">
               <p className="text-xs text-zinc-500">Salary considered</p>
-              <p className="text-sm font-semibold text-white tabular-nums">
-                {formatCurrency(engine.salary_considered)}
-              </p>
+              <MoneyValue
+                value={engine.salary_considered}
+                className="text-sm font-semibold text-white tabular-nums font-display block"
+              />
               <p className="mt-1 text-[11px] text-zinc-500">
                 Confidence: {confidence.score ?? 0}/100 ({confidence.label || 'low'})
               </p>
@@ -87,7 +88,7 @@ export function SalaryRuleEnginePanel({ engine }) {
           </div>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+        <div className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4 card-specular">
           <RuleProgressBar
             label="Commitments First"
             amount={Number(allocation.commitments || 0)}
@@ -115,7 +116,7 @@ export function SalaryRuleEnginePanel({ engine }) {
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 card-specular">
             <p className="mb-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
               Top Planned Expenses
             </p>
@@ -129,9 +130,8 @@ export function SalaryRuleEnginePanel({ engine }) {
                     className="flex items-center justify-between gap-3 text-xs"
                   >
                     <span className="truncate text-zinc-300">{expense.category_name}</span>
-                    <span className="tabular-nums text-zinc-200">
-                      {formatCurrency(expense.allocated || 0)} /{' '}
-                      {formatCurrency(expense.requested || 0)}
+                    <span className="tabular-nums text-zinc-200 flex items-center gap-1 font-display">
+                      <MoneyValue value={expense.allocated || 0} /> / <MoneyValue value={expense.requested || 0} />
                     </span>
                   </div>
                 ))}
@@ -139,7 +139,7 @@ export function SalaryRuleEnginePanel({ engine }) {
             )}
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 card-specular">
             <p className="mb-2 text-xs uppercase tracking-[0.16em] text-zinc-500">
               Top Goal Allocations
             </p>
@@ -155,8 +155,8 @@ export function SalaryRuleEnginePanel({ engine }) {
                     <span className="truncate text-zinc-300">
                       {goal.goal_name} (P{goal.priority})
                     </span>
-                    <span className="tabular-nums text-zinc-200">
-                      {formatCurrency(goal.allocated)} / {formatCurrency(goal.requested)}
+                    <span className="tabular-nums text-zinc-200 flex items-center gap-1 font-display">
+                      <MoneyValue value={goal.allocated} /> / <MoneyValue value={goal.requested} />
                     </span>
                   </div>
                 ))}
@@ -164,29 +164,29 @@ export function SalaryRuleEnginePanel({ engine }) {
             )}
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 card-specular">
             <p className="mb-2 text-xs uppercase tracking-[0.16em] text-zinc-500">Actual Spend</p>
             <div className="space-y-2 text-xs text-zinc-300">
               <div className="flex items-center justify-between gap-3">
                 <span>Commitment spend</span>
-                <span className="tabular-nums">{formatCurrency(actuals.commitment_spend || 0)}</span>
+                <MoneyValue value={actuals.commitment_spend || 0} className="tabular-nums font-display" />
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span>Planned spend</span>
-                <span className="tabular-nums">{formatCurrency(actuals.planned_spend || 0)}</span>
+                <MoneyValue value={actuals.planned_spend || 0} className="tabular-nums font-display" />
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span>Goal contributions</span>
-                <span className="tabular-nums">{formatCurrency(actuals.goal_contributions || 0)}</span>
+                <MoneyValue value={actuals.goal_contributions || 0} className="tabular-nums font-display" />
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span>Flexible spend</span>
-                <span className="tabular-nums">{formatCurrency(actuals.flexible_spend || 0)}</span>
+                <MoneyValue value={actuals.flexible_spend || 0} className="tabular-nums font-display" />
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 md:col-span-2">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 md:col-span-2 card-specular">
             <p className="mb-2 text-xs uppercase tracking-[0.16em] text-zinc-500">Rule Health</p>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2 text-zinc-300">
@@ -195,8 +195,8 @@ export function SalaryRuleEnginePanel({ engine }) {
                 ) : (
                   <TriangleAlert size={14} className="text-amber-400" />
                 )}
-                <span>
-                  Free floor target: {formatCurrency(allocation.free_money_floor_target || 0)}
+                <span className="flex items-center gap-1">
+                  Free floor target: <MoneyValue value={allocation.free_money_floor_target || 0} className="font-display tabular-nums inline" />
                 </span>
               </div>
 
@@ -223,9 +223,14 @@ export function SalaryRuleEnginePanel({ engine }) {
                 warningDetails.slice(0, 4).map((warning) => (
                   <div key={`${warning.code}-${warning.message}`} className="rounded-lg border border-amber-500/20 bg-amber-500/8 p-3">
                     <p className="text-amber-200">{warning.message}</p>
-                    <p className="mt-1 text-[11px] uppercase tracking-wide text-amber-100/80">
-                      {warning.severity}
-                      {warning.amount > 0 ? ` • ${formatCurrency(warning.amount)}` : ''}
+                    <p className="mt-1 text-[11px] uppercase tracking-wide text-amber-100/80 flex items-center gap-1">
+                      <span>{warning.severity}</span>
+                      {warning.amount > 0 ? (
+                        <>
+                          <span>•</span>
+                          <MoneyValue value={warning.amount} className="font-display tabular-nums inline" />
+                        </>
+                      ) : null}
                     </p>
                   </div>
                 ))

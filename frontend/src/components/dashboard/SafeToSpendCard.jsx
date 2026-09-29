@@ -1,5 +1,6 @@
 import React from 'react';
-import { formatCurrency, splitCurrency } from '../../lib/format';
+import { formatCurrency } from '../../lib/format';
+import { MoneyValue } from '../ui/MoneyValue.jsx';
 
 import { ShieldCheck } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -23,7 +24,7 @@ export const SafeToSpendCard = ({ stats }) => {
   }
 
   return (
-    <div className="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden group">
+    <div className="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden group card-specular">
       <div className={`absolute top-0 right-0 w-32 h-32 ${statusColor} opacity-10 blur-3xl group-hover:opacity-20 transition-opacity`} />
       
       <div className="relative z-10 flex flex-col h-full justify-between">
@@ -41,18 +42,11 @@ export const SafeToSpendCard = ({ stats }) => {
           </div>
           
           <div className="mt-2">
-             <span className="text-[1.85rem] sm:text-[2.8rem] font-extrabold text-white tracking-tight leading-none font-display truncate block" title={formatCurrency(safe_to_spend)}>
-                {(() => {
-                  const { symbol, amount, isNegative } = splitCurrency(formatCurrency(safe_to_spend));
-                  return (
-                    <>
-                      {isNegative && <span className="text-rose-400 font-bold mr-0.5 select-none">-</span>}
-                      <span className="text-[0.55em] font-medium text-white/30 mr-1 select-none">{symbol}</span>
-                      {amount}
-                    </>
-                  );
-                })()}
-             </span>
+            <MoneyValue
+              value={safe_to_spend}
+              className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-none font-display truncate block tabular-nums"
+              title={formatCurrency(safe_to_spend)}
+            />
           </div>
         </div>
 

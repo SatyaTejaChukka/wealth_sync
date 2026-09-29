@@ -18,7 +18,7 @@ export function SpendingChart({ data = [], range, onRangeChange }) {
   const tickFontSize = isMobile ? 10 : 12;
 
   return (
-    <Card className="relative z-0 isolate flex h-full min-h-[320px] flex-col border-white/5 bg-zinc-900/40 md:min-h-[360px] xl:min-h-[420px]">
+    <Card className="relative z-0 isolate flex h-full min-h-[320px] flex-col border-white/5 bg-zinc-900/40 md:min-h-[360px] xl:min-h-[420px] card-specular">
       <CardHeader className="flex shrink-0 flex-row items-center justify-between gap-3 pb-2">
         <CardTitle>Spending Overview</CardTitle>
         <div className="w-28 sm:w-32">

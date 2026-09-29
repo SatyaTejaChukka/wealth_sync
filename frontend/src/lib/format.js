@@ -62,3 +62,6 @@ export function formatDate(isoDate) {
     year: 'numeric',
   });
 }
+
+export { MoneyValue } from '../components/ui/MoneyValue.jsx';
+

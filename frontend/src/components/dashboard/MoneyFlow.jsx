@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gauge, ShieldAlert, Sparkles, TriangleAlert } from 'lucide-react';
 
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
 
 const allocationTones = {
@@ -48,10 +48,15 @@ function titleCase(value) {
 }
 
 function DetailTile({ label, value, toneClass, description }) {
+  const isCurrency = typeof value === 'number' || (typeof value === 'string' && /^[₹$€£]/.test(value.trim()));
   return (
-    <div className={cn("rounded-xl border p-3", toneClass || 'border-white/10 bg-zinc-950/60')}>
+    <div className={cn("rounded-xl border p-3 card-specular", toneClass || 'border-white/10 bg-zinc-950/60')}>
       <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500 font-bold">{label}</p>
-      <p className="mt-1 text-base font-bold tabular-nums text-white leading-tight">{value}</p>
+      {isCurrency ? (
+        <MoneyValue value={value} className="mt-1 text-base font-bold tabular-nums text-white leading-tight block" />
+      ) : (
+        <p className="mt-1 text-base font-bold tabular-nums text-white leading-tight">{value}</p>
+      )}
       {description && <p className="mt-1 text-[10px] text-zinc-500 leading-tight">{description}</p>}
     </div>
   );
@@ -117,12 +122,15 @@ export const MoneyFlow = ({ stats }) => {
 
       </div>
 
-      <div className="mt-5 rounded-2xl border border-white/8 bg-black/20 p-4">
+      <div className="mt-5 rounded-2xl border border-white/8 bg-black/20 p-4 card-specular">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.16em] text-zinc-500">Monthly income basis</p>
             {income > 0 ? (
-              <p className="mt-1 text-lg font-semibold tabular-nums text-white">{formatCurrency(income)}</p>
+              <MoneyValue
+                value={income}
+                className="mt-1 text-lg font-bold tabular-nums text-white block"
+              />
             ) : (
               <button 
                 onClick={() => navigate('/dashboard/budget')}
@@ -176,7 +184,7 @@ export const MoneyFlow = ({ stats }) => {
               <div 
                 key={item.key}
                 className={cn(
-                  "relative rounded-xl border p-3 transition-all group overflow-hidden",
+                  "relative rounded-xl border p-3 transition-all group overflow-hidden card-specular",
                   hasData ? (tone.panel || 'border-white/10 bg-zinc-950/60') : "border-white/5 bg-zinc-950/20 grayscale opacity-60"
                 )}
               >
@@ -184,9 +192,10 @@ export const MoneyFlow = ({ stats }) => {
                    <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500 font-bold">{tone.label}</p>
                    <span className="text-[10px] text-zinc-600 group-hover:text-zinc-400 transition-colors cursor-help" title={tooltips[item.key]}>?</span>
                 </div>
-                <p className={cn("mt-1 text-base font-bold tabular-nums tracking-tight", hasData ? "text-white" : "text-zinc-600")}>
-                  {formatCurrency(item.value)}
-                </p>
+                <MoneyValue
+                  value={item.value}
+                  className={cn("mt-1 text-base font-bold tabular-nums tracking-tight block", hasData ? "text-white" : "text-zinc-600")}
+                />
                 {hasData && (
                    <div className="absolute bottom-0 left-0 h-0.5 bg-current opacity-20" style={{ width: `${percentOf(item.value, income)}%`, color: 'inherit' }} />
                 )}

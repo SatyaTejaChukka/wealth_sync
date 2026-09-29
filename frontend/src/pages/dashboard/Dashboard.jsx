@@ -27,7 +27,7 @@ import { NotificationBell } from '../../components/notifications/NotificationBel
 import { Button } from '../../components/ui/Button.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { useAuth } from '../../lib/auth.jsx';
-import { formatCurrency } from '../../lib/format.js';
+import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { calculateSafeBudgetSignal } from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 import { dashboardService } from '../../services/dashboard.js';
@@ -95,7 +95,7 @@ function CategoryBreakdown({ categories = [], totalExpenses = 0 }) {
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-zinc-200 truncate">{cat.name}</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white">{formatCurrency(val)}</span>
+                <MoneyValue value={val} className="font-bold text-white font-display tabular-nums" />
                 <span className="text-[11px] text-zinc-500 w-9 text-right font-medium">{pct}%</span>
               </div>
             </div>
@@ -351,7 +351,7 @@ export default function Dashboard() {
           className="col-span-1 shadow-lg shadow-rose-500/5 hover-glow-rose"
         />
 
-        <Card className="col-span-2 lg:col-span-1 border-white/5 bg-zinc-900/30 backdrop-blur-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 hover:scale-[1.01] transition-all duration-300">
+        <Card className="col-span-2 lg:col-span-1 border-white/5 bg-zinc-900/30 backdrop-blur-xl relative overflow-hidden flex flex-col justify-between p-4 sm:p-5 hover:scale-[1.01] transition-all duration-300 card-specular">
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="font-bold uppercase tracking-[0.08em] text-[9px] sm:text-[11px] text-zinc-400">
@@ -401,7 +401,7 @@ export default function Dashboard() {
           )}
 
           {/* Visual Intelligence Hub (Sankey Flow / Spending Trend / Category Breakdown) */}
-          <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-xl overflow-hidden relative shadow-xl">
+          <Card className="p-0 border-white/5 bg-zinc-900/30 backdrop-blur-xl overflow-hidden relative shadow-xl card-specular">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 pt-5 pb-3 gap-3 border-b border-white/5">
               <div>
                 <h3 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">

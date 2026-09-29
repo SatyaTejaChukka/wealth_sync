@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDailySafeToSpend } from '../../hooks/useDailySafeToSpend.js';
 import { useDeviceShake } from '../../hooks/useDeviceShake.js';
 import { useFinanceFeedback } from '../../hooks/useFinanceFeedback.js';
-import { formatCurrency, splitCurrency } from '../../lib/format.js';
+import { formatCurrency, splitCurrency, MoneyValue } from '../../lib/format.js';
 import {
   calculateMiniOrbScale,
   calculateOrbSize,
@@ -219,7 +219,7 @@ export function SafeToSpendOrb() {
 
   return (
     <>
-      <Card className="bg-zinc-900/40 border-white/5 min-h-90 sm:min-h-105 overflow-hidden">
+      <Card className="bg-zinc-900/40 border-white/5 min-h-90 sm:min-h-105 overflow-hidden card-specular">
         <div className="p-4 sm:p-6 h-full flex flex-col items-center justify-between gap-4">
           <div className="w-full flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
             <span>Safe-to-Spend Orb</span>
@@ -324,18 +324,10 @@ export function SafeToSpendOrb() {
               aria-label={`Safe to spend ${viewMode}: ${formatCurrency(primaryAmount)}. ${statusText}`}
             >
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">{viewMode === 'daily' ? 'Today' : 'This month'}</p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl leading-none font-black text-white mt-2 tabular-nums font-display tracking-tight">
-                {(() => {
-                  const { symbol, amount, isNegative } = splitCurrency(formatCurrency(displayAmount).replace('.00', ''));
-                  return (
-                    <>
-                      {isNegative && <span className="text-rose-400 font-bold mr-0.5 select-none">-</span>}
-                      <span className="text-[0.55em] font-medium text-white/30 mr-0.5 select-none">{symbol}</span>
-                      {amount}
-                    </>
-                  );
-                })()}
-              </p>
+              <MoneyValue
+                value={displayAmount}
+                className="text-2xl sm:text-3xl lg:text-4xl leading-none font-black text-white mt-2 tabular-nums font-display tracking-tight block"
+              />
 
               <p className="mt-2 text-[10px] text-zinc-300">Tap for details</p>
             </button>
@@ -352,7 +344,7 @@ export function SafeToSpendOrb() {
       </Card>
 
       <Modal isOpen={detailsOpen} onClose={() => setDetailsOpen(false)} title="Safe-to-Spend Details">
-        <div className="space-y-3">
+        <div className="segmented-deck divide-y divide-white/[0.04] overflow-hidden">
           <DetailRow label="Daily limit" value={data.daily_limit} />
           <DetailRow label="Monthly safe total" value={data.monthly_safe_total} />
           <DetailRow label="Days left in month" value={data.days_left_in_month} raw />
@@ -370,11 +362,13 @@ export function SafeToSpendOrb() {
 
 function DetailRow({ label, value, raw = false }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 px-3 py-2">
-      <span className="text-sm text-zinc-400">{label}</span>
-      <span className="text-sm font-semibold text-white tabular-nums">
-        {raw ? String(value ?? 0) : formatCurrency(Number(value || 0))}
-      </span>
+    <div className="flex items-center justify-between p-3 hover:bg-white/[0.03] transition-colors">
+      <span className="text-xs sm:text-sm text-zinc-400">{label}</span>
+      {raw ? (
+        <span className="text-xs sm:text-sm font-semibold text-white tabular-nums font-display">{String(value ?? 0)}</span>
+      ) : (
+        <MoneyValue value={Number(value || 0)} className="text-xs sm:text-sm font-semibold text-white tabular-nums font-display" />
+      )}
     </div>
   );
 }
