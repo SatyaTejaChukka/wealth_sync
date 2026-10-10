@@ -7,9 +7,6 @@ import { Alert } from '../components/ui/Alert.jsx';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.jsx';
 import { ServerConnectionModal } from '../components/common/ServerConnectionModal.jsx';
 import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, User, Server } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
-
-const isNative = Capacitor.isNativePlatform();
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -111,8 +108,8 @@ export default function Signup() {
           <div className="bg-zinc-900/80 backdrop-blur-xl rounded-xl shadow-2xl p-6 sm:p-8 border border-zinc-800 animate-fadeIn space-y-6">
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-            {/* 1-Click Google Sign-Up (Web only) */}
-            {isFirebaseConfigured && !isNative && (
+            {/* 1-Click Google Sign-Up */}
+            {isFirebaseConfigured && (
               <>
                 <GoogleSignInButton
                   onClick={handleGoogleSignUp}
