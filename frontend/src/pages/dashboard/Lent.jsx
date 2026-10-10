@@ -17,7 +17,9 @@ import {
   ArrowRight,
   Clock,
   HandCoins,
-  Receipt
+  Receipt,
+  Building2,
+  Banknote
 } from 'lucide-react';
 
 import { Button } from '../../components/ui/Button.jsx';
@@ -779,12 +781,13 @@ export default function Lent() {
                   onClick={() => setFormData({ ...formData, payment_source: 'bank', track_in_transactions: true })}
                   className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     formData.payment_source === 'bank'
-                      ? 'border-violet-500 bg-violet-500/15 text-white shadow-sm shadow-violet-500/10'
+                      ? 'border-blue-500 bg-blue-500/15 text-white shadow-sm shadow-blue-500/10'
                       : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700'
                   }`}
                 >
                   <p className="text-xs font-semibold flex items-center gap-1.5">
-                    <span>🏦</span> Bank / Netbanking
+                    <Building2 size={13} className="text-blue-400 shrink-0" />
+                    <span>Bank / Netbanking</span>
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-1">Deducted from tracked bank balance</p>
                 </button>
@@ -798,7 +801,8 @@ export default function Lent() {
                   }`}
                 >
                   <p className="text-xs font-semibold flex items-center gap-1.5">
-                    <span>💵</span> Physical Cash
+                    <Banknote size={13} className="text-emerald-400 shrink-0" />
+                    <span>Physical Cash</span>
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-1">In-hand cash; leaves bank balance intact</p>
                 </button>

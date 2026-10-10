@@ -117,8 +117,9 @@ export function ElectricityCard({ account, onFetch, onPay, onDelete }) {
             {latestBill ? formatCurrency(latestBill.amount) : '₹0.00'}
           </div>
           {latestBill?.units_consumed && (
-            <p className="text-xs text-amber-400/80 mt-0.5">
-              ⚡ {latestBill.units_consumed} kWh consumed
+            <p className="text-xs text-amber-400/80 mt-0.5 flex items-center gap-1">
+              <Zap size={11} className="text-amber-400 shrink-0" />
+              <span>{latestBill.units_consumed} kWh consumed</span>
             </p>
           )}
         </div>
@@ -127,7 +128,7 @@ export function ElectricityCard({ account, onFetch, onPay, onDelete }) {
           {latestBill ? (
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border",
                 dueVariant === 'success' && "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
                 dueVariant === 'warning' && "bg-amber-500/15 text-amber-300 border-amber-500/30",
                 dueVariant === 'danger' && "bg-rose-500/15 text-rose-300 border-rose-500/30 animate-pulse",

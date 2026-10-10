@@ -6,6 +6,8 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx';
+import TermsConditions from './pages/TermsConditions.jsx';
 import MainLayout from './layouts/MainLayout.jsx';
 import Dashboard from './pages/dashboard/Dashboard.jsx';
 import Transactions from './pages/dashboard/Transactions.jsx';
@@ -27,7 +29,7 @@ function RequireAuth({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
         <div className="flex items-center gap-3 text-zinc-400">
-          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
           <span className="text-sm font-medium">Loading WealthSync...</span>
         </div>
       </div>
@@ -46,7 +48,7 @@ function RequireGuest({ children }) {
      return (
       <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
         <div className="flex items-center gap-3 text-zinc-400">
-          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
           <span className="text-sm font-medium">Loading...</span>
         </div>
       </div>
@@ -84,6 +86,8 @@ export default function App() {
           </RequireGuest>
         }
       />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsConditions />} />
 
       <Route
         path="/dashboard"

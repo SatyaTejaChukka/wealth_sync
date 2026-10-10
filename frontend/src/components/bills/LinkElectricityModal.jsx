@@ -215,8 +215,9 @@ export function LinkElectricityModal({ isOpen, onClose, onSuccess }) {
             </div>
 
             {previewData.units_consumed && (
-              <p className="text-[11px] text-amber-300/80 pt-1 border-t border-white/5">
-                ⚡ Monthly Consumption: {previewData.units_consumed} kWh
+              <p className="text-[11px] text-amber-300/80 pt-1 border-t border-white/5 flex items-center gap-1.5">
+                <Zap size={12} className="text-amber-400 shrink-0" />
+                <span>Monthly Consumption: {previewData.units_consumed} kWh</span>
               </p>
             )}
           </div>
