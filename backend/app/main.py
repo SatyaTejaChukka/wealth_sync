@@ -132,6 +132,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route(f"{settings.API_V1_STR}/health", methods=["GET", "HEAD"])
 async def health_check():
     try:
         async with engine.connect() as conn:
