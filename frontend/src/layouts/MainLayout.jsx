@@ -5,11 +5,10 @@ import { MobileBottomNav } from '../components/layout/MobileBottomNav.jsx';
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-[#09090b] text-foreground relative overflow-hidden selection:bg-violet-500/30">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-violet-600/10 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/10 blur-[120px]" />
+    <div className="min-h-screen bg-[#09090b] text-foreground relative overflow-hidden selection:bg-zinc-800 selection:text-white">
+      {/* Subtle precision background */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px]" />
       </div>
 
       <Sidebar />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Search, AlertCircle, CheckCircle2, ShieldCheck, Sparkles, Building2 } from 'lucide-react';
+import { Zap, Search, AlertCircle, CheckCircle2, ShieldCheck, Building2 } from 'lucide-react';
 import { Modal } from '../ui/Modal.jsx';
 import { Button } from '../ui/Button.jsx';
 import { Input } from '../ui/Input.jsx';
@@ -196,7 +196,7 @@ export function LinkElectricityModal({ isOpen, onClose, onSuccess }) {
           <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-zinc-900/80 to-zinc-950 p-4 space-y-2 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                <Sparkles size={14} /> Bill Verified from {previewData.provider_code}
+                <CheckCircle2 size={14} className="text-emerald-400" /> Bill Verified from {previewData.provider_code}
               </span>
               <span className="text-[11px] font-mono text-zinc-400">#{previewData.bill_number}</span>
             </div>

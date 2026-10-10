@@ -10,7 +10,6 @@ import {
   PiggyBank,
   RefreshCw,
   Shield,
-  Sparkles,
   Wallet,
 } from 'lucide-react';
 import { CommitmentVaultDetails } from './CommitmentVaultDetails.jsx';
@@ -222,7 +221,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shrink-0">
-                <Sparkles size={16} />
+                <Wallet size={16} />
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-white truncate">Free to Spend</p>
@@ -302,7 +301,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           >
             <div className="flex items-center justify-between w-full">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
-                <Sparkles size={14} className="text-emerald-400" />
+                <Wallet size={14} className="text-emerald-400" />
                 Free
               </span>
               <span className="text-[11px] text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
