@@ -23,8 +23,8 @@ class Settings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        # Prioritize .env file when present so local edits take immediate effect
-        return (dotenv_settings, env_settings, init_settings, file_secret_settings)
+        # Prioritize init arguments, then .env file when present, then system environment
+        return (init_settings, dotenv_settings, env_settings, file_secret_settings)
 
     PROJECT_NAME: str = "WealthSync"
     API_V1_STR: str = "/api/v1"
@@ -95,7 +95,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_SIGNUP: str = "3/minute"
 
     # Firebase Authentication
-    FIREBASE_PROJECT_ID: str | None = None
+    FIREBASE_PROJECT_ID: str = "wealthsync-app-b24c1"
     FIREBASE_CREDENTIALS_PATH: str | None = None
 
     # Database
@@ -158,7 +158,7 @@ class Settings(BaseSettings):
             if not self.SECRET_KEY:
                 raise ValueError("SECRET_KEY is required in production")
             if not self.FIREBASE_PROJECT_ID:
-                raise ValueError("FIREBASE_PROJECT_ID is required in production")
+                self.FIREBASE_PROJECT_ID = "wealthsync-app-b24c1"
             if "*" in self.ALLOWED_HOSTS:
                 raise ValueError("Wildcard '*' in ALLOWED_HOSTS is not permitted in production")
 
