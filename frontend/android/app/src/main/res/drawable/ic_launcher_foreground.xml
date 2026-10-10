@@ -4,14 +4,14 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Top Diamond: Stark White Apex -->
+    <!-- Top Diamond: Stark White -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#F4F4F5"
         android:strokeWidth="4.5"
         android:strokeLineJoin="round"
         android:pathData="M 30.6,39.7 L 54,28 L 77.4,39.7 L 54,51.4 Z" />
-    <!-- Middle Chevron: Institutional Emerald Yield -->
+    <!-- Middle Chevron: Institutional Emerald -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#10B981"
@@ -19,7 +19,7 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="M 30.6,54 L 54,65.7 L 77.4,54" />
-    <!-- Bottom Chevron: Slate Foundation -->
+    <!-- Bottom Chevron: Slate -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#71717A"
