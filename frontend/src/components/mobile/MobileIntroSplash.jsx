@@ -13,7 +13,7 @@ import { cn } from '../../lib/utils';
  */
 export function MobileIntroSplash({
   onComplete,
-  duration = 2800,
+  duration = 2400,
   minDisplayTime = 500,
   force = false,
   persist = false,
@@ -101,10 +101,10 @@ export function MobileIntroSplash({
 
       {/* 2. Central Mathematical Stacking & Zoom Reveal */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-6">
-        {/* Monogram Vector Container */}
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center">
-          {/* Ambient Specular Base Shadow */}
-          <div className="absolute -inset-3 bg-emerald-500/10 blur-xl rounded-2xl opacity-60 pointer-events-none" />
+        {/* Monogram Vector Container with Tactile Lock Snap */}
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center animate-emblem-lock">
+          {/* Specular Halo Flash on Lock-In */}
+          <div className="opacity-0 absolute -inset-3 bg-emerald-500/15 blur-xl rounded-2xl pointer-events-none animate-specular-flash" />
 
           <svg
             viewBox="0 0 32 32"
@@ -143,23 +143,23 @@ export function MobileIntroSplash({
           </svg>
         </div>
 
-        {/* Step 4: Title Reveal (Strictly Hidden at Start; Zooms in and Fades in after Layer Stacking) */}
+        {/* Step 4: Title Reveal (Optical Focus & Lens Defocus Resolution) */}
         <div className="mt-7 flex flex-col items-center">
-          <h1 className="opacity-0 font-display text-xl sm:text-2xl font-bold text-white uppercase tracking-[0.24em] animate-title-zoom-fade">
+          <h1 className="opacity-0 font-display text-xl sm:text-2xl font-bold text-white uppercase tracking-[0.24em] animate-title-focus">
             WealthSync
           </h1>
 
-          {/* Step 5: Accent Hairline & Subtitle Line (Zooms in and Fades in after Title) */}
-          <div className="opacity-0 w-12 h-px bg-gradient-to-r from-transparent via-emerald-500/70 to-transparent my-2 animate-line-expand origin-center" />
+          {/* Step 5: Accent Hairline (Laser Wipe) & Subtitle Line (Crisp Institutional Unmask) */}
+          <div className="opacity-0 w-12 h-px bg-gradient-to-r from-transparent via-emerald-500/70 to-transparent my-2 animate-hairline-laser origin-center" />
           
-          <p className="opacity-0 text-[10px] sm:text-[11px] font-mono tracking-[0.28em] text-zinc-400 uppercase animate-subtitle-zoom-fade">
+          <p className="opacity-0 text-[10px] sm:text-[11px] font-mono tracking-[0.28em] text-zinc-400 uppercase animate-subtitle-unmask">
             Deterministic Liquidity Engine
           </p>
         </div>
       </div>
 
       {/* Step 6: Bottom Institutional Integrity Tag */}
-      <div className="opacity-0 relative z-10 animate-security-reveal flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-zinc-600 uppercase tracking-widest px-4 py-1.5 rounded-md border border-white/[0.04] bg-white/[0.02]">
+      <div className="opacity-0 relative z-10 animate-security-fade flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-zinc-600 uppercase tracking-widest px-4 py-1.5 rounded-md border border-white/[0.04] bg-white/[0.02]">
         <Shield size={11} className="text-emerald-500/70" />
         <span>Protected Commitment Ledger</span>
       </div>
