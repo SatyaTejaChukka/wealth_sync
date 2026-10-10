@@ -47,18 +47,20 @@ Deploy WealthSync with **Vercel** (frontend), **Render** (backend), and **Supaba
 | ----------------------------- | ----------------------------------------------- | ------------------------------ |
 | `DATABASE_URL`                | `postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres?ssl=require` | URL-encode special chars in password |
 | `SECRET_KEY`                  | *(generate a random 32+ char string)*           | Used for JWT signing           |
-| `ENVIRONMENT`                 | `production`                                    |                                |
+| `ENVIRONMENT`                 | `production`                                    | Enables production validation  |
+| `FIREBASE_PROJECT_ID`         | `wealthsync-app-b24c1`                          | Firebase Console project ID    |
+| `FIREBASE_CREDENTIALS_PATH`   | `/etc/secrets/firebase-service-account.json`     | Optional: Render Secret File   |
+| `BACKEND_CORS_ORIGINS`        | `["https://wealthsync-lemon.vercel.app","http://localhost:5173"]` | JSON array of allowed origins  |
+| `ALLOWED_HOSTS`               | `["wealth-sync.onrender.com","*.onrender.com"]` | JSON array of allowed hosts    |
 | `AUTO_CREATE_TABLES`          | `False`                                         | Alembic handles migrations     |
-| `BACKEND_CORS_ORIGINS`        | `["https://your-app.vercel.app"]`               | JSON array of allowed origins  |
-| `ALLOWED_HOSTS`               | `["your-service.onrender.com"]`                 | JSON array of allowed hosts    |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `11520`                                         | 8 days (optional)              |
-| `RATE_LIMIT_LOGIN`            | `5/minute`                                      | Optional                       |
-| `RATE_LIMIT_SIGNUP`           | `3/minute`                                      | Optional                       |
+| `RATE_LIMIT_LOGIN`            | `15/minute`                                     | Rate limiting                  |
+| `RATE_LIMIT_SIGNUP`           | `15/minute`                                     | Rate limiting                  |
 | `REDIS_URL`                   | *(leave empty if not using Celery)*             | Optional                       |
 | `SENTRY_DSN`                  | *(your Sentry DSN)*                             | Optional error monitoring      |
 
 5. Click **Deploy**. Render will build and start the service automatically.
-6. Copy the deployed URL (e.g., `https://wealthsync.onrender.com`).
+6. Copy the deployed URL (e.g., `https://wealth-sync.onrender.com`).
 
 ### Important Notes
 
