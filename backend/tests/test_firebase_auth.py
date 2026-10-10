@@ -98,3 +98,82 @@ async def test_firebase_existing_user_linking(client: AsyncClient, db_session):
     assert existing_user.id == "local-uuid-existing-user"
     assert existing_user.firebase_uid == "fb-uid-linked-999"
     assert existing_user.full_name == "Linked Existing User"
+
+
+@pytest.mark.asyncio
+async def test_firebase_account_linking_conflict_rejected(client: AsyncClient, db_session):
+    """
+    Test that attempting to link an account already linked to another Firebase UID is rejected with 409 Conflict.
+    """
+    existing_user = User(
+        id="local-uuid-conflict-user",
+        email="conflict@example.com",
+        password_hash="somehash",
+        firebase_uid="original-fb-uid-111",
+        is_active=True
+    )
+    db_session.add(existing_user)
+    await db_session.commit()
+
+    mock_payload = {
+        "uid": "new-intruder-fb-uid-222",
+        "sub": "new-intruder-fb-uid-222",
+        "iss": "https://securetoken.google.com/test-project",
+        "email": "conflict@example.com",
+        "name": "Intruder User",
+        "email_verified": True
+    }
+    dummy_token = make_dummy_firebase_token(mock_payload)
+
+    with patch("app.api.deps.verify_firebase_id_token", return_value=mock_payload):
+        response = await client.get("/api/v1/auth/me", headers={
+            "Authorization": f"Bearer {dummy_token}"
+        })
+        assert response.status_code == 409
+        assert "already linked" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_firebase_unverified_email_linking_rejected_in_prod(client: AsyncClient, db_session):
+    """
+    Test that in production, attempting to link an existing user with an unverified email is rejected with 400.
+    """
+    existing_user = User(
+        id="local-uuid-unverified-user",
+        email="unverified@example.com",
+        password_hash="somehash",
+        firebase_uid=None,
+        is_active=True
+    )
+    db_session.add(existing_user)
+    await db_session.commit()
+
+    mock_payload = {
+        "uid": "fb-uid-unverified-333",
+        "sub": "fb-uid-unverified-333",
+        "iss": "https://securetoken.google.com/test-project",
+        "email": "unverified@example.com",
+        "name": "Unverified User",
+        "email_verified": False
+    }
+    dummy_token = make_dummy_firebase_token(mock_payload)
+
+    with patch("app.api.deps.settings.ENVIRONMENT", "production"):
+        with patch("app.api.deps.verify_firebase_id_token", return_value=mock_payload):
+            response = await client.get("/api/v1/auth/me", headers={
+                "Authorization": f"Bearer {dummy_token}"
+            })
+            assert response.status_code == 400
+            assert "unverified email" in response.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_firebase_token_rejected_when_project_id_unconfigured():
+    """
+    Test that verify_firebase_id_token fails closed and returns None if FIREBASE_PROJECT_ID is not configured.
+    """
+    from app.api.deps import verify_firebase_id_token
+    with patch("app.api.deps.settings.FIREBASE_PROJECT_ID", None):
+        result = verify_firebase_id_token("dummy.jwt.token")
+        assert result is None
+
