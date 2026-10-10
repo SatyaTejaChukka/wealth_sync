@@ -13,7 +13,6 @@ import {
   ChevronRight,
   TrendingUp,
   Info,
-  DollarSign,
   ArrowRight,
   Clock,
   HandCoins,
@@ -700,7 +699,7 @@ export default function Lent() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-zinc-300 mb-2">Principal Amount (INR)</label>
+              <label className="block text-sm font-semibold text-zinc-300 mb-2">Principal Amount (₹)</label>
               <Input
                 type="number"
                 value={formData.principal_amount}
@@ -947,11 +946,11 @@ export default function Lent() {
           {(repayTarget || selectedDetails) && (
             <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-zinc-300 space-y-1">
               <p>Borrower: <strong className="text-white">{(repayTarget || selectedDetails).lent_record?.borrower_name || (repayTarget || selectedDetails).borrower_name}</strong></p>
-              <p>Current Net Outstanding: <strong className="text-white">INR {parseFloat((repayTarget || selectedDetails).outstanding_balance ?? (repayTarget || selectedDetails).principal_amount ?? 0).toLocaleString('en-IN')}</strong></p>
+              <p>Current Net Outstanding: <strong className="text-white">₹{parseFloat((repayTarget || selectedDetails).outstanding_balance ?? (repayTarget || selectedDetails).principal_amount ?? 0).toLocaleString('en-IN')}</strong></p>
             </div>
           )}
           <div>
-            <label className="block text-sm font-semibold text-zinc-300 mb-2">Repayment Amount (INR)</label>
+            <label className="block text-sm font-semibold text-zinc-300 mb-2">Repayment Amount (₹)</label>
             <Input
               type="number"
               step="0.01"

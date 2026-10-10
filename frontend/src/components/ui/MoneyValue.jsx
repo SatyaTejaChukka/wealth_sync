@@ -17,10 +17,11 @@ export function MoneyValue({
   negativeClassName = 'text-rose-400 font-bold mr-0.5 select-none',
   amountClassName = '',
 }) {
+  const sanitizedValue = typeof value === 'string' ? value.replace(/\$/g, '₹') : value;
   const formatted =
-    typeof value === 'string' && (value.includes('₹') || value.includes('$'))
-      ? value
-      : formatCurrency(value, { compact });
+    typeof sanitizedValue === 'string' && sanitizedValue.includes('₹')
+      ? sanitizedValue
+      : formatCurrency(sanitizedValue, { compact });
 
   const { symbol, amount, isNegative } = splitCurrency(formatted);
 

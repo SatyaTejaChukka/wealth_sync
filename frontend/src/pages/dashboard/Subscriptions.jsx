@@ -215,7 +215,7 @@ export default function Subscriptions() {
                     )}
                   </div>
                 </div>
-                <span className="text-lg font-bold text-white">${parseFloat(sub.amount).toFixed(2)}</span>
+                <span className="text-lg font-bold text-white">{formatCurrency(sub.amount)}</span>
               </div>
               <div className="flex items-center gap-3 flex-wrap text-xs">
                 {sub.category && (
@@ -440,7 +440,7 @@ export default function Subscriptions() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-zinc-300 mb-2">Amount</label>
+            <label className="block text-sm font-semibold text-zinc-300 mb-2">Amount (₹)</label>
             <Input
               type="number"
               step="0.01"

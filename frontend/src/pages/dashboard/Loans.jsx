@@ -13,7 +13,6 @@ import {
   ChevronRight,
   TrendingDown,
   Info,
-  DollarSign,
   ArrowRight,
   Clock
 } from 'lucide-react';
@@ -962,7 +961,7 @@ export default function Loans() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-zinc-300 mb-2">Principal Amount</label>
+              <label className="block text-sm font-semibold text-zinc-300 mb-2">Principal Amount (₹)</label>
               <Input
                 type="number"
                 value={formData.principal_amount}

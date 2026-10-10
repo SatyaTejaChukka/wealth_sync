@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CircleDollarSign, Gauge, ReceiptText, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, IndianRupee, Gauge, ReceiptText, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card.jsx';
 import { CollapsibleCard } from '../mobile/CollapsibleCard.jsx';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
@@ -63,7 +63,7 @@ export function FinancialTriagePanel({ triage }) {
 
       <div className="rounded-xl border border-white/[0.06] bg-black/35 p-3 card-specular">
         <div className="flex items-center gap-1.5 text-zinc-400 text-[10px] sm:text-xs uppercase tracking-wide">
-          <CircleDollarSign size={12} />
+          <IndianRupee size={12} />
           Fixed Costs
         </div>
         <MoneyValue value={triage.monthly_fixed_costs} className="text-white font-semibold font-display tabular-nums mt-1 text-xs sm:text-sm block" />
