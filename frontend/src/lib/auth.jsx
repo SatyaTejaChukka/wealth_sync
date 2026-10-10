@@ -18,8 +18,10 @@ import api from './api.js';
 
 let googleSignInInitPromise = null;
 
+const CANONICAL_GOOGLE_WEB_CLIENT_ID = '773706147941-0c3jjgq0kdjgkntpsqi3f483ceghul34.apps.googleusercontent.com';
+
 async function ensureGoogleSignInInitialized() {
-  const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID;
+  const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || CANONICAL_GOOGLE_WEB_CLIENT_ID;
 
   if (!clientId) {
     throw new Error(
