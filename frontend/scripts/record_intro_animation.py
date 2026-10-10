@@ -1,6 +1,6 @@
 """
 WealthSync Intro Animation Precision Recorder
-Records pixel-perfect GIF and WebM video of the mobile intro animation using Playwright and Pillow.
+Records pixel-perfect GIF and WebM video of the sequential mobile intro animation using Playwright and Pillow.
 """
 
 import os
@@ -18,13 +18,13 @@ PUBLIC_GIF = os.path.join(PROJECT_ROOT, "frontend", "public", "wealthsync_intro_
 TEMP_VIDEO_DIR = os.path.join(PROJECT_ROOT, "temp_video_rec")
 
 def main():
-    print("WealthSync Precision Media Recorder Starting...")
+    print("WealthSync Precision Media Recorder Starting (Sequential Reveal)...")
     os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
 
-        # 1. First Pass: Record real-time WebM video with native Chromium compositor
+        # 1. First Pass: Real-time WebM video
         print("Recording real-time WebM video...")
         vid_context = browser.new_context(
             viewport={"width": 390, "height": 844},
@@ -34,7 +34,7 @@ def main():
         )
         vid_page = vid_context.new_page()
         vid_page.goto("http://localhost:5173/preview-splash", wait_until="networkidle")
-        time.sleep(2.0) # Let full animation play out
+        time.sleep(3.2) # Let full sequential animation play out and hold
         vid_page.close()
         raw_video_path = vid_page.video.path() if vid_page.video else None
         vid_context.close()
@@ -58,8 +58,8 @@ def main():
         """)
 
         frames = []
-        # Step through 0ms to 1350ms in 35ms increments (approx 39 animated frames)
-        time_steps = list(range(0, 1360, 35))
+        # Step through 0ms to 2450ms in 35ms increments
+        time_steps = list(range(0, 2450, 35))
         
         for t_ms in time_steps:
             page.evaluate(f"""
@@ -73,10 +73,10 @@ def main():
             p_img = img.convert("RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
             frames.append(p_img)
 
-        # Hold the final assembled frame for 1.2 seconds (approx 16 hold frames)
+        # Hold the final assembled frame for ~1.2 seconds (approx 25 hold frames)
         if frames:
             last_frame = frames[-1]
-            for _ in range(16):
+            for _ in range(25):
                 frames.append(last_frame)
 
         print(f"Captured {len(frames)} frames. Encoding animated GIF...")
@@ -92,7 +92,7 @@ def main():
             )
             print(f"  [OK] Saved Root GIF: {OUTPUT_GIF_ROOT} ({os.path.getsize(OUTPUT_GIF_ROOT) // 1024} KB)")
 
-            # Save in frontend/public so it's accessible via web / localhost
+            # Save in frontend/public
             shutil.copyfile(OUTPUT_GIF_ROOT, PUBLIC_GIF)
             print(f"  [OK] Saved Public GIF: {PUBLIC_GIF}")
 
@@ -108,7 +108,7 @@ def main():
     if os.path.exists(TEMP_VIDEO_DIR):
         shutil.rmtree(TEMP_VIDEO_DIR, ignore_errors=True)
 
-    print("Media recording and encoding completed successfully!")
+    print("Sequential media recording and encoding completed successfully!")
 
 if __name__ == "__main__":
     main()

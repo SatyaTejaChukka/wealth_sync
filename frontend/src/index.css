@@ -48,12 +48,13 @@
   --animate-stagger-2: stagger-2 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-stagger-3: stagger-3 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-  --animate-monogram-apex: monogram-apex 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  --animate-chevron-middle: chevron-middle 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
-  --animate-chevron-bottom: chevron-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.32s forwards;
-  --animate-wordmark-reveal: wordmark-reveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
-  --animate-subtitle-reveal: subtitle-reveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
-  --animate-security-reveal: subtitle-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.85s forwards;
+  --animate-layer-apex: layer-apex-drop 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  --animate-layer-emerald: layer-emerald-stack 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+  --animate-layer-slate: layer-slate-stack 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.95s forwards;
+  --animate-title-zoom-fade: title-zoom-fade 0.48s cubic-bezier(0.16, 1, 0.3, 1) 1.38s forwards;
+  --animate-line-expand: accent-line-expand 0.38s cubic-bezier(0.16, 1, 0.3, 1) 1.76s forwards;
+  --animate-subtitle-zoom-fade: line-zoom-fade 0.44s cubic-bezier(0.16, 1, 0.3, 1) 1.84s forwards;
+  --animate-security-reveal: line-zoom-fade 0.38s cubic-bezier(0.16, 1, 0.3, 1) 2.12s forwards;
   --animate-splash-exit: splash-exit 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-ambient-glow: ambient-glow 3s ease-in-out infinite alternate;
 
@@ -125,10 +126,10 @@
     }
   }
 
-  @keyframes monogram-apex {
+  @keyframes layer-apex-drop {
     0% {
       opacity: 0;
-      transform: scale(1.16) translateY(-4px);
+      transform: scale(1.25) translateY(-14px);
     }
     100% {
       opacity: 1;
@@ -136,49 +137,62 @@
     }
   }
 
-  @keyframes chevron-middle {
+  @keyframes layer-emerald-stack {
     0% {
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateY(18px) scale(0.9);
     }
     100% {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 
-  @keyframes chevron-bottom {
+  @keyframes layer-slate-stack {
     0% {
       opacity: 0;
-      transform: translateY(14px);
+      transform: translateY(22px) scale(0.85);
     }
     100% {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 
-  @keyframes wordmark-reveal {
+  @keyframes title-zoom-fade {
     0% {
       opacity: 0;
-      transform: translateY(8px);
+      transform: scale(0.78) translateY(8px);
       letter-spacing: 0.12em;
     }
     100% {
       opacity: 1;
-      transform: translateY(0);
-      letter-spacing: 0.22em;
+      transform: scale(1) translateY(0);
+      letter-spacing: 0.24em;
     }
   }
 
-  @keyframes subtitle-reveal {
+  @keyframes accent-line-expand {
     0% {
       opacity: 0;
-      transform: translateY(5px);
+      transform: scaleX(0);
+    }
+    100% {
+      opacity: 0.7;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes line-zoom-fade {
+    0% {
+      opacity: 0;
+      transform: scale(0.84) translateY(6px);
+      letter-spacing: 0.18em;
     }
     100% {
       opacity: 1;
-      transform: translateY(0);
+      transform: scale(1) translateY(0);
+      letter-spacing: 0.28em;
     }
   }
 
@@ -637,11 +651,12 @@
     .animate-money-weather-drift,
     .animate-money-weather-drift-reverse,
     .transaction-momentum-fill,
-    .animate-monogram-apex,
-    .animate-chevron-middle,
-    .animate-chevron-bottom,
-    .animate-wordmark-reveal,
-    .animate-subtitle-reveal,
+    .animate-layer-apex,
+    .animate-layer-emerald,
+    .animate-layer-slate,
+    .animate-title-zoom-fade,
+    .animate-line-expand,
+    .animate-subtitle-zoom-fade,
     .animate-security-reveal,
     .animate-splash-exit,
     .animate-ambient-glow {

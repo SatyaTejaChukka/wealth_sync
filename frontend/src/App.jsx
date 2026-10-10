@@ -70,7 +70,7 @@ export default function App() {
       )}
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/preview-splash" element={<MobileIntroSplash force duration={3000} minDisplayTime={2500} onComplete={() => {}} />} />
+        <Route path="/preview-splash" element={<MobileIntroSplash force persist onComplete={() => {}} />} />
         <Route
         path="/login"
         element={
