@@ -172,7 +172,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0">
                 <Shield size={16} />
               </div>
               <div className="min-w-0">
@@ -245,14 +245,14 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('protected')}
-            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-violet-500/40 hover:bg-violet-500/5 cursor-pointer shadow-sm card-specular"
+            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer shadow-sm card-specular"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-300">
-                <Shield size={14} className="text-violet-400" />
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
+                <Shield size={14} className="text-amber-400" />
                 Protected
               </span>
-              <span className="text-[11px] text-zinc-500 group-hover:text-violet-300 transition-colors">
+              <span className="text-[11px] text-zinc-500 group-hover:text-amber-300 transition-colors">
                 View &rarr;
               </span>
             </div>
@@ -324,6 +324,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
 
       {/* Details Drawer / Modal */}
       <CommitmentVaultDetails
+        key={`${selectedTab}-${isDetailsOpen ? 'open' : 'closed'}`}
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         vault={
