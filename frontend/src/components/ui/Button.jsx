@@ -21,7 +21,7 @@ const Button = React.forwardRef(({
     ghost: "hover:bg-accent hover:text-accent-foreground",
     link: "text-primary underline-offset-4 hover:underline",
     glass: "glass text-foreground hover:bg-white/10 hover:border-white/20 transition-all duration-300",
-    gradient: "bg-linear-to-r from-violet-600 to-indigo-600 text-white shadow-lg hover:shadow-violet-500/25 hover:scale-[1.02] transition-all duration-300 border-0",
+    gradient: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm hover:shadow-emerald-950/40 transition-colors border-0 font-medium",
     surface: "border border-white/10 bg-zinc-900/70 text-zinc-200 hover:bg-zinc-900 hover:border-white/20 transition-all duration-200",
     light: "bg-white text-black shadow-lg shadow-white/10 hover:bg-zinc-200 transition-colors",
   }

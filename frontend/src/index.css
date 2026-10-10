@@ -128,7 +128,7 @@
   --popover: #09090b;
   --popover-foreground: #fafafa;
 
-  --primary: #8b5cf6; /* Violet 500 */
+  --primary: #10b981; /* Emerald 500 - Institutional Accent */
   --primary-foreground: #ffffff;
 
   --secondary: #27272a; /* Zinc 800 */
@@ -145,7 +145,7 @@
 
   --border: #27272a; /* Zinc 800 */
   --input: #27272a;
-  --ring: #8b5cf6;
+  --ring: #10b981;
 
   --radius: 0.75rem;
 }
@@ -193,11 +193,11 @@
 
 
   .text-gradient {
-    @apply bg-linear-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent;
+    @apply bg-linear-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent;
   }
 
   .glow {
-    @apply shadow-[0_0_20px_rgba(139,92,246,0.3)];
+    @apply shadow-[0_0_20px_rgba(16,185,129,0.15)];
   }
 
   .custom-scrollbar::-webkit-scrollbar {

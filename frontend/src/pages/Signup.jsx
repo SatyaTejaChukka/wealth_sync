@@ -86,29 +86,29 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4 relative overflow-hidden">
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-violet-600/20 rounded-full mix-blend-screen filter blur-3xl animate-pulse" />
-      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-indigo-600/20 rounded-full mix-blend-screen filter blur-3xl animate-pulse delay-1000" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-600/10 rounded-full mix-blend-screen filter blur-3xl animate-pulse delay-500" />
+    <div className="min-h-screen flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
+      {/* Precision background grid */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-60" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-72 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+      </div>
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 py-8">
         <div className="text-center mb-8 animate-fadeIn">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
-              <TrendingUp className="text-white" size={24} />
+            <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-inner">
+              <TrendingUp className="text-emerald-400" size={20} />
             </div>
-            <span className="text-3xl font-bold bg-linear-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold text-white font-display tracking-tight">
               WealthSync
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">Create your account</h1>
-          <p className="text-zinc-400 text-sm">Start protecting commitments & growing your wealth</p>
+          <h1 className="text-2xl font-bold text-white mb-1.5 font-display">Create Workspace Account</h1>
+          <p className="text-zinc-400 text-xs sm:text-sm">Ring-fence non-discretionary commitments with deterministic accuracy</p>
         </div>
 
-        <div className="relative group">
-          <div className="absolute -inset-0.5 bg-linear-to-r from-violet-600 to-indigo-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000" />
-
-          <div className="relative bg-zinc-900/70 backdrop-blur-xl rounded-2xl shadow-2xl p-8 sm:p-10 border border-zinc-800/50 animate-fadeIn space-y-6">
+        <div className="relative">
+          <div className="bg-zinc-900/80 backdrop-blur-xl rounded-xl shadow-2xl p-6 sm:p-8 border border-zinc-800 animate-fadeIn space-y-6">
             {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
             {/* 1-Click Google Sign-Up (Web only) */}
@@ -123,7 +123,7 @@ export default function Signup() {
 
                 <div className="relative flex items-center justify-center">
                   <div className="border-t border-zinc-800 w-full" />
-                  <span className="bg-zinc-900 px-3 text-xs uppercase tracking-wider text-zinc-500 font-semibold absolute">
+                  <span className="bg-zinc-900 px-3 text-xs uppercase tracking-wider text-zinc-500 font-semibold absolute font-mono">
                     or with email
                   </span>
                 </div>
@@ -132,47 +132,47 @@ export default function Signup() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-semibold text-zinc-300 mb-1.5">
+                <label htmlFor="fullName" className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase font-mono tracking-wider">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
                   <Input
                     id="fullName"
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="John Doe"
+                    placeholder="Jane Doe"
                     required
-                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                    className="pl-11 bg-zinc-950/80 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-emerald-500/60 focus:ring-emerald-500/20 rounded-lg text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-zinc-300 mb-1.5">
+                <label htmlFor="email" className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase font-mono tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="name@example.com"
                     required
-                    className="pl-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                    className="pl-11 bg-zinc-950/80 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-emerald-500/60 focus:ring-emerald-500/20 rounded-lg text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-zinc-300 mb-1.5">
+                <label htmlFor="password" className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase font-mono tracking-wider">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -182,16 +182,16 @@ export default function Signup() {
                     onBlur={() => setIsPasswordFocused(false)}
                     placeholder="••••••••"
                     required
-                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                    className="pl-11 pr-11 bg-zinc-950/80 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-emerald-500/60 focus:ring-emerald-500/20 rounded-lg text-sm"
                   />
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setShowPassword((value) => !value)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {isPasswordFocused && (
@@ -202,11 +202,11 @@ export default function Signup() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-zinc-300 mb-1.5">
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase font-mono tracking-wider">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={20} />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" size={18} />
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -216,16 +216,16 @@ export default function Signup() {
                     onBlur={() => setIsConfirmPasswordFocused(false)}
                     placeholder="••••••••"
                     required
-                    className="pl-12 pr-12 bg-zinc-800/50 backdrop-blur-sm border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                    className="pl-11 pr-11 bg-zinc-950/80 border-zinc-800 text-white placeholder:text-zinc-600 focus:border-emerald-500/60 focus:ring-emerald-500/20 rounded-lg text-sm"
                   />
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => setShowConfirmPassword((value) => !value)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                   >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {isConfirmPasswordFocused && hasConfirmPasswordValue && !passwordsMatch && (
@@ -238,13 +238,13 @@ export default function Signup() {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  variant="gradient"
                   size="lg"
                   fullWidth
                   isLoading={isLoading}
                   disabled={isGoogleLoading}
-                  icon={<ArrowRight size={20} />}
+                  icon={<ArrowRight size={18} />}
                   iconPosition="right"
+                  className="h-11 rounded-lg bg-white text-zinc-950 font-bold hover:bg-zinc-200 transition-colors shadow-sm"
                 >
                   Create Account
                 </Button>
@@ -252,9 +252,9 @@ export default function Signup() {
             </form>
 
             <div className="text-center pt-2">
-              <p className="text-sm text-zinc-400">
+              <p className="text-xs text-zinc-400">
                 Already have an account?{' '}
-                <Link to="/login" className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+                <Link to="/login" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
                   Sign in
                 </Link>
               </p>
@@ -262,19 +262,29 @@ export default function Signup() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-zinc-500 mt-6">
-          By signing up, you agree to our Terms and Privacy Policy.
-        </p>
+        {/* Legal Disclaimer with Clickable Links */}
+        <div className="mt-6 space-y-3 text-center">
+          <p className="text-xs text-zinc-500">
+            By registering, you agree to our{' '}
+            <Link to="/terms" className="text-zinc-400 hover:text-white underline underline-offset-2">
+              Terms & Conditions
+            </Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="text-zinc-400 hover:text-white underline underline-offset-2">
+              Privacy Policy
+            </Link>.
+          </p>
 
-        <div className="flex justify-center mt-3">
-          <button
-            type="button"
-            onClick={() => setIsServerModalOpen(true)}
-            className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 py-1 px-3 rounded-full border border-zinc-800 bg-zinc-900/60 transition-colors cursor-pointer"
-          >
-            <Server size={12} className="text-violet-400" />
-            <span>Server Connection</span>
-          </button>
+          <div className="flex justify-center pt-1">
+            <button
+              type="button"
+              onClick={() => setIsServerModalOpen(true)}
+              className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 py-1 px-3 rounded-md border border-zinc-800 bg-zinc-900/60 transition-colors cursor-pointer"
+            >
+              <Server size={12} className="text-zinc-400" />
+              <span>Server Connection</span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -141,7 +141,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={toast}>
       {children}
 
-      {/* Toast container — fixed bottom-right */}
+      {/* Toast container: fixed bottom-right */}
       {toasts.length > 0 && (
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[9999] flex flex-col gap-3 pointer-events-auto items-center sm:items-end">
           {toasts.map((t) => (

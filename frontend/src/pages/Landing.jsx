@@ -10,26 +10,27 @@ import {
   ShieldCheck,
   ArrowRight,
   Lock,
-  CheckCircle2,
   Layers,
   Users,
   Calendar,
-  Sparkles,
-  ChevronRight,
   CreditCard,
   Clock,
   ArrowUpRight,
   PieChart,
-  Bell,
   Check,
-  X
+  X,
+  Database,
+  Server,
+  FileText,
+  SlidersHorizontal,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // If user is already authenticated on mobile app, redirect straight to dashboard
+  // If user is already authenticated on mobile app or web, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true });
@@ -37,27 +38,29 @@ export default function Landing() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white selection:bg-violet-500/30 selection:text-violet-200 overflow-x-hidden relative">
-      {/* Ambient background glows */}
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-zinc-800 selection:text-white overflow-x-hidden relative">
+      {/* Precision background grid */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[340px] sm:w-[600px] h-[340px] sm:h-[600px] bg-violet-600/15 rounded-full blur-[100px] sm:blur-[140px]" />
-        <div className="absolute top-[40%] -right-20 w-[260px] sm:w-[480px] h-[260px] sm:h-[480px] bg-indigo-600/10 rounded-full blur-[90px] sm:blur-[130px]" />
-        <div className="absolute top-[70%] -left-20 w-[240px] sm:w-[400px] h-[240px] sm:h-[400px] bg-cyan-600/10 rounded-full blur-[90px] sm:blur-[120px]" />
-        {/* Subtle dot matrix grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:20px_20px] opacity-70" />
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] opacity-60" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
       </div>
 
-      {/* Top Fixed Mobile-First Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/[0.06] transition-all">
+      {/* Top Fixed Institutional Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#09090b]/85 backdrop-blur-md border-b border-zinc-800/80 transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           {/* Brand Logo */}
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 border border-white/20">
-              <TrendingUp className="w-4 h-4 text-white" />
+          <div
+            className="flex items-center gap-2.5 cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center border border-zinc-700/80 shadow-inner">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-base sm:text-lg font-extrabold tracking-tight text-white font-display">WealthSync</span>
-              <span className="hidden xs:inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30">
+            <div className="flex items-center gap-2">
+              <span className="text-base sm:text-lg font-bold tracking-tight text-white font-display">
+                WealthSync
+              </span>
+              <span className="text-[10px] font-mono font-medium tracking-wider px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800">
                 v2.4
               </span>
             </div>
@@ -69,15 +72,14 @@ export default function Landing() {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/login')}
-              className="text-xs font-semibold text-zinc-300 hover:text-white px-2.5 sm:px-3 h-8 hover:bg-white/5"
+              className="text-xs font-semibold text-zinc-300 hover:text-white px-3 h-8 rounded-lg hover:bg-zinc-800/60"
             >
               Sign In
             </Button>
             <Button
               size="sm"
-              variant="gradient"
               onClick={() => navigate('/signup')}
-              className="h-8 px-3 text-xs font-bold shadow-md shadow-violet-600/25 shrink-0"
+              className="h-8 px-3.5 text-xs font-bold bg-white text-zinc-950 hover:bg-zinc-200 rounded-lg shrink-0 transition-colors shadow-sm"
             >
               Get Started
             </Button>
@@ -88,283 +90,288 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="relative z-10 pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 max-w-6xl mx-auto">
         <div className="text-center max-w-3xl mx-auto space-y-4 sm:space-y-6">
-          {/* Status Beacon Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md shadow-inner text-[11px] font-medium text-zinc-300">
+          {/* Status Indicator Chip */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
-            <span className="font-semibold text-white tracking-wide">LIVE WEALTH INTELLIGENCE</span>
-            <span className="text-zinc-500">•</span>
-            <span className="text-zinc-400 hidden xs:inline">Zero Guesswork</span>
+            <span className="font-semibold text-white tracking-wide">DETERMINISTIC CASH FLOW ENGINE</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400 hidden xs:inline">Self-Hosted & Private</span>
           </div>
 
-          {/* Punchy Hero Title */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.14] text-white">
-            Stop Guessing.{' '}
+          {/* Institutional Title */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.12] text-white font-display">
+            Calculate True Liquid Runway.
             <br />
-            <span className="bg-gradient-to-r from-violet-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
-              Know What's Safe to Spend.
+            <span className="text-zinc-400">
+              Isolate Obligations in Real Time.
             </span>
           </h1>
 
           {/* Hero Subtitle */}
-          <p className="text-xs sm:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed font-normal">
-            Your bank balance lies by hiding upcoming rent, power bills, EMIs, and monthly goals. WealthSync ring-fences your committed cash so you always know your exact spend runway.
+          <p className="text-xs sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed font-normal">
+            Bank account balances conceal pending rent, upcoming electricity bills, scheduled loan EMIs, and monthly reserve targets. WealthSync ring-fences non-discretionary commitments so you always know your exact safe-to-spend liquidity.
           </p>
 
-          {/* Mobile-Optimized CTA Buttons */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5 max-w-sm sm:max-w-none mx-auto w-full">
+          {/* Structured CTA Buttons */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm sm:max-w-none mx-auto w-full">
             <Button
               onClick={() => navigate('/signup')}
-              className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl shadow-xl shadow-violet-600/30 hover:shadow-violet-600/50 transition-all duration-300 group"
+              className="w-full sm:w-auto h-11 sm:h-12 px-7 sm:px-8 text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 rounded-lg shadow-sm transition-all group"
             >
-              <span>Get Started Free</span>
-              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              <span>Initialize Workspace</span>
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
             </Button>
             <Button
-              variant="surface"
+              variant="outline"
               onClick={() => navigate('/login')}
-              className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-7 text-sm font-semibold rounded-xl border border-white/10 hover:border-white/20 bg-zinc-900/60 hover:bg-zinc-800/80 text-zinc-200"
+              className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-7 text-sm font-semibold rounded-lg border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200"
             >
-              <span>Sign In to Account</span>
+              <span>Access Existing Account</span>
             </Button>
           </div>
 
-          {/* Trust Badges */}
-          <div className="pt-2 flex items-center justify-center gap-4 sm:gap-6 text-[11px] text-zinc-400 flex-wrap">
+          {/* Security & Architecture Guarantees */}
+          <div className="pt-2 flex items-center justify-center gap-4 sm:gap-8 text-[11px] text-zinc-400 flex-wrap font-mono">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              100% Private & Encrypted
+              Local Encryption
             </span>
             <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              Live Bill Auto-Fetch
+              <Database className="w-3.5 h-3.5 text-zinc-300" />
+              Zero Telemetry / No Ads
             </span>
             <span className="flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-indigo-400" />
-              Zero Ad Selling
+              <Server className="w-3.5 h-3.5 text-zinc-300" />
+              PostgreSQL & Docker Ready
             </span>
           </div>
         </div>
 
-        {/* The Live Engine Mobile Interactive Card Preview (The Jewel) */}
+        {/* The Live Engine Interactive Card Preview */}
         <div className="mt-8 sm:mt-14 max-w-xl mx-auto">
-          <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-linear-to-b from-zinc-900/80 via-zinc-900/40 to-black/80 p-4 sm:p-6 backdrop-blur-2xl card-specular shadow-2xl">
+          <div className="relative rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6 backdrop-blur-xl shadow-2xl">
             {/* Card Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
-                  LIVE SPEND RUNWAY
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-300 font-mono">
+                  LIQUID RUNWAY CALCULATION
                 </span>
               </div>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Protected Floor Active
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Floor Active
               </span>
             </div>
 
             {/* Central Safe-to-Spend Balance Display */}
             <div className="py-4 sm:py-5 text-center">
-              <span className="text-[11px] uppercase tracking-wider text-zinc-400 font-medium">Safe to Spend Right Now</span>
+              <span className="text-[11px] uppercase tracking-wider text-zinc-400 font-medium font-mono">
+                Safe to Spend Right Now
+              </span>
               <div className="mt-1 flex items-center justify-center">
                 <MoneyValue
                   value={48250}
-                  className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-display drop-shadow-[0_0_20px_rgba(139,92,246,0.35)]"
+                  className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-display"
                 />
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                Calculated after ₹21,750 committed bills & goals
+              <p className="text-[11px] text-zinc-400 mt-1 font-mono">
+                Formula: ₹70,000 Liquid - (₹15,000 Bills + ₹6,750 Debt)
               </p>
             </div>
 
             {/* Proportional Distribution Bar */}
             <div className="space-y-1.5">
-              <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-black/50 border border-white/[0.06] p-0.5 gap-0.5">
-                <div className="h-full rounded-l-full bg-violet-500 shadow-sm" style={{ width: '60%' }} title="Safe to Spend: 60%" />
-                <div className="h-full bg-amber-500 shadow-sm" style={{ width: '25%' }} title="Committed Bills: 25%" />
-                <div className="h-full rounded-r-full bg-cyan-500 shadow-sm" style={{ width: '15%' }} title="Goal Reserve: 15%" />
+              <div className="h-2 w-full rounded-md overflow-hidden flex bg-zinc-950 border border-zinc-800 p-0.5 gap-0.5">
+                <div className="h-full bg-emerald-500 rounded-sm" style={{ width: '60%' }} title="Safe to Spend: 60%" />
+                <div className="h-full bg-amber-500 rounded-sm" style={{ width: '25%' }} title="Committed Bills: 25%" />
+                <div className="h-full bg-cyan-500 rounded-sm" style={{ width: '15%' }} title="Reserve Vaults: 15%" />
               </div>
-              <div className="flex justify-between items-center text-[10px] text-zinc-400 px-0.5">
+              <div className="flex justify-between items-center text-[10px] text-zinc-400 px-0.5 font-mono">
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400" /> Safe Spend (60%)
+                  <span className="w-1.5 h-1.5 rounded-sm bg-emerald-500" /> Safe Spend (60%)
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Bills (25%)
+                  <span className="w-1.5 h-1.5 rounded-sm bg-amber-500" /> Bills (25%)
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Goals (15%)
+                  <span className="w-1.5 h-1.5 rounded-sm bg-cyan-500" /> Goals (15%)
                 </span>
               </div>
             </div>
 
             {/* 3 Metric Mini-Deck */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="p-2.5 rounded-xl bg-black/30 border border-white/[0.05] text-center">
+              <div className="p-2.5 rounded-lg bg-zinc-950/80 border border-zinc-800 text-center">
                 <span className="text-[10px] text-zinc-500 block uppercase font-mono">Committed</span>
                 <MoneyValue value={21750} className="text-xs sm:text-sm font-bold text-amber-300 font-display mt-0.5" />
               </div>
-              <div className="p-2.5 rounded-xl bg-black/30 border border-white/[0.05] text-center">
+              <div className="p-2.5 rounded-lg bg-zinc-950/80 border border-zinc-800 text-center">
                 <span className="text-[10px] text-zinc-500 block uppercase font-mono">Goal Vault</span>
                 <MoneyValue value={15000} className="text-xs sm:text-sm font-bold text-cyan-300 font-display mt-0.5" />
               </div>
-              <div className="p-2.5 rounded-xl bg-black/30 border border-white/[0.05] text-center">
+              <div className="p-2.5 rounded-lg bg-zinc-950/80 border border-zinc-800 text-center">
                 <span className="text-[10px] text-zinc-500 block uppercase font-mono">Cash Runway</span>
                 <span className="text-xs sm:text-sm font-bold text-emerald-400 font-display mt-0.5 block">24 Days</span>
               </div>
             </div>
 
-            {/* Simulated Live Event Alert */}
-            <div className="mt-3.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2 text-xs">
+            {/* Scheduled Obligation Alert */}
+            <div className="mt-3.5 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                  <Zap className="w-3.5 h-3.5 fill-amber-400/30" />
+                <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Zap className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-white truncate text-[11px] sm:text-xs">
-                    APSPDCL Electricity Bill
+                    State Power Distribution Utility
                   </p>
-                  <p className="text-[10px] text-zinc-400 truncate">₹1,420 due in 3 days • Auto-tracked</p>
+                  <p className="text-[10px] text-zinc-400 truncate">₹1,420 due in 3 days. Ring-fenced in ledger.</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-amber-300 bg-amber-400/15 px-2 py-0.5 rounded-md shrink-0">
-                Tracked
+              <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 shrink-0">
+                Protected
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Core Features Pillars */}
-      <section className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 max-w-6xl mx-auto">
+      {/* Core Architectural Engines */}
+      <section className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 max-w-6xl mx-auto border-t border-zinc-800/80">
         <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-violet-400 font-mono">
-            ENGINE ARCHITECTURE
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">
+            CORE ENGINES
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Designed for Financial Clarity
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-display">
+            Functional Capabilities
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400">
-            Four specialized engines working in unison to eliminate cash anxiety.
+            Four specialized subsystems designed for exact ledger verification.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
           {/* Card 1: Safe-to-Spend Runway */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4 sm:p-6 card-specular hover:border-violet-500/30 transition-all duration-300">
-            <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-400 mb-3.5 shadow-sm shadow-violet-500/20">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6 hover:border-zinc-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-emerald-400 mb-3 border border-zinc-700/80">
               <Wallet className="w-4 h-4" />
             </div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h3 className="text-sm sm:text-base font-bold text-white">Safe-to-Spend Runway</h3>
-              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20">
-                Dynamic
+              <h3 className="text-sm sm:text-base font-bold text-white">Safe-to-Spend Calculator</h3>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
+                Arithmetic
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Dynamically deducts upcoming bills, subscriptions, loan EMIs, and monthly savings goals from your account balance before you swipe.
+              Deducts upcoming utility bills, active subscriptions, scheduled debt amortizations, and savings reserves from your liquid balances before expenses occur.
             </p>
           </div>
 
           {/* Card 2: Electricity & Bill Radar */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4 sm:p-6 card-specular hover:border-amber-500/30 transition-all duration-300">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-3.5 shadow-sm shadow-amber-500/20">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6 hover:border-zinc-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-amber-400 mb-3 border border-zinc-700/80">
               <Zap className="w-4 h-4" />
             </div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h3 className="text-sm sm:text-base font-bold text-white">Live Electricity & Bill Radar</h3>
-              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                Auto-Fetch
+              <h3 className="text-sm sm:text-base font-bold text-white">Utility Bill & Electricity Radar</h3>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
+                Scheduled
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Connect your state electricity provider with your service number. WealthSync automatically polls monthly bills, monitors units, and alerts before due dates.
+              Track state electricity connections, consumer identification numbers, monthly bill cycles, and unit metrics with deterministic payment due alerts.
             </p>
           </div>
 
           {/* Card 3: P2P Lending & Debt Ledger */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4 sm:p-6 card-specular hover:border-emerald-500/30 transition-all duration-300">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3.5 shadow-sm shadow-emerald-500/20">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6 hover:border-zinc-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-cyan-400 mb-3 border border-zinc-700/80">
               <Users className="w-4 h-4" />
             </div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h3 className="text-sm sm:text-base font-bold text-white">P2P Lending & Loan Ledger</h3>
-              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <h3 className="text-sm sm:text-base font-bold text-white">Bilateral Lending & Debt Ledger</h3>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
                 Audit Trail
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Track money lent to friends, repayment timelines, interest calculations, and bank loan amortization schedules in one secure ledger.
+              Maintains bilateral debt logs for personal loans, money lent to associates, interest formulas, and installment tracking with zero third-party visibility.
             </p>
           </div>
 
           {/* Card 4: Salary Rule Engine */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4 sm:p-6 card-specular hover:border-cyan-500/30 transition-all duration-300">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-3.5 shadow-sm shadow-cyan-500/20">
-              <Layers className="w-4 h-4" />
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6 hover:border-zinc-700 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-300 mb-3 border border-zinc-700/80">
+              <SlidersHorizontal className="w-4 h-4" />
             </div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <h3 className="text-sm sm:text-base font-bold text-white">Salary Rule Engine</h3>
-              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                Deterministic
+              <h3 className="text-sm sm:text-base font-bold text-white">Deterministic Allocation Engine</h3>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
+                Rules
               </span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Rule-based engine automatically breaks down monthly salary into commitments, planned budgets, and prioritized goal buckets the second income arrives.
+              Configurable split rules partition incoming deposits into fixed obligations, discretionary allowances, and emergency reserves automatically upon receipt.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Comparative Reality Check: Bank App vs WealthSync */}
+      {/* Comparative Matrix: Standard Bank Balances vs WealthSync */}
       <section className="relative z-10 py-10 sm:py-14 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-linear-to-b from-zinc-900/50 via-zinc-900/30 to-black/60 p-5 sm:p-8 card-specular">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 sm:p-8">
           <div className="text-center mb-6 space-y-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-white">Why Bank Apps Fail You</h2>
-            <p className="text-xs text-zinc-400">Traditional banks show what you have; WealthSync shows what you can afford.</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white font-display">
+              Why Raw Account Balances Mislead
+            </h2>
+            <p className="text-xs text-zinc-400">
+              Commercial banking interfaces report aggregate balances without obligation deduction.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* The Old Way */}
-            <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/15 space-y-2.5">
+            {/* Standard Bank Account */}
+            <div className="p-4 rounded-lg bg-zinc-950 border border-zinc-800 space-y-2.5">
               <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wide">
                 <X className="w-4 h-4" />
-                <span>Standard Bank Account</span>
+                <span>Commercial Bank Interface</span>
               </div>
               <ul className="space-y-2 text-xs text-zinc-400">
                 <li className="flex items-start gap-2">
-                  <span className="text-rose-400 font-bold">•</span>
-                  <span>Shows total balance including money committed to bills.</span>
+                  <span className="text-rose-500 font-bold">•</span>
+                  <span>Displays unallocated total balance without accounting for unbilled commitments.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-rose-400 font-bold">•</span>
-                  <span>Surprise bill auto-debits that wipe out unexpected cash.</span>
+                  <span className="text-rose-500 font-bold">•</span>
+                  <span>Auto-debits hit unexpectedly, disrupting cash flow planning.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-rose-400 font-bold">•</span>
-                  <span>No visibility into money lent or personal loans.</span>
+                  <span className="text-rose-500 font-bold">•</span>
+                  <span>No ledger tracking for informal loans or peer-to-peer receivables.</span>
                 </li>
               </ul>
             </div>
 
-            {/* The WealthSync Way */}
-            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-2.5">
+            {/* WealthSync */}
+            <div className="p-4 rounded-lg bg-zinc-950 border border-emerald-950/60 space-y-2.5">
               <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wide">
                 <Check className="w-4 h-4" />
-                <span>With WealthSync Engine</span>
+                <span>WealthSync Ledger Engine</span>
               </div>
               <ul className="space-y-2 text-xs text-zinc-300">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">•</span>
-                  <span>True Safe-to-Spend runway updated in real time.</span>
+                  <span>Calculates actual safe-to-spend liquidity in real time.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">•</span>
-                  <span>Upcoming rent & electricity bills ring-fenced in advance.</span>
+                  <span>Scheduled rent, utility bills, and loan EMIs are locked in advance.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">•</span>
-                  <span>Single unified view of cash, loans, goals, and bills.</span>
+                  <span>Unified tracking of liquid capital, debts, savings, and expenses.</span>
                 </li>
               </ul>
             </div>
@@ -372,59 +379,63 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 3 Simple Steps */}
-      <section className="relative z-10 py-10 sm:py-14 px-4 sm:px-6 max-w-4xl mx-auto">
+      {/* Deployment & Workflow Steps */}
+      <section className="relative z-10 py-10 sm:py-14 px-4 sm:px-6 max-w-4xl mx-auto border-t border-zinc-800/80">
         <div className="text-center mb-8 space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-violet-400 font-mono">ONBOARDING FLOW</span>
-          <h2 className="text-xl sm:text-2xl font-bold text-white">Up and Running in 60 Seconds</h2>
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
+            GETTING STARTED
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold text-white font-display">
+            Operational Setup
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div className="p-4 rounded-2xl bg-zinc-900/30 border border-white/5 card-specular space-y-2 text-center sm:text-left">
-            <span className="text-xl font-extrabold text-violet-400 font-mono">01</span>
-            <h3 className="text-sm font-bold text-white">Log or Link Accounts</h3>
-            <p className="text-xs text-zinc-400">Add transactions, recurring subscriptions, and state power connections.</p>
+          <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2">
+            <span className="text-sm font-bold text-zinc-400 font-mono">STEP 01</span>
+            <h3 className="text-sm font-bold text-white">Record Balance & Accounts</h3>
+            <p className="text-xs text-zinc-400">Establish base ledger balances, income sources, and discretionary categories.</p>
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-900/30 border border-white/5 card-specular space-y-2 text-center sm:text-left">
-            <span className="text-xl font-extrabold text-indigo-400 font-mono">02</span>
-            <h3 className="text-sm font-bold text-white">Engine Locks Commitments</h3>
-            <p className="text-xs text-zinc-400">Bills and monthly savings floors are automatically protected from spending.</p>
+          <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2">
+            <span className="text-sm font-bold text-zinc-400 font-mono">STEP 02</span>
+            <h3 className="text-sm font-bold text-white">Configure Obligations</h3>
+            <p className="text-xs text-zinc-400">Specify recurring rent, loan amortization schedules, and utility connections.</p>
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-900/30 border border-white/5 card-specular space-y-2 text-center sm:text-left">
-            <span className="text-xl font-extrabold text-cyan-400 font-mono">03</span>
-            <h3 className="text-sm font-bold text-white">Spend With Peace of Mind</h3>
-            <p className="text-xs text-zinc-400">Check your Safe-to-Spend runway before every purchase with 100% confidence.</p>
+          <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2">
+            <span className="text-sm font-bold text-zinc-400 font-mono">STEP 03</span>
+            <h3 className="text-sm font-bold text-white">Monitor Runway</h3>
+            <p className="text-xs text-zinc-400">Inspect the Safe-to-Spend indicator prior to discretionary disbursements.</p>
           </div>
         </div>
       </section>
 
-      {/* Final Call to Action Card */}
+      {/* Final Action Call */}
       <section className="relative z-10 py-12 sm:py-16 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="rounded-2xl sm:rounded-3xl border border-violet-500/20 bg-linear-to-b from-violet-950/40 via-zinc-900/60 to-black p-6 sm:p-10 text-center space-y-4 card-specular relative overflow-hidden">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center mx-auto shadow-xl shadow-violet-500/30">
-            <Sparkles className="w-6 h-6 text-white" />
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 sm:p-10 text-center space-y-4">
+          <div className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center mx-auto text-white">
+            <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Take Control of Your Cash Flow
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-display">
+              Deploy Your Financial Ledger
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto">
-              Join WealthSync today and experience real financial clarity on your mobile device.
+              Run on your private server, native mobile device, or local Docker container.
             </p>
           </div>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 max-w-xs sm:max-w-none mx-auto">
             <Button
               onClick={() => navigate('/signup')}
-              className="w-full sm:w-auto h-11 px-7 text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 shadow-xl shadow-white/10 rounded-xl"
+              className="w-full sm:w-auto h-11 px-7 text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-200 rounded-lg shadow-sm"
             >
-              Create Free Account
+              Create Account
             </Button>
             <Button
               variant="outline"
               onClick={() => navigate('/login')}
-              className="w-full sm:w-auto h-11 px-6 text-sm font-semibold border-zinc-700 hover:bg-zinc-800 text-white rounded-xl"
+              className="w-full sm:w-auto h-11 px-6 text-sm font-semibold border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg"
             >
               Sign In
             </Button>
@@ -432,17 +443,50 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 py-6 sm:py-8 px-4 sm:px-6 border-t border-white/5 text-center text-xs text-zinc-500">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-            <TrendingUp className="w-3 h-3 text-white" />
+      {/* Institutional Legal & Product Footer */}
+      <footer className="relative z-10 py-8 px-4 sm:px-6 border-t border-zinc-800/80 text-xs text-zinc-500">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-5 h-5 rounded-md bg-zinc-900 border border-zinc-700 flex items-center justify-center">
+              <TrendingUp className="w-3 h-3 text-emerald-400" />
+            </div>
+            <span className="font-bold text-zinc-300">WealthSync Engine</span>
+            <span className="text-zinc-600">|</span>
+            <span className="text-[11px] text-zinc-500">Self-Hosted Personal Wealth Intelligence</span>
           </div>
-          <span className="font-bold text-zinc-300">WealthSync</span>
+
+          {/* Legal Navigation Links */}
+          <div className="flex items-center gap-5 text-xs text-zinc-400">
+            <button
+              onClick={() => navigate('/privacy')}
+              className="hover:text-white transition-colors"
+            >
+              Privacy Policy
+            </button>
+            <button
+              onClick={() => navigate('/terms')}
+              className="hover:text-white transition-colors"
+            >
+              Terms & Conditions
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="hover:text-white transition-colors"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => navigate('/signup')}
+              className="hover:text-white transition-colors"
+            >
+              Register
+            </button>
+          </div>
         </div>
-        <p className="text-[11px] text-zinc-400">
-          Native Personal Wealth & Cash Flow Intelligence • © 2026 WealthSync. All rights reserved.
-        </p>
+
+        <div className="max-w-6xl mx-auto mt-4 pt-4 border-t border-zinc-900 text-center sm:text-left text-[11px] text-zinc-600">
+          Copyright 2026 WealthSync. Open-source personal cash flow software. All calculation engines run locally or on user-controlled infrastructure.
+        </div>
       </footer>
     </div>
   );
