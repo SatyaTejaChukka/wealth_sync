@@ -24,10 +24,21 @@ export function ServerConnectionModal({ isOpen, onClose }) {
     setTestResult(null);
 
     const testTarget = url.trim().replace(/\/+$/, '');
-    const healthUrl = `${testTarget}/health`;
+    const primaryHealthUrl = testTarget.endsWith('/health') ? testTarget : `${testTarget}/health`;
+    const fallbackHealthUrl = `${testTarget.replace(/\/api\/v1\/?$/, '')}/health`;
 
     try {
-      const res = await axios.get(healthUrl, { timeout: 4000 });
+      let res;
+      try {
+        res = await axios.get(primaryHealthUrl, { timeout: 4000 });
+      } catch (firstErr) {
+        if (firstErr?.response?.status === 404 && fallbackHealthUrl !== primaryHealthUrl) {
+          res = await axios.get(fallbackHealthUrl, { timeout: 4000 });
+        } else {
+          throw firstErr;
+        }
+      }
+
       if (res.status === 200) {
         setTestResult({
           success: true,
