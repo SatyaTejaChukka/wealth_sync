@@ -4,7 +4,14 @@ import { Capacitor } from '@capacitor/core';
 const getInitialBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem('custom_api_base_url');
-    if (custom) return custom;
+    if (custom) {
+      // On mobile native, localhost is unreachable; purge it and use production HTTPS
+      if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && (custom.includes('localhost') || custom.includes('127.0.0.1'))) {
+        localStorage.removeItem('custom_api_base_url');
+      } else {
+        return custom;
+      }
+    }
   }
   // On native mobile builds, fallback to production HTTPS endpoint rather than unreachable host localhost
   if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
@@ -21,15 +28,18 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
-  timeout: 15000, // 15 seconds
+  timeout: 60000, // 60 seconds to accommodate Render free-tier cold starts
 });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const customUrl = localStorage.getItem('custom_api_base_url');
     if (customUrl) {
-      config.baseURL = customUrl;
+      if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && (customUrl.includes('localhost') || customUrl.includes('127.0.0.1'))) {
+        localStorage.removeItem('custom_api_base_url');
+      } else {
+        config.baseURL = customUrl;
+      }
     }
   }
   const token = localStorage.getItem('token');
