@@ -48,6 +48,15 @@
   --animate-stagger-2: stagger-2 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-stagger-3: stagger-3 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
+  --animate-monogram-apex: monogram-apex 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-chevron-middle: chevron-middle 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+  --animate-chevron-bottom: chevron-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.32s forwards;
+  --animate-wordmark-reveal: wordmark-reveal 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+  --animate-subtitle-reveal: subtitle-reveal 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+  --animate-security-reveal: subtitle-reveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.85s forwards;
+  --animate-splash-exit: splash-exit 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-ambient-glow: ambient-glow 3s ease-in-out infinite alternate;
+
 
   @keyframes accordion-down {
     from {
@@ -113,6 +122,86 @@
     }
     to {
       width: 0%;
+    }
+  }
+
+  @keyframes monogram-apex {
+    0% {
+      opacity: 0;
+      transform: scale(1.16) translateY(-4px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes chevron-middle {
+    0% {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes chevron-bottom {
+    0% {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes wordmark-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+      letter-spacing: 0.12em;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+      letter-spacing: 0.22em;
+    }
+  }
+
+  @keyframes subtitle-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes splash-exit {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.02);
+      visibility: hidden;
+    }
+  }
+
+  @keyframes ambient-glow {
+    0% {
+      opacity: 0.35;
+      transform: scale(0.92);
+    }
+    100% {
+      opacity: 0.75;
+      transform: scale(1.08);
     }
   }
 }
@@ -547,8 +636,18 @@
     .animate-approval-ritual,
     .animate-money-weather-drift,
     .animate-money-weather-drift-reverse,
-    .transaction-momentum-fill {
+    .transaction-momentum-fill,
+    .animate-monogram-apex,
+    .animate-chevron-middle,
+    .animate-chevron-bottom,
+    .animate-wordmark-reveal,
+    .animate-subtitle-reveal,
+    .animate-security-reveal,
+    .animate-splash-exit,
+    .animate-ambient-glow {
       animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
     }
   }
 }
