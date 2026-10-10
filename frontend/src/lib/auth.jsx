@@ -50,13 +50,22 @@ export function AuthProvider({ children }) {
           setUser(res.data);
         } catch (err) {
           console.error('Failed to sync user profile from backend', err);
-          // If backend couldn't validate, keep user info from Firebase at minimum
-          setUser({
-            id: fbUser.uid,
-            email: fbUser.email,
-            full_name: fbUser.displayName || fbUser.email?.split('@')[0],
-            avatar_url: fbUser.photoURL
-          });
+          const status = err?.response?.status;
+          if (status === 401 || status === 403) {
+            // Backend definitively rejected the credentials or disabled user
+            localStorage.removeItem('token');
+            setUser(null);
+          } else {
+            // Backend connectivity issue (cold start, offline, timeout)
+            // Preserve basic Firebase profile with explicit offline indicator
+            setUser({
+              id: fbUser.uid,
+              email: fbUser.email,
+              full_name: fbUser.displayName || fbUser.email?.split('@')[0],
+              avatar_url: fbUser.photoURL,
+              is_backend_unavailable: true
+            });
+          }
         }
       } else {
         localStorage.removeItem('token');

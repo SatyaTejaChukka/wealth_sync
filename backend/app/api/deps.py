@@ -117,10 +117,22 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
     """
     Verify a Firebase ID token using Google public certificates or Firebase Admin SDK.
     Returns decoded token dictionary or None if invalid.
+    Strictly validates audience and issuer against FIREBASE_PROJECT_ID; fails closed if unconfigured.
     """
     project_id = settings.FIREBASE_PROJECT_ID
+    if not project_id:
+        logger.error("FIREBASE_PROJECT_ID is not configured. Rejecting token verification to prevent unverified audience security risks.")
+        return None
 
-    # 1. Verify using Google's public certificates directly (works everywhere with 0 credentials setup)
+    # 1. Prefer Firebase Admin SDK if service account or default credentials configured
+    app = get_firebase_app()
+    if app and firebase_auth:
+        try:
+            return firebase_auth.verify_id_token(token, check_revoked=False)
+        except Exception as e:
+            logger.debug("Firebase Admin SDK verification failed, trying public certs: %s", e)
+
+    # 2. Verify using Google's public certificates with strict audience and issuer validation
     try:
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
@@ -132,27 +144,16 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
                 cert = certs.get(kid)
 
             if cert:
-                if project_id:
-                    decoded = jwt.decode(
-                        token,
-                        cert,
-                        algorithms=["RS256"],
-                        audience=project_id,
-                        issuer=f"https://securetoken.google.com/{project_id}"
-                    )
-                else:
-                    decoded = jwt.decode(token, cert, algorithms=["RS256"], options={"verify_aud": False})
+                decoded = jwt.decode(
+                    token,
+                    cert,
+                    algorithms=["RS256"],
+                    audience=project_id,
+                    issuer=f"https://securetoken.google.com/{project_id}"
+                )
                 return decoded
     except Exception as e:
         logger.debug("Public certificate verification failed: %s", e)
-
-    # 2. Fallback to Firebase Admin SDK if service account is configured
-    app = get_firebase_app()
-    if app and firebase_auth:
-        try:
-            return firebase_auth.verify_id_token(token, check_revoked=False)
-        except Exception as e:
-            logger.debug("Firebase Admin SDK verification failed: %s", e)
 
     return None
 
@@ -205,11 +206,34 @@ async def get_current_user(
                     await db.commit()
                     await db.refresh(user)
 
-            # Fallback lookup by email (Link existing user accounts)
+            # Fallback lookup by email (Link existing user accounts with safety checks)
             if not user and email:
                 result = await db.execute(select(User).filter(User.email == email))
-                user = result.scalars().first()
-                if user:
+                existing_email_user = result.scalars().first()
+                if existing_email_user:
+                    # Security check: Never overwrite an already linked different Firebase UID
+                    if existing_email_user.firebase_uid and existing_email_user.firebase_uid != uid:
+                        logger.warning(
+                            "Account linking rejected: User %s already linked to Firebase UID %s, cannot link to %s",
+                            existing_email_user.email,
+                            existing_email_user.firebase_uid,
+                            uid,
+                        )
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail="This account is already linked to a different Firebase identity.",
+                        )
+
+                    # Security check: Ensure email is verified by identity provider before linking existing account in production
+                    email_verified = firebase_payload.get("email_verified", False)
+                    if not email_verified and settings.ENVIRONMENT == "production":
+                        logger.warning("Unverified email linking rejected for user %s", email)
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Cannot link account with unverified email address.",
+                        )
+
+                    user = existing_email_user
                     user.firebase_uid = uid
                     if name and not user.full_name:
                         user.full_name = name

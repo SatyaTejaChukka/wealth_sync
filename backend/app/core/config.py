@@ -153,15 +153,18 @@ class Settings(BaseSettings):
         )
 
     @model_validator(mode="after")
-    def ensure_secret_key(self):
-        if self.SECRET_KEY:
-            return self
-
+    def validate_production_settings(self):
         if self.ENVIRONMENT == "production":
-            raise ValueError("SECRET_KEY is required in production")
+            if not self.SECRET_KEY:
+                raise ValueError("SECRET_KEY is required in production")
+            if not self.FIREBASE_PROJECT_ID:
+                raise ValueError("FIREBASE_PROJECT_ID is required in production")
+            if "*" in self.ALLOWED_HOSTS:
+                raise ValueError("Wildcard '*' in ALLOWED_HOSTS is not permitted in production")
 
-        # Stable local-only fallback so the app can boot without a .env file.
-        self.SECRET_KEY = "dev-only-secret-key-change-me"
+        if not self.SECRET_KEY:
+            # Stable local-only fallback so the app can boot without a .env file.
+            self.SECRET_KEY = "dev-only-secret-key-change-me"
         return self
 
 settings = Settings()
