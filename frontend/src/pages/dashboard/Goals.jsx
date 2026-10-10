@@ -326,7 +326,7 @@ export default function Goals() {
             className="space-y-4"
          >
              <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Amount to Add</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Amount to Add (₹)</label>
                 <input 
                     name="amount" 
                     type="number" 
@@ -393,7 +393,7 @@ export default function Goals() {
                                            </span>
                                        </span>
                                        <span className="font-semibold text-emerald-400">
-                                           +${parseFloat(log.amount).toFixed(2)}
+                                           +{formatGoalCurrency(log.amount)}
                                        </span>
                                    </div>
                                    );
