@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gauge, ShieldAlert, Sparkles, TriangleAlert } from 'lucide-react';
+import { Gauge, ShieldAlert, SlidersHorizontal, TriangleAlert } from 'lucide-react';
 
 import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { cn } from '../../lib/utils.js';
@@ -104,7 +104,7 @@ export const MoneyFlow = ({ stats }) => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 font-semibold text-zinc-100">
-            <Sparkles size={16} className="text-violet-300" />
+            <SlidersHorizontal size={16} className="text-zinc-300" />
             Money Flow
           </h3>
           <p className="mt-1 text-sm text-zinc-400">

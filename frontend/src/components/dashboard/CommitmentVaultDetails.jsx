@@ -12,7 +12,7 @@ import {
   Info,
   PiggyBank,
   Shield,
-  Sparkles,
+  Wallet,
   TrendingDown,
   X,
 } from 'lucide-react';
@@ -119,7 +119,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             )}
           >
-            <Sparkles size={14} />
+            <Wallet size={14} />
             <span>Free Equation</span>
           </button>
         </div>

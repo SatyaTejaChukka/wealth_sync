@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Select } from '../../components/ui/Select.jsx';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
-import { Plus, Trash2, CheckCircle, CircleX, Calendar, Zap, Sparkles } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, CircleX, Calendar, Zap } from 'lucide-react';
 import { billService } from '../../services/bills.js';
 import { electricityService } from '../../services/electricity.js';
 import { categoryService } from '../../services/categories.js';
@@ -252,7 +252,7 @@ export default function Bills() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-1">
                 <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <Zap className="h-4 w-4 text-amber-400 shrink-0" />
                   <span>Auto-fetch your real monthly electricity bill</span>
                 </h3>
                 <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
