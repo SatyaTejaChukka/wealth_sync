@@ -2,6 +2,8 @@
 .env
 *.env
 backend/.env
+google-services.json
+**/google-services.json
 
 # Python
 __pycache__/
