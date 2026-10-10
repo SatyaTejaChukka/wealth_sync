@@ -38,3 +38,9 @@ backups/
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent & IDE workspace configurations
+.agents/
+.agent/
+.gemini/
+.antigravity/
