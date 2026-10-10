@@ -98,7 +98,7 @@ export function PaymentTimelineFeed({
           <button
             type="button"
             onClick={() => setShowAll(!showAll)}
-            className="w-full py-2.5 mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-zinc-300 hover:bg-white/10 transition-all"
+            className="w-full h-11 min-h-[44px] mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-zinc-300 hover:bg-white/10 active:scale-[0.98] transition-all touch-press"
           >
             {showAll ? (
               <>

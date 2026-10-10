@@ -237,10 +237,10 @@ export default function Dashboard() {
               <Button
                 onClick={() => navigate('/dashboard/calendar')}
                 variant="outline"
-                className="h-9 w-9 p-0 rounded-xl border-white/10 bg-zinc-900/60 hover:bg-white/10 text-zinc-300"
+                className="h-10 w-10 p-0 rounded-xl border-white/10 bg-zinc-900/60 hover:bg-white/10 text-zinc-300 touch-press"
                 aria-label="Open Calendar"
               >
-                <CalendarDays size={16} />
+                <CalendarDays size={17} />
               </Button>
               <NotificationBell />
             </div>
@@ -298,7 +298,7 @@ export default function Dashboard() {
             onClick={() => navigate('/dashboard/transactions')}
             variant="gradient"
             icon={<Plus size={16} />}
-            className="flex-1 h-10 text-xs font-bold shadow-sm shadow-emerald-500/20 active:scale-98 transition-all"
+            className="flex-1 h-11 text-xs sm:text-sm font-bold shadow-sm shadow-emerald-500/20 touch-press"
           >
             Add Transaction
           </Button>
@@ -306,7 +306,7 @@ export default function Dashboard() {
             onClick={() => navigate('/dashboard/calendar')}
             variant="outline"
             icon={<CalendarDays size={15} />}
-            className="h-10 px-3.5 text-xs font-semibold border-white/10 bg-zinc-900/60 active:scale-98 transition-all"
+            className="h-11 px-4 text-xs sm:text-sm font-semibold border-white/10 bg-zinc-900/60 touch-press"
           >
             Calendar
           </Button>
@@ -417,7 +417,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setActiveChart('sankey')}
                   className={cn(
-                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] text-xs font-semibold rounded-lg transition-all whitespace-nowrap touch-press',
                     activeChart === 'sankey'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'
@@ -431,7 +431,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setActiveChart('trend')}
                   className={cn(
-                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] text-xs font-semibold rounded-lg transition-all whitespace-nowrap touch-press',
                     activeChart === 'trend'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'
@@ -445,7 +445,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => setActiveChart('categories')}
                   className={cn(
-                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] text-xs font-semibold rounded-lg transition-all whitespace-nowrap touch-press',
                     activeChart === 'categories'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'

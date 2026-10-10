@@ -153,7 +153,7 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
               return (
                 <div
                   key={`${item.linked_id || item.title}-${idx}`}
-                  className="group flex items-center justify-between gap-3 p-3 hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors"
+                  className="group flex items-center justify-between gap-3 p-3 hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors touch-row min-h-[48px] touch-press cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border shrink-0", cfg.bg)}>

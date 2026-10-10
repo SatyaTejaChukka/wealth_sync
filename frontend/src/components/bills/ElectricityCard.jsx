@@ -95,14 +95,14 @@ export function ElectricityCard({ account, onFetch, onPay, onDelete }) {
             onClick={handleFetch}
             disabled={fetching}
             title="Check latest bill from provider"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-400/10 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:text-amber-400 hover:bg-amber-400/10 transition-colors touch-press"
           >
             <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin text-amber-400")} />
           </button>
           <button
             onClick={() => onDelete(account.id)}
             title="Unlink connection"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors touch-press"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -113,7 +113,7 @@ export function ElectricityCard({ account, onFetch, onPay, onDelete }) {
       <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-3 items-end">
         <div>
           <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">Current Bill</span>
-          <div className="text-2xl font-bold text-white tracking-tight mt-0.5">
+          <div className="text-2xl font-bold text-white tracking-tight mt-0.5 font-display tabular-nums">
             {latestBill ? formatCurrency(latestBill.amount) : '₹0.00'}
           </div>
           {latestBill?.units_consumed && (
@@ -175,7 +175,7 @@ export function ElectricityCard({ account, onFetch, onPay, onDelete }) {
               variant="secondary"
               loading={paying}
               onClick={handlePay}
-              className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shadow-md shadow-amber-500/20 h-8 px-4"
+              className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shadow-md shadow-amber-500/20 h-10 sm:h-8 px-4 text-xs touch-press"
             >
               Mark as Paid
             </Button>
