@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "773706147941",
+    "project_id": "wealthsync-app-b24c1",
+    "storage_bucket": "wealthsync-app-b24c1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773706147941:android:60d409b5058e51927fbe8c",
+        "android_client_info": {
+          "package_name": "com.wealthsync.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "773706147941-c7pjp6lhn12qltv24mdvjooe0o2je4pu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wealthsync.app",
+            "certificate_hash": "bee6f157198b4e17f8a1be526458b4a9966d8e56"
+          }
+        },
+        {
+          "client_id": "773706147941-0c3jjgq0kdjgkntpsqi3f483ceghul34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKR1xNwiGRKeopR3YofF2VghYUswEmM70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "773706147941-0c3jjgq0kdjgkntpsqi3f483ceghul34.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -5,13 +5,39 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithPopup, 
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut, 
   onIdTokenChanged,
   updateProfile 
 } from 'firebase/auth';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import { Capacitor } from '@capacitor/core';
 import { auth, googleProvider, isFirebaseConfigured } from './firebase.js';
 import api from './api.js';
+
+let googleSignInInitPromise = null;
+
+async function ensureGoogleSignInInitialized() {
+  const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID;
+
+  if (!clientId) {
+    throw new Error(
+      'Google Sign-In is not configured. Check VITE_GOOGLE_WEB_CLIENT_ID in frontend/.env.'
+    );
+  }
+
+  if (!googleSignInInitPromise) {
+    googleSignInInitPromise = GoogleSignIn.initialize({
+      clientId,
+    }).catch((error) => {
+      googleSignInInitPromise = null;
+      throw error;
+    });
+  }
+
+  return googleSignInInitPromise;
+}
 
 const AuthContext = createContext(null);
 
@@ -162,22 +188,66 @@ export function AuthProvider({ children }) {
     }
   }, [navigate]);
 
-  // 2. 1-Click Google Sign-In
-  const loginWithGoogle = useCallback(async (redirectTo = '/dashboard') => {
-    if (!isFirebaseConfigured) {
-      throw new Error('Firebase credentials not configured in frontend/.env');
-    }
-    if (Capacitor.isNativePlatform()) {
-      throw new Error('Google Sign-In via popup is not supported in the mobile app. Please use your Email and Password to sign in or create an account.');
-    }
-    const cred = await signInWithPopup(auth, googleProvider);
-    const token = await cred.user.getIdToken();
-    localStorage.setItem('token', token);
-    const res = await api.get('/auth/me');
-    setUser(res.data);
-    navigate(redirectTo, { replace: true });
-    return res.data;
-  }, [navigate]);
+  // 2. Google Sign-In: native Android and web
+  const loginWithGoogle = useCallback(
+    async (redirectTo = '/dashboard') => {
+      if (!isFirebaseConfigured || !auth) {
+        throw new Error(
+          'Firebase credentials are not configured in frontend/.env.'
+        );
+      }
+
+      let firebaseUser;
+
+      if (Capacitor.isNativePlatform()) {
+        // Android/iOS: use native Google Sign-In.
+        await ensureGoogleSignInInitialized();
+
+        const googleResult = await GoogleSignIn.signIn();
+
+        if (!googleResult?.idToken) {
+          throw new Error(
+            'Google Sign-In did not return an ID token. Please try again.'
+          );
+        }
+
+        // Exchange Google's ID token for a Firebase credential.
+        const credential = GoogleAuthProvider.credential(
+          googleResult.idToken
+        );
+
+        const firebaseCredential = await signInWithCredential(
+          auth,
+          credential
+        );
+
+        firebaseUser = firebaseCredential.user;
+      } else {
+        // Web: preserve the existing Firebase popup flow.
+        const credential = await signInWithPopup(
+          auth,
+          googleProvider
+        );
+
+        firebaseUser = credential.user;
+      }
+
+      // Obtain the Firebase ID token for the FastAPI backend.
+      const token = await firebaseUser.getIdToken();
+
+      localStorage.setItem('token', token);
+
+      // Synchronize the authenticated user with the backend.
+      const response = await api.get('/auth/me');
+
+      setUser(response.data);
+
+      navigate(redirectTo, { replace: true });
+
+      return response.data;
+    },
+    [navigate]
+  );
 
   // 3. Email + Password Registration
   const signupWithEmail = useCallback(async (email, password, fullName = '', redirectTo = '/dashboard') => {
@@ -216,6 +286,13 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     localStorage.removeItem('token');
     setUser(null);
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await GoogleSignIn.signOut();
+      } catch (err) {
+        console.warn('Native Google sign out warning:', err);
+      }
+    }
     if (isFirebaseConfigured && auth) {
       try {
         await signOut(auth);
