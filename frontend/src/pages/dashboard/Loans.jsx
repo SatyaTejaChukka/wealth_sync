@@ -414,7 +414,7 @@ export default function Loans() {
             onClick={() => setShowAddModal(true)}
             variant="gradient"
             icon={<Plus size={14} />}
-            className="w-full sm:w-auto font-bold"
+            className="w-full sm:w-auto h-11 sm:h-9 px-4 text-xs sm:text-sm font-bold touch-press"
           >
             Add Loan
           </Button>
@@ -422,30 +422,26 @@ export default function Loans() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-white/5 gap-6">
+      <div className="flex border-b border-white/5 gap-4 sm:gap-6 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('my-loans')}
           className={cn(
-            "pb-3 text-sm font-semibold transition-all relative",
+            "min-h-[48px] py-3 text-xs sm:text-sm font-semibold transition-all relative flex items-center gap-2 whitespace-nowrap touch-press",
             activeTab === 'my-loans' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
-          <div className="flex items-center gap-2">
-            <Landmark size={16} />
-            <span>My Loan Portfolios</span>
-          </div>
+          <Landmark size={16} />
+          <span>My Loan Portfolios</span>
         </button>
         <button
           onClick={() => setActiveTab('calculator')}
           className={cn(
-            "pb-3 text-sm font-semibold transition-all relative",
+            "min-h-[48px] py-3 text-xs sm:text-sm font-semibold transition-all relative flex items-center gap-2 whitespace-nowrap touch-press",
             activeTab === 'calculator' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
-          <div className="flex items-center gap-2">
-            <Calculator size={16} />
-            <span>EMI Projection Calculator</span>
-          </div>
+          <Calculator size={16} />
+          <span>EMI Projection Calculator</span>
         </button>
       </div>
 
@@ -456,10 +452,10 @@ export default function Loans() {
           <div className="lg:col-span-2 space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+              <Card className="p-4 sm:p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between card-specular">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Monthly EMI Outflow</p>
-                  <h3 className="text-2xl font-bold text-white mt-1">
+                  <h3 className="text-xl sm:text-2xl font-black text-white mt-1 font-display tabular-nums tracking-tight">
                     ₹{monthlyEMIs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
@@ -467,10 +463,10 @@ export default function Loans() {
                   <TrendingDown size={20} />
                 </div>
               </Card>
-              <Card className="p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between">
+              <Card className="p-4 sm:p-5 bg-zinc-900/30 border-white/5 backdrop-blur-md relative overflow-hidden flex items-center justify-between card-specular">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Active Debt Portfolio</p>
-                  <h3 className="text-2xl font-bold text-white mt-1">
+                  <h3 className="text-xl sm:text-2xl font-black text-white mt-1 font-display tabular-nums tracking-tight">
                     ₹{totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
@@ -584,7 +580,7 @@ export default function Loans() {
                               e.stopPropagation();
                               fetchLoanDetails(loan.id);
                             }}
-                            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                            className="min-h-[40px] px-2.5 py-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 rounded-lg hover:bg-emerald-500/10 transition-colors touch-press"
                           >
                             <span>View Amortization</span>
                             <ChevronRight size={14} />
@@ -599,7 +595,7 @@ export default function Loans() {
                                 }}
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-3 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all"
+                                className="h-10 px-3.5 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 rounded-lg touch-press"
                               >
                                 Pay EMI
                               </Button>
@@ -611,7 +607,7 @@ export default function Loans() {
                               }}
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-zinc-500 hover:text-red-400 active:scale-95 transition-all"
+                              className="h-10 w-10 text-zinc-400 hover:text-red-400 rounded-lg border border-white/5 bg-zinc-900/60 touch-press"
                             >
                               <Trash2 size={15} />
                             </Button>
@@ -803,15 +799,15 @@ export default function Loans() {
                     <div className="divide-y divide-white/5 text-sm">
                       <div className="py-2.5 flex justify-between">
                         <span className="text-zinc-400">Total Principal</span>
-                        <span className="font-semibold text-white">INR {parseFloat(calcData.principal).toLocaleString('en-IN')}</span>
+                        <span className="font-semibold text-white font-display tabular-nums">₹{parseFloat(calcData.principal).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="py-2.5 flex justify-between">
                         <span className="text-zinc-400">Total Interest Payable</span>
-                        <span className="font-semibold text-amber-400">INR {calcResult.totalInterest.toLocaleString('en-IN')}</span>
+                        <span className="font-semibold text-amber-400 font-display tabular-nums">₹{calcResult.totalInterest.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="py-2.5 flex justify-between">
                         <span className="text-zinc-400">Total Sum Payable</span>
-                        <span className="font-semibold text-white">INR {calcResult.totalAmount.toLocaleString('en-IN')}</span>
+                        <span className="font-semibold text-white font-display tabular-nums">₹{calcResult.totalAmount.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="py-2.5 flex justify-between border-t border-white/5">
                         <span className="text-zinc-400">Interest Calculation Model</span>
@@ -836,7 +832,7 @@ export default function Loans() {
                       setShowAddModal(true);
                     }}
                     variant="outline"
-                    className="w-full border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 mt-4"
+                    className="w-full h-11 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 mt-4 rounded-xl font-bold touch-press"
                   >
                     Save As My Loan Profile
                   </Button>

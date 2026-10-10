@@ -44,7 +44,7 @@ export function RecentActivity({ transactions = [], maxItems }) {
               return (
                 <div
                   key={t.id}
-                  className="relative flex items-center justify-between group cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06] p-3 sm:p-3.5 transition-colors"
+                  className="relative flex items-center justify-between group cursor-pointer hover:bg-white/[0.04] active:bg-white/[0.06] p-3 sm:p-3.5 transition-colors touch-row min-h-[48px] touch-press"
                 >
                   <div className="transaction-momentum-track">
                     <div

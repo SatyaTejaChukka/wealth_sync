@@ -169,7 +169,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('protected')}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left"
+            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left touch-row min-h-[48px] touch-press"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0">
@@ -183,7 +183,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             <div className="flex items-center gap-2 shrink-0">
               <MoneyValue
                 value={protected_amount}
-                className="text-sm font-extrabold text-white font-display"
+                className="text-sm font-extrabold text-white font-display tabular-nums"
               />
               <ChevronRight size={14} className="text-zinc-500" />
             </div>
@@ -193,7 +193,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('future')}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left"
+            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left touch-row min-h-[48px] touch-press"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 shrink-0">
@@ -207,7 +207,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             <div className="flex items-center gap-2 shrink-0">
               <MoneyValue
                 value={future_amount}
-                className="text-sm font-extrabold text-white font-display"
+                className="text-sm font-extrabold text-white font-display tabular-nums"
               />
               <ChevronRight size={14} className="text-zinc-500" />
             </div>
@@ -217,7 +217,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('free')}
-            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left"
+            className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left touch-row min-h-[48px] touch-press"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shrink-0">
@@ -231,7 +231,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             <div className="flex items-center gap-2 shrink-0">
               <MoneyValue
                 value={free_amount}
-                className="text-sm font-extrabold text-emerald-400 font-display"
+                className="text-sm font-extrabold text-emerald-400 font-display tabular-nums"
                 symbolClassName="text-[0.65em] font-medium text-emerald-400/60 mr-0.5 select-none"
               />
               <ChevronRight size={14} className="text-zinc-500" />

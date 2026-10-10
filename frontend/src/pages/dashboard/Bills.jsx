@@ -206,7 +206,7 @@ export default function Bills() {
           <Button
             size="sm"
             onClick={() => setShowElectricityModal(true)}
-            className="w-full sm:w-auto h-9 px-3 text-xs bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold border-none shadow-md shadow-amber-500/20"
+            className="w-full sm:w-auto h-11 sm:h-9 px-3 text-xs bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold border-none shadow-md shadow-amber-500/20 touch-press"
             icon={<Zap size={14} className="fill-zinc-950 shrink-0" />}
           >
             <span className="sm:hidden truncate">Link Power</span>
@@ -221,7 +221,7 @@ export default function Bills() {
             }}
             variant="gradient"
             icon={<Plus size={14} className="shrink-0" />}
-            className="w-full sm:w-auto h-9 px-3 text-xs font-bold"
+            className="w-full sm:w-auto h-11 sm:h-9 px-3 text-xs font-bold touch-press"
           >
             <span className="sm:hidden truncate">Add Bill</span>
             <span className="hidden sm:inline">Add Manual Bill</span>
@@ -262,7 +262,7 @@ export default function Bills() {
               <Button
                 size="sm"
                 onClick={() => setShowElectricityModal(true)}
-                className="h-8 px-3 text-xs bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shrink-0"
+                className="h-10 sm:h-8 px-4 text-xs bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold border-none shrink-0 touch-press"
                 icon={<Zap size={13} className="fill-zinc-950" />}
               >
                 Connect Provider
@@ -310,17 +310,17 @@ export default function Bills() {
                   handleEdit(bill);
                 }
               }}
-              className="rounded-xl border border-white/5 bg-zinc-900/40 p-3.5 backdrop-blur-md space-y-2.5 cursor-pointer card-specular"
+              className="rounded-2xl border border-white/5 bg-zinc-900/40 p-4 backdrop-blur-md space-y-3 cursor-pointer card-specular touch-press"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{bill.name}</h3>
+                  <h3 className="text-sm sm:text-base font-semibold text-white">{bill.name}</h3>
                   <p className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1">
-                    <Calendar size={11} className="text-zinc-500" />
+                    <Calendar size={12} className="text-zinc-500" />
                     Due day {bill.due_day}
                   </p>
                 </div>
-                <MoneyValue value={bill.amount_estimated} className="text-base font-bold text-white font-display tabular-nums" />
+                <MoneyValue value={bill.amount_estimated} className="text-base sm:text-lg font-bold text-white font-display tabular-nums" />
               </div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 {bill.category && (
@@ -338,17 +338,17 @@ export default function Bills() {
                   {bill.last_paid_at ? `Paid ${new Date(bill.last_paid_at).toLocaleDateString()}` : 'Never paid'}
                 </span>
               </div>
-              <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+              <div className="flex items-center gap-2 pt-2 border-t border-white/5">
                 <Button
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    "h-7.5 px-3 flex-1 font-bold text-xs",
+                    "h-10 min-h-[40px] px-3.5 flex-1 font-bold text-xs rounded-lg border touch-press",
                     bill.last_paid_at
-                      ? 'text-emerald-400 hover:bg-emerald-500/10'
-                      : 'text-rose-400 hover:bg-rose-500/10'
+                      ? 'border-emerald-500/20 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15'
+                      : 'border-rose-500/20 text-rose-400 bg-rose-500/10 hover:bg-rose-500/15'
                   )}
-                  icon={bill.last_paid_at ? <CheckCircle size={13} /> : <CircleX size={13} />}
+                  icon={bill.last_paid_at ? <CheckCircle size={14} /> : <CircleX size={14} />}
                   iconPosition="left"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -360,13 +360,13 @@ export default function Bills() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7.5 w-7.5 text-zinc-500 hover:text-red-400"
+                  className="h-10 w-10 min-h-[40px] rounded-lg text-zinc-400 hover:text-red-400 border border-white/5 bg-zinc-900/60 touch-press"
                   onClick={(event) => {
                     event.stopPropagation();
                     setPendingDeleteBillId(bill.id);
                   }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={15} />
                 </Button>
               </div>
             </div>
