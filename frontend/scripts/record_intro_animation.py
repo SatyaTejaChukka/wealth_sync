@@ -34,7 +34,7 @@ def main():
         )
         vid_page = vid_context.new_page()
         vid_page.goto("http://localhost:5173/preview-splash", wait_until="networkidle")
-        time.sleep(3.2) # Let full sequential animation play out and hold
+        time.sleep(2.6) # Let full sequential animation play out and hold
         vid_page.close()
         raw_video_path = vid_page.video.path() if vid_page.video else None
         vid_context.close()
@@ -58,8 +58,8 @@ def main():
         """)
 
         frames = []
-        # Step through 0ms to 2450ms in 35ms increments
-        time_steps = list(range(0, 2450, 35))
+        # Step through 0ms to 1600ms in 25ms increments for high-smoothness playback
+        time_steps = list(range(0, 1625, 25))
         
         for t_ms in time_steps:
             page.evaluate(f"""
@@ -73,15 +73,15 @@ def main():
             p_img = img.convert("RGB").convert("P", palette=Image.Palette.ADAPTIVE, colors=256)
             frames.append(p_img)
 
-        # Hold the final assembled frame for ~1.2 seconds (approx 25 hold frames)
+        # Hold the final assembled frame for ~1.0 second (approx 28 hold frames)
         if frames:
             last_frame = frames[-1]
-            for _ in range(25):
+            for _ in range(28):
                 frames.append(last_frame)
 
         print(f"Captured {len(frames)} frames. Encoding animated GIF...")
         if frames:
-            frame_duration_ms = 40 # 25 FPS
+            frame_duration_ms = 35 # ~28.5 FPS
             frames[0].save(
                 OUTPUT_GIF_ROOT,
                 save_all=True,
