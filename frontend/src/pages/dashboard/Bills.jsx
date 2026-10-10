@@ -505,7 +505,7 @@ export default function Bills() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-zinc-300 mb-2">Amount</label>
+            <label className="block text-sm font-semibold text-zinc-300 mb-2">Amount (₹)</label>
             <Input
               type="number"
               step="0.01"

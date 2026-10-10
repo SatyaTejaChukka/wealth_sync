@@ -58,7 +58,7 @@ export function GoalForm({ onSubmit, onCancel, initialData = null, submitText = 
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Target Amount</label>
+            <label className="text-sm font-medium text-zinc-400">Target Amount (₹)</label>
              <Input 
                 required
                 type="number"
@@ -69,7 +69,7 @@ export function GoalForm({ onSubmit, onCancel, initialData = null, submitText = 
             />
         </div>
         <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Current Saved</label>
+            <label className="text-sm font-medium text-zinc-400">Current Saved (₹)</label>
              <Input 
                 type="number"
                 step="0.01"

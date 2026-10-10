@@ -23,13 +23,13 @@ const SLIDES = [
     schematic: {
       title: 'Real-Time Liquidity Breakdown',
       rows: [
-        { label: 'Liquid Cash Balance', value: '$14,250.00', sign: '+' },
-        { label: 'Scheduled Obligations', value: '$4,820.00', sign: '−', highlight: 'text-red-400' },
-        { label: 'Liquidity Buffer Target', value: '$2,000.00', sign: '−', highlight: 'text-amber-400' },
+        { label: 'Liquid Cash Balance', value: '₹14,250.00', sign: '+' },
+        { label: 'Scheduled Obligations', value: '₹4,820.00', sign: '−', highlight: 'text-red-400' },
+        { label: 'Liquidity Buffer Target', value: '₹2,000.00', sign: '−', highlight: 'text-amber-400' },
       ],
       result: {
         label: 'True Safe-to-Spend',
-        value: '$7,430.00',
+        value: '₹7,430.00',
         status: 'VERIFIED'
       }
     }
@@ -44,9 +44,9 @@ const SLIDES = [
     schematic: {
       title: 'Next 14 Days Outflow Horizon',
       items: [
-        { date: 'OCT 15', name: 'Commercial Mortgage Note', amount: '$2,400.00', tag: 'LOCKED', tagStyle: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' },
-        { date: 'OCT 18', name: 'Tier-1 Cloud Infrastructure', amount: '$380.00', tag: 'SYNCED', tagStyle: 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10' },
-        { date: 'OCT 22', name: 'Executive Equipment Lease', amount: '$640.00', tag: 'QUEUED', tagStyle: 'border-zinc-700 text-zinc-400 bg-zinc-800/40' },
+        { date: 'OCT 15', name: 'Commercial Mortgage Note', amount: '₹2,400.00', tag: 'LOCKED', tagStyle: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' },
+        { date: 'OCT 18', name: 'Tier-1 Cloud Infrastructure', amount: '₹380.00', tag: 'SYNCED', tagStyle: 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10' },
+        { date: 'OCT 22', name: 'Executive Equipment Lease', amount: '₹640.00', tag: 'QUEUED', tagStyle: 'border-zinc-700 text-zinc-400 bg-zinc-800/40' },
       ]
     }
   },
@@ -60,10 +60,10 @@ const SLIDES = [
     schematic: {
       title: 'Counterpart Lending Position',
       stats: [
-        { label: 'Principal Extended', value: '$8,500.00' },
-        { label: 'Recovered to Date', value: '$5,200.00' },
+        { label: 'Principal Extended', value: '₹8,500.00' },
+        { label: 'Recovered to Date', value: '₹5,200.00' },
       ],
-      active: { label: 'Net Active Receivables', value: '$3,300.00' },
+      active: { label: 'Net Active Receivables', value: '₹3,300.00' },
       progress: 61
     }
   }

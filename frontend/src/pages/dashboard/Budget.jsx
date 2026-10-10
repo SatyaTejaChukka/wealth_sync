@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button.jsx';
 import { budgetService } from '../../services/budgets.js';
 import { incomeService } from '../../services/income.js';
-import { Plus, Settings2, Trash2, AlertCircle, Edit2, DollarSign } from 'lucide-react';
+import { Plus, Settings2, Trash2, AlertCircle, Edit2, IndianRupee } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal.jsx';
 import { BudgetRuleForm } from '../../components/budget/BudgetRuleForm.jsx';
 import { CategoryMaintenanceModal } from '../../components/budget/CategoryMaintenanceModal.jsx';
@@ -318,7 +318,7 @@ export default function Budget() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <DollarSign className="text-emerald-400" size={22} />
+              <IndianRupee className="text-emerald-400" size={22} />
               Expected Income Sources
             </h2>
             <p className="text-xs text-zinc-400">Configure recurring deposits to feed your Autopilot budget allocation.</p>
@@ -339,7 +339,7 @@ export default function Budget() {
         {incomes.length === 0 ? (
           <Card className="bg-zinc-900/40 border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 rounded-full bg-zinc-850 flex items-center justify-center mb-3 text-zinc-500">
-              <DollarSign size={20} />
+              <IndianRupee size={20} />
             </div>
             <p className="text-zinc-400 text-sm font-medium">No Expected Income Sources Set</p>
             <p className="text-zinc-500 text-xs mt-1 max-w-sm">
