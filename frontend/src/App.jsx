@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -21,19 +21,13 @@ import Lent from './pages/dashboard/Lent.jsx';
 import Settings from './pages/dashboard/Settings.jsx';
 import Calendar from './pages/dashboard/Calendar.jsx';
 import { useAuth } from './lib/auth.jsx';
+import { MobileIntroSplash } from './components/mobile/MobileIntroSplash.jsx';
 
 function RequireAuth({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
-        <div className="flex items-center gap-3 text-zinc-400">
-          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
-          <span className="text-sm font-medium">Loading WealthSync...</span>
-        </div>
-      </div>
-    );
+    return <MobileIntroSplash force duration={800} minDisplayTime={200} />;
   }
   if (!isAuthenticated) {
     const from = `${location.pathname}${location.search}`;
@@ -45,20 +39,22 @@ function RequireAuth({ children }) {
 function RequireGuest({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) {
-     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
-        <div className="flex items-center gap-3 text-zinc-400">
-          <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
-          <span className="text-sm font-medium">Loading...</span>
-        </div>
-      </div>
-    );
+    return <MobileIntroSplash force duration={800} minDisplayTime={200} />;
   }
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 export default function App() {
+  const [introFinished, setIntroFinished] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const shown = sessionStorage.getItem('wealthsync_intro_shown');
+      if (shown) return true;
+    }
+    // Only auto-play the full intro reveal on native mobile cold start
+    return !Capacitor.isNativePlatform();
+  });
+
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
@@ -68,9 +64,13 @@ export default function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route
+    <>
+      {!introFinished && (
+        <MobileIntroSplash onComplete={() => setIntroFinished(true)} />
+      )}
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route
         path="/login"
         element={
           <RequireGuest>
@@ -112,5 +112,6 @@ export default function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  );
+  </>
+);
 }
