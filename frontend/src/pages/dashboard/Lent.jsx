@@ -51,6 +51,8 @@ export default function Lent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(null); // stores lent record id to delete
   const [showRepayModal, setShowRepayModal] = useState(false);
+  const [repayTarget, setRepayTarget] = useState(null);
+  const [isSubmittingRepay, setIsSubmittingRepay] = useState(false);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -108,9 +110,11 @@ export default function Lent() {
     try {
       const data = await lentService.getById(id);
       setSelectedDetails(data);
+      return data;
     } catch (err) {
       console.error('Failed to load details', err);
       toast.error('Failed to load detailed lent status');
+      return null;
     }
   };
 
@@ -167,22 +171,45 @@ export default function Lent() {
 
   const handleRepaySubmit = async (e) => {
     e.preventDefault();
-    if (!selectedDetails) return;
+    const target = repayTarget || selectedDetails;
+    if (!target) {
+      toast.error('No lending profile selected for repayment');
+      return;
+    }
+
+    const lentId = target.lent_record?.id || target.id;
+    if (!lentId) {
+      toast.error('Unable to determine lending profile ID');
+      return;
+    }
+
+    const amountVal = parseFloat(repayData.amount);
+    if (isNaN(amountVal) || amountVal <= 0) {
+      toast.error('Please enter a valid repayment amount greater than 0');
+      return;
+    }
+
     try {
-      const amountVal = parseFloat(repayData.amount);
+      setIsSubmittingRepay(true);
       await lentService.repay(
-        selectedDetails.lent_record.id,
+        lentId,
         amountVal,
-        repayData.notes
+        repayData.notes?.trim() ? repayData.notes.trim() : undefined
       );
       toast.success('Repayment recorded successfully');
       setShowRepayModal(false);
+      setRepayTarget(null);
       setRepayData({ amount: '', notes: '' });
-      loadRecords();
-      fetchRecordDetails(selectedDetails.lent_record.id);
+      await loadRecords();
+      if (selectedDetails && (selectedDetails.lent_record?.id === lentId || selectedDetails.id === lentId)) {
+        await fetchRecordDetails(lentId);
+      }
     } catch (err) {
       console.error('Failed to record repayment', err);
-      toast.error(err.response?.data?.detail || 'Failed to record repayment');
+      const detail = err?.response?.data?.detail;
+      toast.error(typeof detail === 'string' && detail.trim() ? detail : 'Failed to record repayment');
+    } finally {
+      setIsSubmittingRepay(false);
     }
   };
 
@@ -294,15 +321,16 @@ export default function Lent() {
         {isActive && outstanding > 0 && (
           <div className="pt-1">
             <Button
+              type="button"
               onClick={() => {
-                if (onClose) onClose();
+                setRepayTarget(details);
                 setRepayData({
                   amount: String(outstanding.toFixed(2)),
                   notes: 'Full settlement repayment'
                 });
                 setShowRepayModal(true);
               }}
-              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs sm:text-sm font-bold py-3 h-11 rounded-xl text-white border-0 shadow-lg shadow-emerald-500/10 active:scale-98 transition-all flex items-center justify-center gap-1.5"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-xs sm:text-sm font-bold py-3 h-11 rounded-xl text-white border-0 shadow-sm active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Settle Outstanding (</span>
               <MoneyValue value={outstanding} className="text-white font-bold" />
@@ -543,14 +571,34 @@ export default function Lent() {
                         <div className="flex items-center gap-2">
                           {isActive && (
                             <Button
-                              onClick={(e) => {
+                              type="button"
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                setSelectedDetails(null);
-                                fetchRecordDetails(rec.id).then(() => setShowRepayModal(true));
+                                try {
+                                  let targetDetails = selectedDetails;
+                                  if (!targetDetails || targetDetails.lent_record?.id !== rec.id) {
+                                    targetDetails = await lentService.getById(rec.id);
+                                  }
+                                  setRepayTarget(targetDetails);
+                                  const outstandingVal = parseFloat(targetDetails?.outstanding_balance ?? rec.principal_amount ?? 0);
+                                  setRepayData({
+                                    amount: outstandingVal > 0 ? String(outstandingVal.toFixed(2)) : '',
+                                    notes: 'Part payment received'
+                                  });
+                                  setShowRepayModal(true);
+                                } catch (err) {
+                                  console.error('Failed to prepare repayment modal', err);
+                                  setRepayTarget({ lent_record: rec, outstanding_balance: rec.principal_amount });
+                                  setRepayData({
+                                    amount: String(parseFloat(rec.principal_amount).toFixed(2)),
+                                    notes: 'Part payment received'
+                                  });
+                                  setShowRepayModal(true);
+                                }
                               }}
                               variant="outline"
                               size="sm"
-                              className="h-8 px-3 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all"
+                              className="h-8 px-3 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all cursor-pointer"
                             >
                               Add Repayment
                             </Button>
@@ -886,14 +934,20 @@ export default function Lent() {
       {/* ADD REPAYMENT MODAL */}
       <Modal
         isOpen={showRepayModal}
-        onClose={() => setShowRepayModal(false)}
+        onClose={() => {
+          if (!isSubmittingRepay) {
+            setShowRepayModal(false);
+            setRepayTarget(null);
+            setRepayData({ amount: '', notes: '' });
+          }
+        }}
         title="Record Repayment Received"
       >
         <form onSubmit={handleRepaySubmit} className="space-y-4">
-          {selectedDetails && (
+          {(repayTarget || selectedDetails) && (
             <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-zinc-300 space-y-1">
-              <p>Borrower: <strong className="text-white">{selectedDetails.lent_record.borrower_name}</strong></p>
-              <p>Current Net Outstanding: <strong className="text-white">INR {parseFloat(selectedDetails.outstanding_balance).toLocaleString('en-IN')}</strong></p>
+              <p>Borrower: <strong className="text-white">{(repayTarget || selectedDetails).lent_record?.borrower_name || (repayTarget || selectedDetails).borrower_name}</strong></p>
+              <p>Current Net Outstanding: <strong className="text-white">INR {parseFloat((repayTarget || selectedDetails).outstanding_balance ?? (repayTarget || selectedDetails).principal_amount ?? 0).toLocaleString('en-IN')}</strong></p>
             </div>
           )}
           <div>
@@ -901,10 +955,12 @@ export default function Lent() {
             <Input
               type="number"
               step="0.01"
+              min="0.01"
               value={repayData.amount}
-              onChange={(e) => setRepayData({ ...repayData, amount: e.target.value })}
+              onChange={(e) => setRepayData((prev) => ({ ...prev, amount: e.target.value }))}
               placeholder="0.00"
               required
+              autoFocus
               className="bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
@@ -912,24 +968,30 @@ export default function Lent() {
             <label className="block text-sm font-semibold text-zinc-300 mb-2">Memo / Transaction Description</label>
             <Input
               value={repayData.notes}
-              onChange={(e) => setRepayData({ ...repayData, notes: e.target.value })}
+              onChange={(e) => setRepayData((prev) => ({ ...prev, notes: e.target.value }))}
               placeholder="e.g. Part payment received"
               className="bg-zinc-800 border-zinc-700 text-white"
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
+            <Button
+              type="submit"
+              isLoading={isSubmittingRepay}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer"
+            >
               Record Income Repayment
             </Button>
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmittingRepay}
               onClick={() => {
                 setShowRepayModal(false);
+                setRepayTarget(null);
                 setRepayData({ amount: '', notes: '' });
               }}
-              className="flex-1"
+              className="flex-1 cursor-pointer"
             >
               Cancel
             </Button>
