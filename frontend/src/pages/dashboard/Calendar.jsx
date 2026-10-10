@@ -122,7 +122,7 @@ export default function Calendar() {
       case 'bill':
         return 'bg-red-500/10 text-red-400 border-red-500/20';
       case 'loan':
-        return 'bg-violet-500/10 text-violet-400 border-violet-500/20';
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case 'subscription':
         return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
       case 'lent':
@@ -139,7 +139,7 @@ export default function Calendar() {
       case 'bill':
         return 'bg-red-500';
       case 'loan':
-        return 'bg-violet-500';
+        return 'bg-amber-500';
       case 'subscription':
         return 'bg-rose-500';
       case 'lent':
@@ -156,7 +156,7 @@ export default function Calendar() {
       case 'bill':
         return <FileText size={14} className="text-red-400" />;
       case 'loan':
-        return <Landmark size={14} className="text-violet-400" />;
+        return <Landmark size={14} className="text-amber-400" />;
       case 'subscription':
         return <Repeat size={14} className="text-rose-400" />;
       case 'lent':
@@ -261,7 +261,7 @@ export default function Calendar() {
             {/* Header Navigation controls */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-1.5">
-                <CalendarDays className="text-violet-500" size={20} />
+                <CalendarDays className="text-cyan-400" size={20} />
                 <h2 className="text-lg font-bold text-white">Monthly Schedule</h2>
               </div>
               <div className="flex items-center gap-4">
@@ -313,7 +313,7 @@ export default function Calendar() {
                       "min-h-20 p-1.5 rounded-lg border transition-all duration-200 flex flex-col justify-between cursor-pointer",
                       cell.isCurrentMonth
                         ? isSelected 
-                          ? "bg-violet-500/10 border-violet-500/40" 
+                          ? "bg-emerald-500/10 border-emerald-500/40" 
                           : "bg-zinc-900/40 border-white/2 hover:bg-white/5 hover:border-white/10"
                         : "bg-transparent border-transparent opacity-20 cursor-not-allowed"
                     )}
@@ -321,7 +321,7 @@ export default function Calendar() {
                     {/* Day Number */}
                     <span className={cn(
                       "text-xs font-bold",
-                      isSelected ? "text-violet-400" : cell.isCurrentMonth ? "text-zinc-300" : "text-zinc-600"
+                      isSelected ? "text-emerald-400" : cell.isCurrentMonth ? "text-zinc-300" : "text-zinc-600"
                     )}>
                       {cell.day}
                     </span>
@@ -414,7 +414,7 @@ export default function Calendar() {
                             {event.type === 'bill' && (
                               <Button 
                                 onClick={() => handlePayBill(event.linked_id)}
-                                className="w-full bg-linear-to-r from-violet-600 to-indigo-600 text-xs font-semibold py-1.5 h-8 border-0"
+                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 h-8 border-0"
                               >
                                 Mark as Paid
                               </Button>
@@ -422,7 +422,7 @@ export default function Calendar() {
                             {event.type === 'loan' && (
                               <Button 
                                 onClick={() => handlePayLoan(event.linked_id)}
-                                className="w-full bg-linear-to-r from-violet-600 to-indigo-600 text-xs font-semibold py-1.5 h-8 border-0"
+                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 h-8 border-0"
                               >
                                 Pay Monthly EMI
                               </Button>
@@ -430,7 +430,7 @@ export default function Calendar() {
                             {event.type === 'lent' && (
                               <Button 
                                 onClick={() => handleSettleLent(event.linked_id, event.amount)}
-                                className="w-full bg-linear-to-r from-emerald-600 to-teal-600 text-xs font-semibold py-1.5 h-8 border-0"
+                                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 h-8 border-0"
                               >
                                 Settle Repayment (INR {event.amount.toLocaleString('en-IN')})
                               </Button>

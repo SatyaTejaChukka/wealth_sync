@@ -41,7 +41,7 @@ function IncomeForm({ initialData, onSubmit, onCancel, submitText }) {
           required
           value={formData.amount}
           onChange={e => setFormData({ ...formData, amount: e.target.value })}
-          className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors"
+          className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
           placeholder="e.g. 50000"
         />
       </div>
@@ -51,7 +51,7 @@ function IncomeForm({ initialData, onSubmit, onCancel, submitText }) {
         <select
           value={formData.frequency}
           onChange={e => setFormData({ ...formData, frequency: e.target.value })}
-          className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors"
+          className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
         >
           <option value="monthly">Monthly</option>
           <option value="weekly">Weekly</option>
@@ -71,7 +71,7 @@ function IncomeForm({ initialData, onSubmit, onCancel, submitText }) {
             required
             value={formData.payday}
             onChange={e => setFormData({ ...formData, payday: e.target.value })}
-            className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500 transition-colors"
+            className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
             placeholder="e.g. 25"
           />
         </div>
@@ -82,7 +82,7 @@ function IncomeForm({ initialData, onSubmit, onCancel, submitText }) {
         <button
           type="button"
           onClick={() => setFormData({ ...formData, active: !formData.active })}
-          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.active ? 'bg-violet-500' : 'bg-zinc-800'}`}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.active ? 'bg-emerald-500' : 'bg-zinc-800'}`}
         >
           <span
             className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${formData.active ? 'translate-x-5' : 'translate-x-0'}`}
@@ -276,7 +276,7 @@ export default function Budget() {
        return (
         <div className="flex items-center justify-center h-[50vh]">
              <div className="flex items-center gap-3 text-zinc-400">
-                <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
+                <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
                 <span className="text-sm font-medium">Loading Budget...</span>
             </div>
         </div>
@@ -318,7 +318,7 @@ export default function Budget() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              <DollarSign className="text-violet-400" size={22} />
+              <DollarSign className="text-emerald-400" size={22} />
               Expected Income Sources
             </h2>
             <p className="text-xs text-zinc-400">Configure recurring deposits to feed your Autopilot budget allocation.</p>
@@ -351,11 +351,11 @@ export default function Budget() {
             {incomes.map((income) => (
               <Card
                 key={income.id}
-                className="relative group overflow-hidden bg-zinc-900/40 border-white/5 hover:border-violet-500/20 transition-all p-5 flex flex-col justify-between"
+                className="relative group overflow-hidden bg-zinc-900/40 border-white/5 hover:border-emerald-500/30 transition-all p-5 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
                       income.active 
                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
                         : 'bg-zinc-800 border-white/5 text-zinc-400'
@@ -432,7 +432,7 @@ export default function Budget() {
                             setIsModalOpen(true);
                           }
                         }}
-                        className="relative group overflow-hidden bg-zinc-900/40 border-white/5 hover:border-violet-500/20 transition-all cursor-pointer"
+                        className="relative group overflow-hidden bg-zinc-900/40 border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer"
                       >
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                              <CardTitle className="text-base">
@@ -483,7 +483,7 @@ export default function Budget() {
                                   </div>
                               </div>
                           </CardContent>
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-violet-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Card>
                   )})}
               </div>

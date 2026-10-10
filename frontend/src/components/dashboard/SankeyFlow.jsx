@@ -138,17 +138,17 @@ export default function SankeyFlow({ summary }) {
             {/* Gradients */}
             <linearGradient id="gradient-income-pool" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.45" />
             </linearGradient>
             <linearGradient id="gradient-pool-expense" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.4" />
+              <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.4" />
             </linearGradient>
             <linearGradient id="gradient-pool-savings" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.4" />
+              <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.4" />
             </linearGradient>
-            <filter id="glow-violet" x="-20%" y="-20%" width="140%" height="140%">
+            <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="3" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
@@ -170,7 +170,7 @@ export default function SankeyFlow({ summary }) {
                   "transition-all duration-200 cursor-pointer",
                   isHovered ? "opacity-100 filter brightness-125" : "opacity-60"
                 )}
-                style={isHovered ? { filter: 'url(#glow-violet)' } : {}}
+                style={isHovered ? { filter: 'url(#glow-cyan)' } : {}}
               />
             );
           })}
@@ -210,7 +210,7 @@ export default function SankeyFlow({ summary }) {
               width={nodeWidth}
               height={middleNodeHeight}
               rx={4}
-              className="fill-violet-500/85 stroke-violet-400/20 stroke-1"
+              className="fill-cyan-500/85 stroke-cyan-400/20 stroke-1"
             />
             <text
               x={colM + nodeWidth / 2}

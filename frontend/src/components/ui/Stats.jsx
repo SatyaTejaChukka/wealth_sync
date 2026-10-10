@@ -2,12 +2,13 @@ import React from 'react';
 
 export function StatsCard({ title, value, icon, trend, color = 'blue', description }) {
   const colorStyles = {
-    blue: { gradient: 'from-blue-500 to-blue-600' },
-    green: { gradient: 'from-green-500 to-emerald-600' },
-    red: { gradient: 'from-red-500 to-pink-600' },
-    purple: { gradient: 'from-purple-500 to-indigo-600' },
-    yellow: { gradient: 'from-yellow-500 to-orange-600' },
-    indigo: { gradient: 'from-indigo-500 to-purple-600' },
+    blue: { gradient: 'from-sky-500 to-blue-600' },
+    green: { gradient: 'from-emerald-500 to-teal-600' },
+    red: { gradient: 'from-rose-500 to-red-600' },
+    yellow: { gradient: 'from-amber-500 to-orange-600' },
+    cyan: { gradient: 'from-cyan-500 to-blue-600' },
+    amber: { gradient: 'from-amber-500 to-orange-600' },
+    slate: { gradient: 'from-slate-700 to-zinc-800' },
   };
 
   const style = colorStyles[color] || colorStyles.blue;

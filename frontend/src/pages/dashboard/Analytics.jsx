@@ -8,18 +8,18 @@ import { dashboardService } from '../../services/dashboard.js';
 
 // Curated high-contrast radiant palette for category distribution
 const CATEGORY_PALETTE = [
-  { bg: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.4)', text: 'text-violet-400' },
+  { bg: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', text: 'text-emerald-400' },
   { bg: '#06b6d4', glow: 'rgba(6, 182, 212, 0.4)', text: 'text-cyan-400' },
   { bg: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)', text: 'text-amber-400' },
   { bg: '#ec4899', glow: 'rgba(236, 72, 153, 0.4)', text: 'text-pink-400' },
-  { bg: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', text: 'text-emerald-400' },
+  { bg: '#0ea5e9', glow: 'rgba(14, 165, 233, 0.4)', text: 'text-sky-400' },
   { bg: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)', text: 'text-blue-400' },
   { bg: '#f97316', glow: 'rgba(249, 115, 22, 0.4)', text: 'text-orange-400' },
-  { bg: '#a855f7', glow: 'rgba(168, 85, 247, 0.4)', text: 'text-purple-400' },
+  { bg: '#0284c7', glow: 'rgba(2, 132, 199, 0.4)', text: 'text-sky-500' },
   { bg: '#14b8a6', glow: 'rgba(20, 184, 166, 0.4)', text: 'text-teal-400' },
   { bg: '#e11d48', glow: 'rgba(225, 29, 72, 0.4)', text: 'text-rose-400' },
   { bg: '#84cc16', glow: 'rgba(132, 204, 22, 0.4)', text: 'text-lime-400' },
-  { bg: '#6366f1', glow: 'rgba(99, 102, 241, 0.4)', text: 'text-indigo-400' },
+  { bg: '#64748b', glow: 'rgba(100, 116, 139, 0.4)', text: 'text-slate-400' },
 ];
 
 export default function Analytics() {
@@ -46,7 +46,7 @@ export default function Analytics() {
       return (
         <div className="flex items-center justify-center h-[50vh]">
              <div className="flex items-center gap-3 text-zinc-400">
-                <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
+                <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
                 <span className="text-sm font-medium">Loading Analytics...</span>
             </div>
         </div>
@@ -82,7 +82,7 @@ export default function Analytics() {
                 <CardTitle className="text-base sm:text-lg font-bold text-white">
                   Spending by Category
                 </CardTitle>
-                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
                   This Month
                 </span>
               </div>

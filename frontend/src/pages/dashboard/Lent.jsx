@@ -247,12 +247,12 @@ export default function Lent() {
         <div>
           <div className="flex justify-between text-xs text-zinc-400 mb-1.5">
             <span>Repayment Progress</span>
-            <span className="font-bold text-violet-400">{repaidPct}%</span>
+            <span className="font-bold text-emerald-400">{repaidPct}%</span>
           </div>
           <Progress
             value={repaidPct}
             className="h-2.5 bg-zinc-800"
-            indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
+            indicatorClassName="bg-linear-to-r from-emerald-500 to-teal-500"
           />
         </div>
 
@@ -281,8 +281,8 @@ export default function Lent() {
               className="text-sm sm:text-base font-bold text-white mt-1 font-display tabular-nums block"
             />
           </div>
-          <div className="p-3.5 rounded-xl bg-violet-500/10 border border-violet-500/20 card-specular">
-            <p className="text-violet-400 font-semibold text-[11px]">Net Outstanding</p>
+          <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 card-specular">
+            <p className="text-cyan-400 font-semibold text-[11px]">Net Outstanding</p>
             <MoneyValue
               value={outstanding}
               className="text-sm sm:text-base font-extrabold text-white mt-1 font-display tabular-nums block"
@@ -397,7 +397,7 @@ export default function Lent() {
           onClick={() => setActiveTab('active')}
           className={cn(
             "pb-3 text-sm font-semibold transition-all relative",
-            activeTab === 'active' ? "text-violet-400 border-b-2 border-violet-500" : "text-zinc-400 hover:text-white"
+            activeTab === 'active' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
           <div className="flex items-center gap-2">
@@ -409,7 +409,7 @@ export default function Lent() {
           onClick={() => setActiveTab('settled')}
           className={cn(
             "pb-3 text-sm font-semibold transition-all relative",
-            activeTab === 'settled' ? "text-violet-400 border-b-2 border-violet-500" : "text-zinc-400 hover:text-white"
+            activeTab === 'settled' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
           <div className="flex items-center gap-2">
@@ -433,7 +433,7 @@ export default function Lent() {
                 ₹{totalPrincipalLent.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-violet-600/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
               <HandCoins size={20} />
             </div>
           </Card>
@@ -470,24 +470,24 @@ export default function Lent() {
                     key={rec.id}
                     onClick={() => fetchRecordDetails(rec.id)}
                     className={cn(
-                      "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
-                      isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
+                      "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-cyan-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
+                      isSelected && "border-cyan-500/40 bg-cyan-500/5 shadow-lg shadow-cyan-500/5"
                     )}
                   >
                     <div className="flex flex-col gap-3">
                       {/* Top Header */}
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-300 font-bold text-xs shrink-0 mt-0.5 shadow-sm">
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-300 font-bold text-xs shrink-0 mt-0.5 shadow-sm">
                             {initials}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-bold text-white text-base sm:text-lg truncate">{rec.borrower_name}</h3>
                               <span className={cn(
-                                "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                                "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
                                 isActive
-                                  ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                                  ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                                   : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                               )}>
                                 {rec.status}
@@ -499,7 +499,7 @@ export default function Lent() {
                                 <span>{new Date(rec.lent_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                               </div>
                               <span className="text-zinc-600">•</span>
-                              <span className="text-violet-300 font-medium">
+                              <span className="text-cyan-300 font-medium">
                                 {rec.interest_rate_type === 'percentage' ? (
                                   `${parseFloat(rec.interest_rate_val)}% ${rec.interest_frequency}`
                                 ) : (
@@ -534,7 +534,7 @@ export default function Lent() {
                             e.stopPropagation();
                             fetchRecordDetails(rec.id);
                           }}
-                          className="text-xs font-semibold text-violet-400 hover:text-violet-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-violet-500/10 transition-colors"
+                          className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-cyan-500/10 transition-colors"
                         >
                           <span>View Ledger & Math</span>
                           <ChevronRight size={14} />
@@ -550,7 +550,7 @@ export default function Lent() {
                               }}
                               variant="outline"
                               size="sm"
-                              className="h-8 px-3 text-xs font-bold text-violet-400 border-violet-500/30 hover:bg-violet-500/10 active:scale-95 transition-all"
+                              className="h-8 px-3 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all"
                             >
                               Add Repayment
                             </Button>
@@ -619,9 +619,9 @@ export default function Lent() {
           subtitle={`${selectedDetails.lent_record.interest_type === 'compound' ? 'Compounding' : 'Simple'} Interest • ₹${parseFloat(selectedDetails.lent_record.principal_amount).toLocaleString('en-IN')}`}
           badge={
             <span className={cn(
-              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
               selectedDetails.lent_record.status === 'active'
-                ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                 : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
             )}>
               {selectedDetails.lent_record.status}
@@ -842,7 +842,7 @@ export default function Lent() {
                       autoFocus
                       className="bg-zinc-800 border-zinc-700 text-white"
                     />
-                    <Button type="button" className="bg-linear-to-r from-violet-600 to-indigo-600 px-3 cursor-pointer" onClick={handleCreateCategory}>
+                    <Button type="button" className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 cursor-pointer" onClick={handleCreateCategory}>
                       <Check size={16} />
                     </Button>
                     <Button type="button" variant="ghost" className="text-zinc-400 hover:text-white px-2 cursor-pointer" onClick={() => setIsCreatingCategory(false)}>
@@ -865,7 +865,7 @@ export default function Lent() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
+            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               Lend Principal
             </Button>
             <Button
@@ -891,7 +891,7 @@ export default function Lent() {
       >
         <form onSubmit={handleRepaySubmit} className="space-y-4">
           {selectedDetails && (
-            <div className="p-3.5 rounded-xl border border-violet-500/20 bg-violet-500/5 text-xs text-zinc-300 space-y-1">
+            <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-zinc-300 space-y-1">
               <p>Borrower: <strong className="text-white">{selectedDetails.lent_record.borrower_name}</strong></p>
               <p>Current Net Outstanding: <strong className="text-white">INR {parseFloat(selectedDetails.outstanding_balance).toLocaleString('en-IN')}</strong></p>
             </div>
@@ -919,7 +919,7 @@ export default function Lent() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
+            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               Record Income Repayment
             </Button>
             <Button

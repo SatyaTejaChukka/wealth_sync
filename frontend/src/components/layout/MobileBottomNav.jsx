@@ -79,9 +79,9 @@ export function MobileBottomNav() {
                     onClick={() => setMoreOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        'flex min-h-24 flex-col justify-between rounded-2xl border px-4 py-3 text-left transition-all',
+                        'flex min-h-24 flex-col justify-between rounded-xl border px-4 py-3 text-left transition-all',
                         isActive
-                          ? 'border-violet-400/45 bg-violet-500/12 text-white'
+                          ? 'border-emerald-500/40 bg-emerald-500/10 text-white'
                           : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/8'
                       )
                     }
@@ -90,9 +90,9 @@ export function MobileBottomNav() {
                       <>
                         <span
                           className={cn(
-                            'inline-flex h-10 w-10 items-center justify-center rounded-xl border',
+                            'inline-flex h-10 w-10 items-center justify-center rounded-lg border',
                             isActive
-                              ? 'border-violet-400/35 bg-violet-500/15 text-violet-200'
+                              ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
                               : 'border-white/10 bg-black/20 text-zinc-400'
                           )}
                         >
@@ -109,7 +109,7 @@ export function MobileBottomNav() {
             <button
               type="button"
               onClick={logout}
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-zinc-200 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-white"
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-zinc-200 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-white"
             >
               Sign Out
             </button>
@@ -128,16 +128,16 @@ export function MobileBottomNav() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[11px] font-medium transition-colors',
+                    'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors',
                     isActive
-                      ? 'bg-violet-500/14 text-white'
+                      ? 'bg-emerald-500/15 text-white'
                       : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-200'
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <Icon size={18} className={isActive ? 'text-violet-300' : undefined} />
+                    <Icon size={18} className={isActive ? 'text-emerald-400' : undefined} />
                     <span>{item.label}</span>
                   </>
                 )}
@@ -149,13 +149,13 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => setMoreOpen(true)}
             className={cn(
-              'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[11px] font-medium transition-colors',
+              'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors',
               moreActive
-                ? 'bg-violet-500/14 text-white'
+                ? 'bg-emerald-500/15 text-white'
                 : 'text-zinc-500 hover:bg-white/5 hover:text-zinc-200'
             )}
           >
-            <MoreHorizontal size={18} className={moreActive ? 'text-violet-300' : undefined} />
+            <MoreHorizontal size={18} className={moreActive ? 'text-emerald-400' : undefined} />
             <span>More</span>
           </button>
         </div>

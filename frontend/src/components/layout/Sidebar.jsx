@@ -37,19 +37,26 @@ export function Sidebar() {
   const { logout, user } = useAuth();
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center h-20 px-8 border-b border-white/5">
-        <Link to="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-all duration-300">
-            <TrendingUp className="text-white" size={20} />
+    <div className="flex flex-col h-full bg-[#09090b]">
+      {/* Brand Header */}
+      <div className="flex items-center h-16 px-5 border-b border-zinc-800/80 shrink-0">
+        <Link to="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700/80 flex items-center justify-center text-emerald-400 shadow-inner group-hover:border-zinc-600 transition-colors">
+            <TrendingUp size={18} />
           </div>
-          <span className="text-2xl font-bold bg-linear-to-r from-white to-white/70 bg-clip-text text-transparent tracking-tight">
-            WealthSync
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-white tracking-tight font-display">
+              WealthSync
+            </span>
+            <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800">
+              v2.4
+            </span>
+          </div>
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+      {/* Modern, Sleek Navigation with subtle scrollbar */}
+      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto modern-scrollbar">
         {navigation.map((item) => {
           const Icon = item.icon;
           return (
@@ -59,28 +66,25 @@ export function Sidebar() {
               end={item.href === '/dashboard'}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 group relative overflow-hidden",
+                  "flex items-center px-3 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors group relative",
                   isActive
-                    ? "text-white shadow-lg shadow-violet-500/10"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    ? "bg-zinc-800/80 border border-zinc-700/70 text-white font-semibold shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60 border border-transparent"
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && (
-                    <div className="absolute inset-0 bg-linear-to-r from-violet-600/20 to-indigo-600/20 border border-violet-500/20 rounded-xl" />
-                  )}
                   <Icon 
-                    size={20} 
+                    size={18} 
                     className={cn(
-                      "mr-3 transition-colors duration-300",
-                      isActive ? "text-violet-400" : "text-zinc-500 group-hover:text-violet-400"
+                      "mr-3 shrink-0 transition-colors",
+                      isActive ? "text-emerald-400" : "text-zinc-500 group-hover:text-zinc-300"
                     )} 
                   />
-                  <span className="relative z-10">{item.name}</span>
+                  <span className="relative z-10 truncate">{item.name}</span>
                   {isActive && (
-                    <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.5)]" />
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.4)] shrink-0" />
                   )}
                 </>
               )}
@@ -89,30 +93,31 @@ export function Sidebar() {
         })}
       </nav>
 
+      {/* User Footer Deck */}
       {user && (
-        <div className="p-4 border-t border-white/5">
-          <div className="mb-4 p-4 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm flex items-center gap-3">
+        <div className="p-3 border-t border-zinc-800/80 shrink-0">
+          <div className="mb-2 p-2.5 rounded-lg bg-zinc-900/70 border border-zinc-800/80 flex items-center gap-2.5">
             {user.avatar_url ? (
               <img 
                 src={`${API_ORIGIN}${user.avatar_url}`}
                 alt="Avatar"
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-8 h-8 rounded-md object-cover border border-zinc-700 shrink-0"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-sm font-bold text-white">
+              <div className="w-8 h-8 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-200 shrink-0">
                 {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mb-1">Signed in as</p>
-              <p className="text-sm font-semibold text-white truncate">{user.full_name || user.email}</p>
+              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">Account</p>
+              <p className="text-xs font-semibold text-white truncate">{user.full_name || user.email}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white/70 hover:text-white bg-white/5 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent rounded-xl transition-all duration-300 group"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-rose-300 bg-zinc-900/40 hover:bg-rose-500/10 hover:border-rose-500/20 border border-zinc-800/60 rounded-lg transition-colors group cursor-pointer"
           >
-            <LogOut size={18} className="group-hover:text-red-400 transition-colors" />
+            <LogOut size={14} className="group-hover:text-rose-400 transition-colors" />
             <span>Sign Out</span>
           </button>
         </div>

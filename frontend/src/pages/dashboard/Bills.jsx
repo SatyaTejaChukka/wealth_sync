@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Select } from '../../components/ui/Select.jsx';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog.jsx';
-import { Plus, Trash2, CheckCircle, CircleX, Calendar, Zap, Sparkles } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, CircleX, Calendar, Zap } from 'lucide-react';
 import { billService } from '../../services/bills.js';
 import { electricityService } from '../../services/electricity.js';
 import { categoryService } from '../../services/categories.js';
@@ -237,7 +237,7 @@ export default function Bills() {
               <Zap className="h-3.5 w-3.5 fill-amber-400/40" />
             </div>
             <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">Linked Electricity Connections</h2>
-            <span className="text-[10px] sm:text-xs bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-full font-medium">
+            <span className="text-[10px] sm:text-xs bg-amber-400/10 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-md font-medium">
               Live Auto-Fetch
             </span>
           </div>
@@ -252,7 +252,7 @@ export default function Bills() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-1">
                 <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <Zap className="h-4 w-4 text-amber-400 shrink-0" />
                   <span>Auto-fetch your real monthly electricity bill</span>
                 </h3>
                 <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
@@ -330,7 +330,7 @@ export default function Bills() {
                   </div>
                 )}
                 {bill.autopay_enabled ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <CheckCircle size={10} /> Autopay
                   </span>
                 ) : null}
@@ -436,7 +436,7 @@ export default function Bills() {
                     </td>
                     <td className="p-6">
                       {bill.autopay_enabled ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           <CheckCircle size={12} />
                           Enabled
                         </span>
@@ -549,7 +549,7 @@ export default function Bills() {
               id="autopay"
               checked={formData.autopay_enabled}
               onChange={(e) => setFormData({ ...formData, autopay_enabled: e.target.checked })}
-              className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-violet-600 focus:ring-violet-500 focus:ring-offset-0"
+              className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
             />
             <label htmlFor="autopay" className="text-sm text-zinc-300 cursor-pointer">
               Enable autopay (automatic tracking)
@@ -557,7 +557,7 @@ export default function Bills() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
+            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               {editingBill ? 'Update' : 'Create'} Bill
             </Button>
             <Button

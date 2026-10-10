@@ -105,7 +105,7 @@ export function SalaryRuleEnginePanel({ engine }) {
             label="Goals by Priority"
             amount={Number(allocation.goals || 0)}
             percent={splitPercentages.goals}
-            tone="bg-indigo-500"
+            tone="bg-cyan-500"
           />
           <RuleProgressBar
             label="Free Money"

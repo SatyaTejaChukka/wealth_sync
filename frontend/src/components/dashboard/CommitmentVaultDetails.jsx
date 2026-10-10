@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -12,7 +12,7 @@ import {
   Info,
   PiggyBank,
   Shield,
-  Sparkles,
+  Wallet,
   TrendingDown,
   X,
 } from 'lucide-react';
@@ -22,6 +22,13 @@ import { cn } from '../../lib/utils.js';
 export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'protected' }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Synchronize activeTab whenever the modal opens or the requested initialTab changes
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
 
   if (!isOpen || !vault) return null;
 
@@ -64,7 +71,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <Shield size={20} />
             </div>
             <div>
@@ -89,7 +96,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
             className={cn(
               'flex items-center gap-2 border-b-2 py-3 px-3 text-xs font-semibold transition-colors',
               activeTab === 'protected'
-                ? 'border-violet-500 text-violet-300'
+                ? 'border-amber-500 text-amber-300'
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             )}
           >
@@ -119,7 +126,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                 : 'border-transparent text-zinc-400 hover:text-zinc-200'
             )}
           >
-            <Sparkles size={14} />
+            <Wallet size={14} />
             <span>Free Equation</span>
           </button>
         </div>
@@ -129,16 +136,16 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {/* TAB 1: PROTECTED */}
           {activeTab === 'protected' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between bg-violet-500/10 border border-violet-500/20 rounded-xl p-3.5 card-specular">
+              <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 card-specular">
                 <div>
-                  <div className="text-xs text-violet-300 font-medium">Total Protected Obligations</div>
+                  <div className="text-xs text-amber-300 font-medium">Total Protected Obligations</div>
                   <MoneyValue
                     value={protectedVault.amount}
                     className="text-xl font-extrabold text-white font-display tabular-nums"
                   />
                 </div>
                 <div className="text-right">
-                  <span className="inline-flex items-center rounded-lg bg-violet-500/20 px-2.5 py-1 text-xs font-medium text-violet-200">
+                  <span className="inline-flex items-center rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-200">
                     {protectedVault.item_count} due before {basis.horizon_end}
                   </span>
                 </div>
@@ -159,10 +166,10 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                         <div className="flex items-center gap-2">
                           <span
                             className={cn(
-                              'text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md',
-                              item.source_type === 'BILL' && 'bg-violet-500/20 text-violet-300',
-                              item.source_type === 'LOAN' && 'bg-indigo-500/20 text-indigo-300',
-                              item.source_type === 'SUBSCRIPTION' && 'bg-fuchsia-500/20 text-fuchsia-300'
+                              'text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border',
+                              item.source_type === 'BILL' && 'bg-amber-500/15 text-amber-300 border-amber-500/20',
+                              item.source_type === 'LOAN' && 'bg-blue-500/15 text-blue-300 border-blue-500/20',
+                              item.source_type === 'SUBSCRIPTION' && 'bg-cyan-500/15 text-cyan-300 border-cyan-500/20'
                             )}
                           >
                             {item.source_type}
@@ -295,14 +302,14 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                       <MoneyValue value={vault.tracked_balance} className="font-display tabular-nums text-white" />
                     </div>
                   </div>
-                  <div className="flex justify-between items-center text-violet-400">
+                  <div className="flex justify-between items-center text-amber-400">
                     <span>- Protected Reserves (Bills, EMIs, Subs)</span>
-                    <div className="flex items-baseline gap-0.5 font-bold text-violet-400">
+                    <div className="flex items-baseline gap-0.5 font-bold text-amber-400">
                       <span>-</span>
                       <MoneyValue
                         value={protectedVault.amount}
-                        className="font-display tabular-nums text-violet-400"
-                        symbolClassName="text-[0.65em] font-medium text-violet-400/60 mr-0.5 select-none"
+                        className="font-display tabular-nums text-amber-400"
+                        symbolClassName="text-[0.65em] font-medium text-amber-400/60 mr-0.5 select-none"
                       />
                     </div>
                   </div>
@@ -381,7 +388,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {/* PERSISTENT FOOTER: BASIS & DATA QUALITY */}
           <div className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 space-y-2.5 text-xs text-zinc-400">
             <div className="flex items-center gap-2 font-semibold text-zinc-300">
-              <Info size={14} className="text-violet-400" />
+              <Info size={14} className="text-emerald-400" />
               <span>Why this calculation?</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-zinc-400">

@@ -10,7 +10,6 @@ import {
   PiggyBank,
   RefreshCw,
   Shield,
-  Sparkles,
   Wallet,
 } from 'lucide-react';
 import { CommitmentVaultDetails } from './CommitmentVaultDetails.jsx';
@@ -78,13 +77,13 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
     <>
       <div className="relative isolate overflow-hidden rounded-3xl border border-white/[0.08] bg-linear-to-b from-zinc-900/80 via-zinc-900/50 to-zinc-950/90 p-4 sm:p-6 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300">
         {/* Glow ambient background inside hero surface */}
-        <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-violet-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-amber-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-12 -bottom-12 h-56 w-56 rounded-full bg-cyan-600/10 blur-3xl" />
 
         {/* Top Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 shadow-sm shadow-violet-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 shadow-sm shadow-amber-500/20">
               <Shield size={18} />
             </div>
             <div>
@@ -105,20 +104,20 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           {/* Status Badge & Details Trigger */}
           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             {integrity_state === 'covered' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300 shadow-sm">
                 <CheckCircle2 size={12} />
                 Covered
               </span>
             )}
             {integrity_state === 'shortfall' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-300 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-300 shadow-sm">
                 <AlertTriangle size={12} />
                 <span>Shortfall:</span>
                 <MoneyValue value={shortfall_amount} symbolClassName="text-[0.65em] font-medium text-rose-300/60 mr-0.5 select-none" />
               </span>
             )}
             {integrity_state === 'incomplete' && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800/80 px-2.5 py-1 text-xs font-semibold text-zinc-300">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 px-2.5 py-1 text-xs font-semibold text-zinc-300">
                 <Info size={12} />
                 Needs Setup
               </span>
@@ -126,7 +125,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
 
             <button
               onClick={() => handleOpenTab('free')}
-              className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
             >
               <span>Explain</span>
               <ChevronRight size={13} />
@@ -149,7 +148,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             <div
               style={{ width: `${Math.max(protectedPct > 0 ? 3 : 0, protectedPct)}%` }}
               title={`Protected: ${protectedPct.toFixed(1)}%`}
-              className="h-full rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.6)] transition-all duration-500"
+              className="h-full rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] transition-all duration-500"
             />
             <div
               style={{ width: `${Math.max(futurePct > 0 ? 3 : 0, futurePct)}%` }}
@@ -173,7 +172,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
             className="w-full p-3.5 flex items-center justify-between hover:bg-white/[0.04] active:bg-white/[0.08] transition-colors cursor-pointer text-left"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0">
                 <Shield size={16} />
               </div>
               <div className="min-w-0">
@@ -222,7 +221,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shrink-0">
-                <Sparkles size={16} />
+                <Wallet size={16} />
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-white truncate">Free to Spend</p>
@@ -246,14 +245,14 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           <button
             type="button"
             onClick={() => handleOpenTab('protected')}
-            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-violet-500/40 hover:bg-violet-500/5 cursor-pointer shadow-sm card-specular"
+            className="group relative flex flex-col justify-between rounded-2xl border border-white/[0.08] bg-zinc-950/40 p-4 text-left transition-all duration-200 hover:border-amber-500/40 hover:bg-amber-500/5 cursor-pointer shadow-sm card-specular"
           >
             <div className="flex items-center justify-between w-full">
-              <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-300">
-                <Shield size={14} className="text-violet-400" />
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
+                <Shield size={14} className="text-amber-400" />
                 Protected
               </span>
-              <span className="text-[11px] text-zinc-500 group-hover:text-violet-300 transition-colors">
+              <span className="text-[11px] text-zinc-500 group-hover:text-amber-300 transition-colors">
                 View &rarr;
               </span>
             </div>
@@ -302,7 +301,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
           >
             <div className="flex items-center justify-between w-full">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
-                <Sparkles size={14} className="text-emerald-400" />
+                <Wallet size={14} className="text-emerald-400" />
                 Free
               </span>
               <span className="text-[11px] text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
@@ -325,6 +324,7 @@ export function CommitmentVault({ snapshot, onRefresh, isLoading }) {
 
       {/* Details Drawer / Modal */}
       <CommitmentVaultDetails
+        key={`${selectedTab}-${isDetailsOpen ? 'open' : 'closed'}`}
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         vault={

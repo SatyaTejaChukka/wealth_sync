@@ -17,7 +17,7 @@ function ProgressBar({ current, target }) {
     return (
         <div className="h-4 w-full bg-zinc-800 rounded-full overflow-hidden">
             <div 
-                className="h-full bg-linear-to-r from-violet-500 to-indigo-500 transition-all duration-500" 
+                className="h-full bg-linear-to-r from-cyan-500 to-blue-500 transition-all duration-500" 
                 style={{ width: `${percentage}%` }} 
             />
         </div>
@@ -188,7 +188,7 @@ export default function Goals() {
                 return (
 				  <Card 
                     key={goal.id} 
-                    className="group bg-zinc-900/40 border-white/5 hover:border-violet-500/20 transition-all cursor-pointer"
+                    className="group bg-zinc-900/40 border-white/5 hover:border-cyan-500/20 transition-all cursor-pointer"
                     role="button"
                     tabIndex={0}
                     onClick={() => {
@@ -235,12 +235,12 @@ export default function Goals() {
 							  <div>
 								  <p className="text-2xl font-bold text-white">{formatCurrency(goal.current_amount)}</p>
 								  <p className="text-xs text-zinc-500">of {formatCurrency(goal.target_amount)}</p>
-                                  <p className="text-[11px] text-indigo-300 mt-1">
+                                  <p className="text-[11px] text-cyan-300 mt-1">
                                       Committed: {formatGoalCurrency(safeCommittedMonthly)} / month
                                   </p>
 							  </div>
 							  <div className="text-right"> 
-								  <span className="text-sm font-bold text-violet-400">
+								  <span className="text-sm font-bold text-cyan-400">
 									  {Math.round((goal.current_amount / goal.target_amount) * 100)}%
 								  </span>
 							  </div>
@@ -333,12 +333,12 @@ export default function Goals() {
                     step="0.01" 
                     min="0.01"
                     autoFocus
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-hidden focus:border-violet-500 transition-colors"
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-hidden focus:border-cyan-500 transition-colors"
                 />
              </div>
              <div className="flex gap-3 pt-2">
                  <Button type="button" variant="ghost" className="flex-1" onClick={() => setAddingFundsTo(null)}>Cancel</Button>
-                 <Button type="submit" className="flex-1 bg-violet-600 hover:bg-violet-700">Contribute</Button>
+                 <Button type="submit" className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold">Contribute</Button>
              </div>
          </form>
        </Modal>
@@ -367,7 +367,7 @@ export default function Goals() {
 
                    <div className="rounded-xl border border-white/5 bg-black/20 px-4 py-3 flex items-center justify-between">
                        <span className="text-sm text-zinc-400">Committed per month</span>
-                       <span className="text-base font-semibold text-indigo-300 tabular-nums">
+                       <span className="text-base font-semibold text-cyan-300 tabular-nums">
                            {formatGoalCurrency(Number(viewingGoal.monthly_contribution ?? viewingGoal.monthlyContribution ?? 0))}
                        </span>
                    </div>
