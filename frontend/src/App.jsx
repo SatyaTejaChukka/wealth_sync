@@ -22,6 +22,7 @@ import Settings from './pages/dashboard/Settings.jsx';
 import Calendar from './pages/dashboard/Calendar.jsx';
 import { useAuth } from './lib/auth.jsx';
 import { MobileIntroSplash } from './components/mobile/MobileIntroSplash.jsx';
+import MobileGateway from './pages/MobileGateway.jsx';
 
 function RequireAuth({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,24 @@ function RequireGuest({ children }) {
   }
   if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return children;
+}
+
+function RootRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Native Mobile APK (Android / iOS via Capacitor)
+  if (Capacitor.isNativePlatform()) {
+    if (isLoading) {
+      return <MobileIntroSplash force duration={800} minDisplayTime={200} />;
+    }
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return <MobileGateway />;
+  }
+
+  // Web Browser Platform (Marketing landing page)
+  return <Landing />;
 }
 
 export default function App() {
@@ -69,7 +88,8 @@ export default function App() {
         <MobileIntroSplash onComplete={() => setIntroFinished(true)} />
       )}
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<RootRoute />} />
+        <Route path="/preview-gateway" element={<MobileGateway />} />
         <Route path="/preview-splash" element={<MobileIntroSplash force persist onComplete={() => {}} />} />
         <Route
         path="/login"
