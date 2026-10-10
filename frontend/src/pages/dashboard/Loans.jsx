@@ -204,7 +204,7 @@ export default function Loans() {
       return;
     }
     try {
-      const newCat = await categoryService.create({ name: normalizedName, color: '#8b5cf6' });
+      const newCat = await categoryService.create({ name: normalizedName, color: '#10b981' });
       setCategories((prev) => [...prev, newCat]);
       setFormData((prev) => ({ ...prev, category_id: newCat.id }));
       setNewCategoryName('');
@@ -301,14 +301,14 @@ export default function Loans() {
       <div>
         <div className="flex justify-between text-xs text-zinc-400 mb-1.5">
           <span>Principal Repaid</span>
-          <span className="font-bold text-violet-400">
+          <span className="font-bold text-emerald-400">
             {Math.round((parseFloat(details.total_principal_paid) / parseFloat(details.loan.principal_amount)) * 100)}%
           </span>
         </div>
         <Progress
           value={(parseFloat(details.total_principal_paid) / parseFloat(details.loan.principal_amount)) * 100}
           className="h-2.5 bg-zinc-800"
-          indicatorClassName="bg-linear-to-r from-violet-500 to-indigo-500"
+          indicatorClassName="bg-linear-to-r from-emerald-500 to-teal-500"
         />
       </div>
 
@@ -361,15 +361,15 @@ export default function Loans() {
               <Area
                 type="monotone"
                 dataKey="remaining_principal"
-                stroke="#8b5cf6"
+                stroke="#f59e0b"
                 fill="url(#colorLoanCurve)"
                 strokeWidth={2}
                 name="Remaining Balance"
               />
               <defs>
                 <linearGradient id="colorLoanCurve" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02}/>
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.02}/>
                 </linearGradient>
               </defs>
             </AreaChart>
@@ -392,7 +392,7 @@ export default function Loans() {
               if (onClose) onClose();
               handlePayEMI(details.loan.id);
             }}
-            className="w-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-sm font-bold py-3 h-11 rounded-xl text-white shadow-lg shadow-violet-500/20 active:scale-98 transition-all"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-sm font-bold py-3 h-11 rounded-xl text-white shadow-md active:scale-98 transition-all"
           >
             Pay Next EMI (₹{parseFloat(details.loan.emi_amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
           </Button>
@@ -428,7 +428,7 @@ export default function Loans() {
           onClick={() => setActiveTab('my-loans')}
           className={cn(
             "pb-3 text-sm font-semibold transition-all relative",
-            activeTab === 'my-loans' ? "text-violet-400 border-b-2 border-violet-500" : "text-zinc-400 hover:text-white"
+            activeTab === 'my-loans' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
           <div className="flex items-center gap-2">
@@ -440,7 +440,7 @@ export default function Loans() {
           onClick={() => setActiveTab('calculator')}
           className={cn(
             "pb-3 text-sm font-semibold transition-all relative",
-            activeTab === 'calculator' ? "text-violet-400 border-b-2 border-violet-500" : "text-zinc-400 hover:text-white"
+            activeTab === 'calculator' ? "text-emerald-400 border-b-2 border-emerald-500" : "text-zinc-400 hover:text-white"
           )}
         >
           <div className="flex items-center gap-2">
@@ -464,7 +464,7 @@ export default function Loans() {
                     ₹{monthlyEMIs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-violet-600/10 flex items-center justify-center border border-violet-500/20 text-violet-400">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
                   <TrendingDown size={20} />
                 </div>
               </Card>
@@ -475,7 +475,7 @@ export default function Loans() {
                     ₹{totalPrincipal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-400">
                   <Landmark size={20} />
                 </div>
               </Card>
@@ -506,24 +506,24 @@ export default function Loans() {
                       key={loan.id}
                       onClick={() => fetchLoanDetails(loan.id)}
                       className={cn(
-                        "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-violet-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
-                        isSelected && "border-violet-500/40 bg-violet-500/5 shadow-lg shadow-violet-500/5"
+                        "p-4 sm:p-5 bg-zinc-900/30 border-white/5 hover:border-emerald-500/30 transition-all duration-300 cursor-pointer backdrop-blur-md relative overflow-hidden card-specular",
+                        isSelected && "border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/5"
                       )}
                     >
                       <div className="flex flex-col gap-3">
                         {/* Top Header */}
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex items-start gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0 mt-0.5">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
                               <Landmark size={20} />
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="font-bold text-white text-base sm:text-lg truncate">{loan.name}</h3>
                                 <span className={cn(
-                                  "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                                  "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
                                   isActive
-                                    ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                                     : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                 )}>
                                   {loan.status}
@@ -585,7 +585,7 @@ export default function Loans() {
                               e.stopPropagation();
                               fetchLoanDetails(loan.id);
                             }}
-                            className="text-xs font-semibold text-violet-400 hover:text-violet-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-violet-500/10 transition-colors"
+                            className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 py-1 px-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
                           >
                             <span>View Amortization</span>
                             <ChevronRight size={14} />
@@ -597,10 +597,10 @@ export default function Loans() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handlePayEMI(loan.id);
-                               }}
+                                }}
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-3 text-xs font-bold text-violet-400 border-violet-500/30 hover:bg-violet-500/10 active:scale-95 transition-all"
+                                className="h-8 px-3 text-xs font-bold text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 active:scale-95 transition-all"
                               >
                                 Pay EMI
                               </Button>
@@ -668,9 +668,9 @@ export default function Loans() {
           subtitle={`${selectedLoanDetails.loan.interest_type === 'simple' ? 'Simple (Flat)' : 'Reducing'} Interest • ₹${parseFloat(selectedLoanDetails.loan.emi_amount).toLocaleString('en-IN')}/mo`}
           badge={
             <span className={cn(
-              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
               selectedLoanDetails.loan.status === 'active'
-                ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                 : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
             )}>
               {selectedLoanDetails.loan.status}
@@ -704,7 +704,7 @@ export default function Loans() {
               <div>
                 <label className="flex justify-between text-sm text-zinc-300 mb-2">
                   <span>Principal Amount (INR)</span>
-                  <span className="font-bold text-violet-400">
+                  <span className="font-bold text-emerald-400">
                     {parseFloat(calcData.principal).toLocaleString('en-IN')}
                   </span>
                 </label>
@@ -722,14 +722,14 @@ export default function Loans() {
                   step="50000"
                   value={calcData.principal}
                   onChange={(e) => setCalcData({ ...calcData, principal: e.target.value })}
-                  className="w-full mt-3 accent-violet-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
+                  className="w-full mt-3 accent-emerald-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm text-zinc-300 mb-2">
                   <span>Interest Rate (% per annum)</span>
-                  <span className="font-bold text-violet-400">{calcData.rate}%</span>
+                  <span className="font-bold text-emerald-400">{calcData.rate}%</span>
                 </label>
                 <Input
                   type="number"
@@ -746,14 +746,14 @@ export default function Loans() {
                   step="0.1"
                   value={calcData.rate}
                   onChange={(e) => setCalcData({ ...calcData, rate: e.target.value })}
-                  className="w-full mt-3 accent-violet-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
+                  className="w-full mt-3 accent-emerald-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm text-zinc-300 mb-2">
                   <span>Tenure (Months)</span>
-                  <span className="font-bold text-violet-400">{calcData.tenure} months</span>
+                  <span className="font-bold text-emerald-400">{calcData.tenure} months</span>
                 </label>
                 <Input
                   type="number"
@@ -769,7 +769,7 @@ export default function Loans() {
                   step="6"
                   value={calcData.tenure}
                   onChange={(e) => setCalcData({ ...calcData, tenure: e.target.value })}
-                  className="w-full mt-3 accent-violet-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
+                  className="w-full mt-3 accent-emerald-500 bg-zinc-800 h-1 rounded-lg cursor-pointer"
                 />
               </div>
 
@@ -796,9 +796,9 @@ export default function Loans() {
                   <div className="space-y-4">
                     <h3 className="font-bold text-white text-lg border-b border-white/5 pb-3">Projection Summary</h3>
                     
-                    <div className="p-5 rounded-2xl bg-linear-to-tr from-violet-600 to-indigo-600 shadow-xl shadow-violet-500/10 text-white flex flex-col items-center justify-center text-center">
-                      <p className="text-xs uppercase tracking-wider font-semibold text-white/70">Calculated Monthly EMI</p>
-                      <h2 className="text-2xl sm:text-3xl font-black mt-1 font-display tabular-nums tracking-tight">₹{calcResult.emi.toLocaleString('en-IN')}</h2>
+                    <div className="p-5 rounded-2xl bg-zinc-950 border border-white/10 shadow-xl text-white flex flex-col items-center justify-center text-center">
+                      <p className="text-xs uppercase tracking-wider font-semibold text-zinc-400">Calculated Monthly EMI</p>
+                      <h2 className="text-2xl sm:text-3xl font-black mt-1 font-display tabular-nums tracking-tight text-white">₹{calcResult.emi.toLocaleString('en-IN')}</h2>
                     </div>
 
                     <div className="divide-y divide-white/5 text-sm">
@@ -808,7 +808,7 @@ export default function Loans() {
                       </div>
                       <div className="py-2.5 flex justify-between">
                         <span className="text-zinc-400">Total Interest Payable</span>
-                        <span className="font-semibold text-violet-400">INR {calcResult.totalInterest.toLocaleString('en-IN')}</span>
+                        <span className="font-semibold text-amber-400">INR {calcResult.totalInterest.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="py-2.5 flex justify-between">
                         <span className="text-zinc-400">Total Sum Payable</span>
@@ -837,7 +837,7 @@ export default function Loans() {
                       setShowAddModal(true);
                     }}
                     variant="outline"
-                    className="w-full border-violet-500/20 text-violet-400 hover:bg-violet-500/10 mt-4"
+                    className="w-full border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 mt-4"
                   >
                     Save As My Loan Profile
                   </Button>
@@ -861,8 +861,8 @@ export default function Loans() {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          <Cell fill="#8b5cf6" />
-                          <Cell fill="#6366f1" />
+                          <Cell fill="#10b981" />
+                          <Cell fill="#f59e0b" />
                         </Pie>
                       </RechartsPieChart>
                     </ResponsiveContainer>
@@ -875,11 +875,11 @@ export default function Loans() {
                   </div>
                   <div className="flex gap-6 justify-center text-xs text-zinc-300 mt-4 w-full border-t border-white/5 pt-4">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-violet-500" />
+                      <span className="w-3 h-3 rounded-full bg-emerald-500" />
                       <span>Principal Amount</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-indigo-500" />
+                      <span className="w-3 h-3 rounded-full bg-amber-500" />
                       <span>Interest Outflow</span>
                     </div>
                   </div>
@@ -1068,7 +1068,7 @@ export default function Loans() {
                   autoFocus
                   className="bg-zinc-800 border-zinc-700 text-white"
                 />
-                <Button type="button" className="bg-linear-to-r from-violet-600 to-indigo-600 px-3" onClick={handleCreateCategory}>
+                <Button type="button" className="bg-emerald-600 hover:bg-emerald-500 text-white px-3" onClick={handleCreateCategory}>
                   <Check size={16} />
                 </Button>
                 <Button type="button" variant="ghost" className="text-zinc-400 hover:text-white px-2" onClick={() => setIsCreatingCategory(false)}>
@@ -1085,7 +1085,7 @@ export default function Loans() {
               id="autopay"
               checked={formData.autopay_enabled}
               onChange={(e) => setFormData({ ...formData, autopay_enabled: e.target.checked })}
-              className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-violet-600 focus:ring-violet-500 focus:ring-offset-0"
+              className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0"
             />
             <label htmlFor="autopay" className="text-sm text-zinc-300 cursor-pointer">
               Enable Auto-generation of upcoming EMI transactions (3 days before due day)
@@ -1093,7 +1093,7 @@ export default function Loans() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
+            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               Create Loan Profile
             </Button>
             <Button

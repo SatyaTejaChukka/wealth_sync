@@ -110,7 +110,7 @@ export function TransactionForm({ onSubmit, onCancel, initialData = {} }) {
         return;
       }
       try {
-          const newCat = await categoryService.create({ name: normalizedName, color: '#8b5cf6' });
+          const newCat = await categoryService.create({ name: normalizedName, color: '#10b981' });
           setCategories((prev) => [...prev, newCat]);
           setFormData((prev) => ({ ...prev, category_id: newCat.id }));
           setNewCategoryName('');

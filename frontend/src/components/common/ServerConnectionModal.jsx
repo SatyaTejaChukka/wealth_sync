@@ -83,7 +83,7 @@ export function ServerConnectionModal({ isOpen, onClose }) {
 
         <div>
           <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
-            <Server size={14} className="text-violet-400" />
+            <Server size={14} className="text-emerald-400" />
             Backend API Base URL
           </label>
           <Input
@@ -103,9 +103,9 @@ export function ServerConnectionModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={() => setUrl(defaultUrl)}
-              className="text-[11px] px-2.5 py-1 rounded-md bg-violet-500/20 hover:bg-violet-500/30 text-violet-300 border border-violet-500/30 flex items-center gap-1 cursor-pointer"
+              className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 cursor-pointer"
             >
-              <Server size={12} className="text-violet-400" />
+              <Server size={12} className="text-emerald-400" />
               Configured Server ({defaultUrl})
             </button>
           )}
@@ -162,7 +162,7 @@ export function ServerConnectionModal({ isOpen, onClose }) {
           <Button
             type="button"
             onClick={handleSave}
-            className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600 font-semibold"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
           >
             Save & Connect
           </Button>

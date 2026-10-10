@@ -11,16 +11,17 @@ export function StatsCard({
   trend, 
   trendValue, 
   icon, 
-  color = "violet",
+  color = "emerald",
   className,
   isHero = false,
 }) {
   const colors = {
-    violet: "from-violet-600 to-indigo-600 shadow-violet-500/20",
-    emerald: "from-emerald-500 to-teal-500 shadow-emerald-500/20",
-    rose: "from-rose-500 to-pink-500 shadow-rose-500/20",
-    amber: "from-amber-500 to-orange-500 shadow-amber-500/20",
-    blue: "from-blue-500 to-cyan-500 shadow-blue-500/20",
+    emerald: "from-emerald-600 to-teal-600 shadow-emerald-500/20",
+    rose: "from-rose-600 to-red-600 shadow-rose-500/20",
+    amber: "from-amber-600 to-orange-600 shadow-amber-500/20",
+    blue: "from-sky-600 to-cyan-600 shadow-cyan-500/20",
+    cyan: "from-cyan-600 to-blue-600 shadow-cyan-500/20",
+    slate: "from-slate-700 to-zinc-800 shadow-zinc-900/40",
   };
 
   return (

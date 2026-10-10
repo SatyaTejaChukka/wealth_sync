@@ -71,7 +71,7 @@ export function BudgetRuleForm({
           return;
       }
       try {
-          const newCat = await categoryService.create({ name: normalizedName, color: '#8b5cf6' }); // Default color
+          const newCat = await categoryService.create({ name: normalizedName, color: '#10b981' }); // Default color
           setCategories((prev) => [...prev, newCat]);
           setFormData((prev) => ({ ...prev, category_id: newCat.id }));
           setNewCategoryName('');

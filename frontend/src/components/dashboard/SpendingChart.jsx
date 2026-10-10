@@ -41,7 +41,7 @@ export function SpendingChart({ data = [], range = 'week', onRangeChange }) {
           </p>
         </div>
         
-        {/* Sleek Apple-style Segmented Pill Control */}
+        {/* Sleek Segmented Control */}
         <div className="inline-flex items-center p-0.5 rounded-lg bg-black/40 border border-white/[0.08] shadow-inner shrink-0">
           <button
             type="button"
@@ -49,7 +49,7 @@ export function SpendingChart({ data = [], range = 'week', onRangeChange }) {
             className={cn(
               "px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200",
               range === 'week'
-                ? "bg-violet-600 text-white shadow-sm shadow-violet-600/40"
+                ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/40"
                 : "text-zinc-400 hover:text-white"
             )}
           >
@@ -61,7 +61,7 @@ export function SpendingChart({ data = [], range = 'week', onRangeChange }) {
             className={cn(
               "px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200",
               range === 'month'
-                ? "bg-violet-600 text-white shadow-sm shadow-violet-600/40"
+                ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/40"
                 : "text-zinc-400 hover:text-white"
             )}
           >
@@ -85,8 +85,8 @@ export function SpendingChart({ data = [], range = 'week', onRangeChange }) {
               >
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" strokeOpacity={0.6} />
@@ -117,12 +117,12 @@ export function SpendingChart({ data = [], range = 'week', onRangeChange }) {
                   itemStyle={{ color: '#ffffff', fontSize: '12px', fontWeight: 600 }}
                   formatter={(value) => [formatCurrency(value), 'Spend']}
                   labelStyle={{ color: '#a1a1aa', fontSize: '11px', marginBottom: '2px', fontWeight: 500 }}
-                  cursor={{ stroke: '#8b5cf6', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '3 3' }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="amount" 
-                  stroke="#8b5cf6" 
+                  stroke="#10b981" 
                   strokeWidth={2.5}
                   fill="url(#colorAmount)" 
                   animationDuration={800}

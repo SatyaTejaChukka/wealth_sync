@@ -28,8 +28,8 @@ const TYPE_CONFIG = {
   loan: {
     icon: Landmark,
     label: 'Loan EMI',
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10 border-violet-500/20',
+    color: 'text-rose-400',
+    bg: 'bg-rose-500/10 border-rose-500/20',
   },
   subscription: {
     icon: Repeat,
@@ -120,10 +120,10 @@ export function UpcomingCommitmentsCard({ maxItems = 4, className }) {
     <Card className={cn("bg-zinc-900/40 border-white/5 backdrop-blur-xl relative overflow-hidden card-specular", className)}>
       <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm font-semibold flex items-center gap-2 text-white">
-          <CalendarDays size={16} className="text-violet-400" />
+          <CalendarDays size={16} className="text-cyan-400" />
           Upcoming Commitments
         </CardTitle>
-        <span className="text-[11px] font-medium text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">
+        <span className="text-[11px] font-medium text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
           Next 14 Days
         </span>
       </CardHeader>

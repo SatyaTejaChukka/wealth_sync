@@ -89,7 +89,7 @@ export function CategoryMaintenanceModal({
         {isLoading ? (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 text-zinc-400">
-              <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-violet-600 animate-spin" />
+              <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
               <span className="text-sm font-medium">Loading categories...</span>
             </div>
           </div>

@@ -62,7 +62,7 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow accent */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -127,7 +127,7 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }) {
                   placeholder="name@example.com"
                   required
                   autoFocus
-                  className="pl-10 bg-zinc-800/60 border-zinc-700/60 text-white placeholder:text-zinc-500 focus:border-violet-500/50"
+                  className="pl-10 bg-zinc-800/60 border-zinc-700/60 text-white placeholder:text-zinc-500 focus:border-emerald-500/50"
                 />
               </div>
             </div>

@@ -160,7 +160,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 Mark all read
               </button>
@@ -179,14 +179,14 @@ export function NotificationBell() {
                   key={notification.id}
                   onClick={() => handleMarkAsRead(notification)}
                   className={`p-4 border-b border-zinc-800 hover:bg-white/5 cursor-pointer transition-colors ${
-                    !notification.read ? 'bg-violet-500/5' : ''
+                    !notification.read ? 'bg-emerald-500/5' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="text-sm font-medium text-white">{notification.title}</h4>
-                        {!notification.read && <span className="w-2 h-2 bg-violet-500 rounded-full" />}
+                        {!notification.read && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
                       </div>
                       <p className="text-xs text-zinc-400 mb-1">{notification.message}</p>
                       <span className="text-[10px] text-zinc-500">{formatDate(notification.created_at)}</span>

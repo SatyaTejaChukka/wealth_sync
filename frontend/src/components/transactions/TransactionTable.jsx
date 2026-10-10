@@ -42,7 +42,7 @@ function TransactionStatusBadge({ status, compact = false }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full font-medium border',
+        'inline-flex items-center gap-1 rounded-md font-medium border',
         compact ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-0.5 text-xs',
         meta.className
       )}
@@ -544,7 +544,7 @@ export function TransactionTable({ refreshTrigger }) {
               <div className="flex flex-wrap justify-end gap-2">
                 <div
                   className={cn(
-                    'px-3 py-1 rounded-full text-xs font-bold border',
+                    'px-2.5 py-1 rounded-md text-xs font-bold border',
                     viewingTransaction.type === 'INCOME'
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
@@ -571,7 +571,7 @@ export function TransactionTable({ refreshTrigger }) {
             {viewingTransaction.category && (
               <div className="flex items-center gap-3 p-4 bg-zinc-900/30 rounded-lg border border-white/5">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white"
+                  className="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white"
                   style={{ backgroundColor: viewingTransaction.category.color }}
                 >
                   {viewingTransaction.category.name[0]}
@@ -585,7 +585,7 @@ export function TransactionTable({ refreshTrigger }) {
 
             {linkedViewingSource && (
               <div className="flex items-center gap-3 p-4 bg-zinc-900/30 rounded-lg border border-white/5">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-zinc-200">
+                <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center font-bold text-zinc-200">
                   {linkedViewingSource.type[0]}
                 </div>
                 <div>

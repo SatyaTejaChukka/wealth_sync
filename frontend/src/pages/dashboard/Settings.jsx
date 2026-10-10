@@ -125,10 +125,10 @@ export default function Settings() {
                           <img 
                             src={`${API_ORIGIN}${profileData.avatar_url}`}
                             alt="Avatar"
-                            className="w-20 h-20 rounded-full object-cover shadow-xl shadow-violet-500/20"
+                            className="w-20 h-20 rounded-2xl object-cover border border-white/10 shadow-lg"
                           />
                         ) : (
-                          <div className="w-20 h-20 rounded-full bg-linear-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-2xl font-bold text-white shadow-xl shadow-violet-500/20">
+                          <div className="w-20 h-20 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
                             {profileData.full_name?.[0]?.toUpperCase() || profileData.email?.[0]?.toUpperCase() || 'U'}
                           </div>
                         )}

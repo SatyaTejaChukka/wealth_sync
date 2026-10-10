@@ -31,7 +31,7 @@ export function ActionCenter({ actions = [], onAction }) {
     <Card className="bg-zinc-900/40 border-white/5 h-full card-specular">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
-          <TriangleAlert size={18} className="text-violet-300" />
+          <TriangleAlert size={18} className="text-amber-400" />
           Priority Action Center
         </CardTitle>
       </CardHeader>

@@ -71,7 +71,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <Shield size={20} />
             </div>
             <div>
@@ -302,14 +302,14 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
                       <MoneyValue value={vault.tracked_balance} className="font-display tabular-nums text-white" />
                     </div>
                   </div>
-                  <div className="flex justify-between items-center text-violet-400">
+                  <div className="flex justify-between items-center text-amber-400">
                     <span>- Protected Reserves (Bills, EMIs, Subs)</span>
-                    <div className="flex items-baseline gap-0.5 font-bold text-violet-400">
+                    <div className="flex items-baseline gap-0.5 font-bold text-amber-400">
                       <span>-</span>
                       <MoneyValue
                         value={protectedVault.amount}
-                        className="font-display tabular-nums text-violet-400"
-                        symbolClassName="text-[0.65em] font-medium text-violet-400/60 mr-0.5 select-none"
+                        className="font-display tabular-nums text-amber-400"
+                        symbolClassName="text-[0.65em] font-medium text-amber-400/60 mr-0.5 select-none"
                       />
                     </div>
                   </div>
@@ -388,7 +388,7 @@ export function CommitmentVaultDetails({ isOpen, onClose, vault, initialTab = 'p
           {/* PERSISTENT FOOTER: BASIS & DATA QUALITY */}
           <div className="rounded-xl border border-white/5 bg-zinc-900/30 p-4 space-y-2.5 text-xs text-zinc-400">
             <div className="flex items-center gap-2 font-semibold text-zinc-300">
-              <Info size={14} className="text-violet-400" />
+              <Info size={14} className="text-emerald-400" />
               <span>Why this calculation?</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-zinc-400">

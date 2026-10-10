@@ -27,7 +27,7 @@ export function PaymentTimelineFeed({
           <span className="font-semibold uppercase tracking-wider text-[11px] text-zinc-500">
             Payment Schedule ({items.length} Months)
           </span>
-          <span className="text-[11px] text-violet-400 font-medium">
+          <span className="text-[11px] text-cyan-400 font-medium">
             {paidMonthsCount} of {items.length} Paid
           </span>
         </div>
@@ -45,7 +45,7 @@ export function PaymentTimelineFeed({
                   isPaid
                     ? "bg-emerald-500/[0.03] border-emerald-500/20 text-zinc-300"
                     : isCurrent
-                    ? "bg-violet-500/[0.07] border-violet-500/40 text-white ring-1 ring-violet-500/30"
+                    ? "bg-amber-500/[0.07] border-amber-500/40 text-white ring-1 ring-amber-500/30"
                     : "bg-white/[0.02] border-white/5 text-zinc-400"
                 )}
               >
@@ -57,7 +57,7 @@ export function PaymentTimelineFeed({
                         Month {row.month}
                       </span>
                     ) : isCurrent ? (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-violet-300">
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-300">
                         <Clock size={13} className="animate-pulse" />
                         Month {row.month} (Next Due)
                       </span>

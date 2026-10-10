@@ -75,12 +75,12 @@ function CategoryBreakdown({ categories = [], totalExpenses = 0 }) {
     : categories.reduce((acc, c) => acc + Number(c.value || 0), 0);
 
   const colors = [
-    'from-violet-500 to-indigo-500',
-    'from-cyan-500 to-blue-500',
     'from-emerald-500 to-teal-500',
+    'from-cyan-500 to-blue-500',
     'from-amber-500 to-orange-500',
-    'from-rose-500 to-pink-500',
-    'from-purple-500 to-violet-500',
+    'from-sky-500 to-blue-600',
+    'from-rose-500 to-red-500',
+    'from-slate-600 to-zinc-700',
   ];
 
   return (
@@ -196,7 +196,7 @@ export default function Dashboard() {
     return (
       <div className="flex h-[55vh] items-center justify-center">
         <div className="flex items-center gap-3 text-zinc-400">
-          <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-violet-500 animate-spin" />
+          <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
           <span className="text-sm font-medium">Synchronizing Financial Dashboard...</span>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               {/* User Avatar Initial Capsule */}
-              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-600/30 via-indigo-600/20 to-cyan-500/20 border border-violet-500/30 text-white font-extrabold text-base sm:text-lg shadow-lg shadow-violet-500/10 shrink-0">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-zinc-800/90 border border-white/10 text-white font-extrabold text-base sm:text-lg shadow-md shrink-0">
                 {(user?.full_name || user?.email || 'User')[0].toUpperCase()}
               </div>
 
@@ -249,7 +249,7 @@ export default function Dashboard() {
           {/* Climate & Autopilot Status Capsule */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             {weatherState && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/80 px-3 py-1 text-xs font-semibold text-zinc-300 backdrop-blur-md self-start shrink-0">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-zinc-900/80 px-2.5 py-1 text-xs font-semibold text-zinc-300 backdrop-blur-md self-start shrink-0">
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full animate-pulse',
@@ -284,7 +284,7 @@ export default function Dashboard() {
             onClick={() => navigate('/dashboard/transactions')}
             variant="light"
             icon={<Plus size={16} />}
-            className="h-9 px-4 text-xs font-bold shadow-lg shadow-violet-500/15"
+            className="h-9 px-4 text-xs font-bold shadow-sm shadow-emerald-500/10"
           >
             Add Transaction
           </Button>
@@ -298,7 +298,7 @@ export default function Dashboard() {
             onClick={() => navigate('/dashboard/transactions')}
             variant="gradient"
             icon={<Plus size={16} />}
-            className="flex-1 h-10 text-xs font-bold shadow-lg shadow-violet-500/20 active:scale-98 transition-all"
+            className="flex-1 h-10 text-xs font-bold shadow-sm shadow-emerald-500/20 active:scale-98 transition-all"
           >
             Add Transaction
           </Button>
@@ -326,8 +326,8 @@ export default function Dashboard() {
           trend={summary.balance_change >= 0 ? 'up' : 'down'}
           trendValue={`${Math.abs(summary.balance_change).toFixed(1)}%`}
           icon={Wallet}
-          color="violet"
-          className="col-span-2 sm:col-span-1 shadow-lg shadow-violet-500/5 hover-glow-violet"
+          color="emerald"
+          className="col-span-2 sm:col-span-1 shadow-lg shadow-emerald-500/5 hover-glow-emerald"
           isHero
         />
 
@@ -357,7 +357,7 @@ export default function Dashboard() {
               <p className="font-bold uppercase tracking-[0.08em] text-[9px] sm:text-[11px] text-zinc-400">
                 Health Score
               </p>
-              <div className="p-1.5 rounded-[10px] bg-linear-to-br from-indigo-500 to-cyan-500 shadow-lg shadow-cyan-500/20 text-white border border-white/5">
+              <div className="p-1.5 rounded-[10px] bg-linear-to-br from-sky-500 to-cyan-500 shadow-lg shadow-cyan-500/20 text-white border border-white/5">
                 <HeartPulse size={14} />
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function Dashboard() {
                 {healthScoreVal}
               </span>
               <span className="text-xs text-zinc-500 font-semibold">/ 100</span>
-              <span className="ml-auto inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full border bg-violet-500/10 text-violet-300 border-violet-500/20">
+              <span className="ml-auto inline-flex px-2 py-0.5 text-[10px] font-bold rounded-md border bg-cyan-500/10 text-cyan-300 border-cyan-500/20">
                 {healthScoreLabel}
               </span>
             </div>
@@ -405,7 +405,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 pt-5 pb-3 gap-3 border-b border-white/5">
               <div>
                 <h3 className="font-bold text-white text-sm uppercase tracking-wider flex items-center gap-2">
-                  <BarChart3 size={16} className="text-violet-400" />
+                  <BarChart3 size={16} className="text-emerald-400" />
                   Financial Flow & Analytics
                 </h3>
                 <p className="text-xs text-zinc-500 mt-0.5">Interactive visibility into how money moves</p>
@@ -419,7 +419,7 @@ export default function Dashboard() {
                   className={cn(
                     'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
                     activeChart === 'sankey'
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'
                   )}
                 >
@@ -433,7 +433,7 @@ export default function Dashboard() {
                   className={cn(
                     'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
                     activeChart === 'trend'
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'
                   )}
                 >
@@ -447,7 +447,7 @@ export default function Dashboard() {
                   className={cn(
                     'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap',
                     activeChart === 'categories'
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-white'
                   )}
                 >

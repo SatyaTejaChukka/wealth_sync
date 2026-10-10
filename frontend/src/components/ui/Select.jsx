@@ -63,7 +63,7 @@ export function Select({ options, value, onChange = () => {}, placeholder = "Sel
           "w-full flex items-center justify-between rounded-xl px-4 transition-all duration-200 border",
           sizes[size] || sizes.default,
           isOpen 
-            ? "border-violet-500 ring-1 ring-violet-500/50 bg-zinc-900/80" 
+            ? "border-emerald-500/50 ring-1 ring-emerald-500/30 bg-zinc-900/80" 
             : "border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 hover:bg-zinc-900/50",
           "text-white"
         )}
@@ -84,7 +84,7 @@ export function Select({ options, value, onChange = () => {}, placeholder = "Sel
                     <input
                         ref={searchInputRef}
                         type="text"
-                        className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-hidden focus:border-violet-500/50 transition-colors placeholder:text-zinc-600"
+                        className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-hidden focus:border-emerald-500/50 transition-colors placeholder:text-zinc-600"
                         placeholder="Search..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -107,12 +107,12 @@ export function Select({ options, value, onChange = () => {}, placeholder = "Sel
                       className={cn(
                         "w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors",
                         option.value === value 
-                          ? "bg-violet-600/10 text-violet-400 font-medium" 
+                          ? "bg-emerald-500/10 text-emerald-400 font-medium" 
                           : "text-zinc-300 hover:bg-white/5 hover:text-white"
                       )}
                     >
                       <span>{option.label}</span>
-                      {option.value === value && <Check size={14} className="text-violet-400" />}
+                      {option.value === value && <Check size={14} className="text-emerald-400" />}
                     </button>
                   ))
               )}

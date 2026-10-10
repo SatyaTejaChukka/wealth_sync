@@ -197,19 +197,19 @@ export default function Subscriptions() {
                   <h3 className="font-medium text-white">{sub.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={cn(
-                      "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border",
+                      "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border",
                       sub.billing_cycle === 'monthly'
                         ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                        : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                        : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                     )}>
                       {sub.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'}
                     </span>
                     {sub.is_active ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         <CheckCircle size={10} /> Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
                         Inactive
                       </span>
                     )}
@@ -326,10 +326,10 @@ export default function Subscriptions() {
                     <td className="p-6 text-white font-bold">{formatCurrency(sub.amount)}</td>
                     <td className="p-6">
                       <span className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                        "inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium border",
                         sub.billing_cycle === 'monthly'
                           ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                          : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                          : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                       )}>
                         {sub.billing_cycle === 'monthly' ? 'Monthly' : 'Yearly'}
                       </span>
@@ -373,12 +373,12 @@ export default function Subscriptions() {
                           disabled={togglingSubscriptionId === sub.id}
                         />
                         {sub.is_active ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             <CheckCircle size={12} />
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
                             Inactive
                           </span>
                         )}
@@ -488,7 +488,7 @@ export default function Subscriptions() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1 bg-linear-to-r from-violet-600 to-indigo-600">
+            <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">
               {editingSub ? 'Update' : 'Create'} Subscription
             </Button>
             <Button

@@ -18,8 +18,8 @@ const allocationTones = {
   },
   goals: {
     label: 'Goals',
-    bar: 'bg-indigo-500',
-    panel: 'border-indigo-500/20 bg-indigo-500/8',
+    bar: 'bg-cyan-500',
+    panel: 'border-cyan-500/20 bg-cyan-500/8',
   },
   free_money_budget: {
     label: 'Free Money',
@@ -113,10 +113,10 @@ export const MoneyFlow = ({ stats }) => {
         </div>
 
         <div className={cn(
-          "inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors",
+          "inline-flex items-center gap-2 self-start rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors",
           income > 0 ? "border-white/10 bg-black/25 text-zinc-400" : "border-amber-500/20 bg-amber-500/10 text-amber-300 shadow-lg shadow-amber-500/5"
         )}>
-          <Gauge size={12} className={income > 0 ? "text-violet-300" : "text-amber-300"} />
+          <Gauge size={12} className={income > 0 ? "text-cyan-300" : "text-amber-300"} />
           <span>{income > 0 ? `Priority: ${titleCase(planningStatus.primary_constraint || planningStatus.health_state)}` : "Missing Plan Basis"}</span>
         </div>
 
@@ -134,7 +134,7 @@ export const MoneyFlow = ({ stats }) => {
             ) : (
               <button 
                 onClick={() => navigate('/dashboard/budget')}
-                className="mt-1 text-sm font-bold text-violet-400 hover:text-violet-300 flex items-center gap-1 transition-colors"
+                className="mt-1 text-sm font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
               >
                 Add Income Source +
               </button>
