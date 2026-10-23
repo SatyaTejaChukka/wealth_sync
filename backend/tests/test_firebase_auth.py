@@ -177,3 +177,63 @@ async def test_firebase_token_rejected_when_project_id_unconfigured():
         result = verify_firebase_id_token("dummy.jwt.token")
         assert result is None
 
+
+@pytest.mark.asyncio
+async def test_firebase_user_profile_sync(client: AsyncClient, db_session):
+    """
+    Test that when an existing Firebase user subsequently logs in with a full_name or avatar,
+    their profile is updated in PostgreSQL.
+    """
+    user = User(
+        id="fb-profile-sync-user",
+        firebase_uid="fb-profile-sync-user",
+        email="sync_user@example.com",
+        full_name=None,
+        avatar_url=None,
+        is_active=True
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    updated_payload = {
+        "uid": "fb-profile-sync-user",
+        "sub": "fb-profile-sync-user",
+        "iss": "https://securetoken.google.com/test-project",
+        "email": "sync_user@example.com",
+        "name": "Updated Profile Name",
+        "picture": "https://example.com/new-pic.jpg"
+    }
+    dummy_token = make_dummy_firebase_token(updated_payload)
+
+    with patch("app.api.deps.verify_firebase_id_token", return_value=updated_payload):
+        response = await client.get("/api/v1/auth/me", headers={
+            "Authorization": f"Bearer {dummy_token}"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["full_name"] == "Updated Profile Name"
+        assert data["avatar_url"] == "https://example.com/new-pic.jpg"
+
+    await db_session.refresh(user)
+    assert user.full_name == "Updated Profile Name"
+    assert user.avatar_url == "https://example.com/new-pic.jpg"
+
+
+@pytest.mark.asyncio
+async def test_firebase_expired_google_token_rejected(client: AsyncClient):
+    """
+    Test that an invalid or expired Google Firebase token returns 401 Unauthorized immediately.
+    """
+    mock_payload = {
+        "iss": "https://securetoken.google.com/wealthsync-app-b24c1",
+        "sub": "some-expired-user"
+    }
+    dummy_token = make_dummy_firebase_token(mock_payload)
+
+    with patch("app.api.deps.verify_firebase_id_token", return_value=None):
+        response = await client.get("/api/v1/auth/me", headers={
+            "Authorization": f"Bearer {dummy_token}"
+        })
+        assert response.status_code == 401
+
+

@@ -20,6 +20,54 @@ let googleSignInInitPromise = null;
 
 const CANONICAL_GOOGLE_WEB_CLIENT_ID = '773706147941-0c3jjgq0kdjgkntpsqi3f483ceghul34.apps.googleusercontent.com';
 
+export function mapAuthError(err) {
+  const code = err?.code || '';
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (code === 'auth/email-already-in-use') {
+    return 'An account with this email already exists. Please sign in instead.';
+  }
+  if (code === 'auth/weak-password') {
+    return 'Password is too weak. Please use at least 8 characters with numbers or symbols.';
+  }
+  if (code === 'auth/invalid-email') {
+    return 'Please enter a valid email address.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Access temporarily disabled due to multiple failed login attempts. You can reset your password or try again later.';
+  }
+  if (code === 'auth/popup-closed-by-user') {
+    return 'Google sign-in was cancelled.';
+  }
+  if (code === 'auth/popup-blocked') {
+    return 'Sign-in pop-up was blocked by your browser. Please allow pop-ups for this site and try again.';
+  }
+  if (code === 'auth/cancelled-popup-request') {
+    return 'Sign-in was cancelled. Please try again.';
+  }
+  if (code === 'auth/account-exists-with-different-credential') {
+    return 'An account already exists with this email using a different sign-in method. Please sign in with your email and password.';
+  }
+  if (code === 'auth/user-disabled') {
+    return 'This account has been disabled. Please contact support.';
+  }
+  if (code === 'auth/operation-not-allowed') {
+    return 'This sign-in method is not enabled. Please contact support.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Network error. Please check your internet connection.';
+  }
+
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object') {
+    return detail.message || detail.error || JSON.stringify(detail);
+  }
+
+  return err?.message || 'Authentication failed. Please check your credentials.';
+}
+
 async function ensureGoogleSignInInitialized() {
   const clientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || CANONICAL_GOOGLE_WEB_CLIENT_ID;
 
@@ -47,11 +95,11 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [firebaseUser, setFirebaseUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => (isFirebaseConfigured && Boolean(auth)) || Boolean(localStorage.getItem('token')));
 
   // Sync token whenever Firebase refreshes it in the background
   useEffect(() => {
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth) {
       // If Firebase is not yet configured, initialize from local token
       const localToken = localStorage.getItem('token');
       if (localToken) {
@@ -62,8 +110,6 @@ export function AuthProvider({ children }) {
             setUser(null);
           })
           .finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
       }
       return;
     }
@@ -253,7 +299,7 @@ export function AuthProvider({ children }) {
 
   // 3. Email + Password Registration
   const signupWithEmail = useCallback(async (email, password, fullName = '', redirectTo = '/dashboard') => {
-    if (isFirebaseConfigured) {
+    if (isFirebaseConfigured && auth) {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       if (fullName && fullName.trim()) {
         try {

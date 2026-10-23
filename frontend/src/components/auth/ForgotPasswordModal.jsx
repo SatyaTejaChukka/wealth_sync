@@ -41,6 +41,8 @@ export function ForgotPasswordModal({ isOpen, onClose, initialEmail = '' }) {
         setError('Invalid email address format.');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Too many requests. Please wait a few minutes and try again.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
       } else {
         setError(err.message || 'Failed to send password reset email. Please try again.');
       }

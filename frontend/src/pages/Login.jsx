@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../lib/auth.jsx';
+import { useAuth, mapAuthError } from '../lib/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
@@ -10,23 +10,6 @@ import { ServerConnectionModal } from '../components/common/ServerConnectionModa
 import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, Server } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
-
-function mapAuthError(err) {
-  const code = err?.code || '';
-  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-    return 'Incorrect email or password. Please try again.';
-  }
-  if (code === 'auth/too-many-requests') {
-    return 'Access temporarily disabled due to multiple failed login attempts. You can reset your password or try again later.';
-  }
-  if (code === 'auth/popup-closed-by-user') {
-    return 'Google sign-in was cancelled.';
-  }
-  if (code === 'auth/network-request-failed') {
-    return 'Network error. Please check your internet connection.';
-  }
-  return err?.response?.data?.detail || err?.message || 'Login failed. Please check your credentials.';
-}
 
 export default function Login() {
   const [email, setEmail] = useState('');

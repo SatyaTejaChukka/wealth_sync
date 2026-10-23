@@ -2,7 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDafP0uJrTnbW6d0GwrdgGBYzqXPvibusg',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'wealthsync-app-b24c1.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'wealthsync-app-b24c1',
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'wealthsync-app-b24c1.firebasestorage.app',

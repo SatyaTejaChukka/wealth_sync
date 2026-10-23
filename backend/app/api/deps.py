@@ -35,13 +35,13 @@ _cached_google_certs = {}
 _google_certs_expiry = 0
 _firebase_initialized = False
 
-def get_google_public_certs() -> dict:
+def get_google_public_certs(force_refresh: bool = False) -> dict:
     """
     Fetch and cache Google's public certificates for Firebase ID token verification.
     """
     global _cached_google_certs, _google_certs_expiry
     now = time.time()
-    if _cached_google_certs and now < _google_certs_expiry:
+    if not force_refresh and _cached_google_certs and now < _google_certs_expiry:
         return _cached_google_certs
 
     try:
@@ -66,7 +66,7 @@ def get_google_public_certs() -> dict:
 
 def get_firebase_app():
     """
-    Safely initialize or retrieve Firebase Admin app singleton.
+    Safely initialize or retrieve Firebase Admin app singleton if credentials are provided.
     """
     global _firebase_initialized
     if firebase_admin is None:
@@ -83,8 +83,6 @@ def get_firebase_app():
         return firebase_admin.get_app()
 
     cred_path = settings.FIREBASE_CREDENTIALS_PATH
-    project_id = settings.FIREBASE_PROJECT_ID
-
     if cred_path and Path(cred_path).exists():
         try:
             cred = credentials.Certificate(cred_path)
@@ -93,14 +91,6 @@ def get_firebase_app():
             return app
         except Exception as e:
             logger.warning("Failed to initialize Firebase with credentials file %s: %s", cred_path, e)
-
-    if project_id:
-        try:
-            app = firebase_admin.initialize_app(options={"projectId": project_id})
-            _firebase_initialized = True
-            return app
-        except Exception as e:
-            logger.warning("Failed to initialize Firebase with projectId %s: %s", project_id, e)
 
     if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
         try:
@@ -132,7 +122,7 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
         except Exception as e:
             logger.debug("Firebase Admin SDK verification failed, trying public certs: %s", e)
 
-    # 2. Verify using Google's public certificates with strict audience and issuer validation
+    # 2. Verify using Google's public certificates with strict audience, issuer validation, and clock leeway
     try:
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
@@ -140,7 +130,7 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
             certs = get_google_public_certs()
             cert = certs.get(kid)
             if not cert:
-                certs = get_google_public_certs()
+                certs = get_google_public_certs(force_refresh=True)
                 cert = certs.get(kid)
 
             if cert:
@@ -149,7 +139,8 @@ def verify_firebase_id_token(token: str) -> Optional[dict]:
                     cert,
                     algorithms=["RS256"],
                     audience=project_id,
-                    issuer=f"https://securetoken.google.com/{project_id}"
+                    issuer=f"https://securetoken.google.com/{project_id}",
+                    options={"leeway": 60}
                 )
                 return decoded
     except Exception as e:
@@ -170,20 +161,28 @@ async def get_current_user(
 
     # 1. Determine if token looks like a Firebase token or local HMAC JWT
     is_firebase_candidate = False
+    is_google_issuer = False
     try:
         unverified_header = jwt.get_unverified_header(token)
         unverified_claims = jwt.get_unverified_claims(token)
         alg = unverified_header.get("alg")
         iss = unverified_claims.get("iss", "")
-        if alg == "RS256" or (isinstance(iss, str) and iss.startswith("https://securetoken.google.com/")):
+        if isinstance(iss, str) and iss.startswith("https://securetoken.google.com/"):
+            is_google_issuer = True
+            is_firebase_candidate = True
+        elif alg == "RS256":
             is_firebase_candidate = True
     except Exception:
         # Invalid format; will fail in subsequent decode steps
         pass
 
-    # 2. Try Firebase ID Token verification if candidate or Firebase is configured
+    # 2. Try Firebase ID Token verification if candidate
     if is_firebase_candidate:
         firebase_payload = verify_firebase_id_token(token)
+        if not firebase_payload and is_google_issuer:
+            # Token is unambiguously a Google Firebase token that failed verification/expired
+            raise credentials_exception
+
         if firebase_payload:
             uid = firebase_payload.get("uid") or firebase_payload.get("sub")
             email = firebase_payload.get("email")
@@ -242,27 +241,56 @@ async def get_current_user(
                     await db.commit()
                     await db.refresh(user)
 
-            # JIT Provisioning if user does not exist at all
-            if not user and email:
-                user = User(
-                    id=uid,
-                    firebase_uid=uid,
-                    email=email,
-                    full_name=name,
-                    avatar_url=picture,
-                    is_active=True,
-                    password_hash=None
-                )
-                db.add(user)
-                await db.commit()
-                await db.refresh(user)
+            # Synchronize profile info if user was found but full_name or avatar was missing
+            if user:
+                needs_sync = False
+                if name and not user.full_name:
+                    user.full_name = name
+                    needs_sync = True
+                if picture and not user.avatar_url:
+                    user.avatar_url = picture
+                    needs_sync = True
+                if needs_sync:
+                    await db.commit()
+                    await db.refresh(user)
 
-                # Seed default budget categories for the new user
+            # JIT Provisioning if user does not exist at all (concurrency-safe)
+            if not user and email:
                 try:
-                    from app.api.v1.auth import seed_default_categories
-                    await seed_default_categories(db, user.id)
+                    user = User(
+                        id=uid,
+                        firebase_uid=uid,
+                        email=email,
+                        full_name=name,
+                        avatar_url=picture,
+                        is_active=True,
+                        password_hash=None
+                    )
+                    db.add(user)
+                    await db.commit()
+                    await db.refresh(user)
+
+                    # Seed default budget categories for the new user
+                    try:
+                        from app.api.v1.auth import seed_default_categories
+                        await seed_default_categories(db, user.id)
+                    except Exception as e:
+                        logger.error("Failed to seed default categories for JIT user %s: %s", user.id, e)
                 except Exception as e:
-                    logger.error("Failed to seed default categories for JIT user %s: %s", user.id, e)
+                    await db.rollback()
+                    # Concurrent request already provisioned or linked user; refetch
+                    result = await db.execute(
+                        select(User).filter(
+                            (User.firebase_uid == uid) | (User.id == uid) | (User.email == email)
+                        )
+                    )
+                    user = result.scalars().first()
+                    if not user:
+                        logger.error("Failed to provision JIT user %s: %s", uid, e)
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Failed to initialize user session.",
+                        )
 
             if not user or not user.is_active:
                 raise HTTPException(status_code=400, detail="Inactive user")

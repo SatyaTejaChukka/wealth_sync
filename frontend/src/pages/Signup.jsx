@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth.jsx';
+import { useAuth, mapAuthError } from '../lib/auth.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
@@ -9,23 +9,6 @@ import { ServerConnectionModal } from '../components/common/ServerConnectionModa
 import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, User, Server } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
-
-function mapAuthError(err) {
-  const code = err?.code || '';
-  if (code === 'auth/email-already-in-use') {
-    return 'An account with this email already exists. Please sign in instead.';
-  }
-  if (code === 'auth/weak-password') {
-    return 'Password is too weak. Please use at least 8 characters with numbers or symbols.';
-  }
-  if (code === 'auth/invalid-email') {
-    return 'Please enter a valid email address.';
-  }
-  if (code === 'auth/popup-closed-by-user') {
-    return 'Google sign-up was cancelled.';
-  }
-  return err?.response?.data?.detail || err?.message || 'Registration failed. Please try again.';
-}
 
 export default function Signup() {
   const [fullName, setFullName] = useState('');
