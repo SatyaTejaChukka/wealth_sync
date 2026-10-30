@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 import {
   BarChart3,
+  CalendarDays,
   FileText,
   LayoutDashboard,
   MoreHorizontal,
@@ -30,6 +33,7 @@ const moreItems = [
   { label: 'Subscriptions', href: '/dashboard/subscriptions', icon: Repeat },
   { label: 'Loans', href: '/dashboard/loans', icon: Landmark },
   { label: 'Lent Tracker', href: '/dashboard/lent', icon: HandCoins },
+  { label: 'Calendar', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
@@ -38,6 +42,29 @@ export function MobileBottomNav() {
   const location = useLocation();
   const { logout } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let isMounted = true;
+    let showHandle = null;
+    let hideHandle = null;
+
+    Keyboard.addListener('keyboardWillShow', () => {
+      if (isMounted) setKeyboardVisible(true);
+    }).then((h) => { showHandle = h; });
+
+    Keyboard.addListener('keyboardWillHide', () => {
+      if (isMounted) setKeyboardVisible(false);
+    }).then((h) => { hideHandle = h; });
+
+    return () => {
+      isMounted = false;
+      if (showHandle) showHandle.remove();
+      if (hideHandle) hideHandle.remove();
+    };
+  }, []);
 
   const moreActive = useMemo(
     () => moreItems.some((item) => location.pathname.startsWith(item.href)),
@@ -51,6 +78,7 @@ export function MobileBottomNav() {
           <button
             type="button"
             aria-label="Close more menu"
+            data-modal-close-btn="true"
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setMoreOpen(false)}
           />
@@ -62,8 +90,9 @@ export function MobileBottomNav() {
               </div>
               <button
                 type="button"
+                data-modal-close-btn="true"
                 onClick={() => setMoreOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
               >
                 <X size={18} />
               </button>
@@ -117,7 +146,12 @@ export function MobileBottomNav() {
         </div>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-[#09090b]/92 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)] pt-2 backdrop-blur-xl md:hidden">
+      <nav
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-[#09090b]/92 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)] pt-2 backdrop-blur-xl md:hidden transition-transform duration-200 select-none",
+          keyboardVisible && "translate-y-full pointer-events-none"
+        )}
+      >
         <div className="mx-auto flex max-w-md items-end justify-between gap-1">
           {primaryItems.map((item) => {
             const Icon = item.icon;
