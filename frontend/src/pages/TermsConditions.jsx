@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scale, ArrowLeft, AlertCircle, FileCheck, ShieldAlert, Cpu } from 'lucide-react';
+import { Scale, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button.jsx';
 
 export default function TermsConditions() {
@@ -28,7 +28,7 @@ export default function TermsConditions() {
               variant="outline"
               size="sm"
               onClick={() => navigate('/login')}
-              className="h-8 px-3 text-xs font-semibold border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+              className="h-8 px-3 text-xs font-semibold border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 rounded-md"
             >
               Sign In
             </Button>
@@ -41,13 +41,13 @@ export default function TermsConditions() {
         <div className="border-b border-zinc-800 pb-8 mb-8">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono font-medium text-amber-400 mb-4">
             <Scale className="w-3.5 h-3.5" />
-            <span>SOFTWARE SERVICE & USAGE AGREEMENT</span>
+            <span>SOFTWARE USAGE AND SERVICE TERMS</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             Terms and Conditions
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-2">
-            Effective Date: October 1, 2026. Version 2.4.0
+            Effective Date: October 2026. Version 2.4.0
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export default function TermsConditions() {
               Non-Custodial Nature of Software
             </h2>
             <p>
-              WealthSync is a computational personal finance management and cash flow ledger application. WealthSync is not a chartered bank, investment adviser, depository institution, or money services business. At no point does WealthSync take custody of, hold, transmit, or control user funds. All monetary values displayed represent user-inputted or aggregator-mirrored bookkeeping entries.
+              WealthSync is a computational personal finance tracking and bookkeeping software application. WealthSync is not a bank, investment advisor, broker-dealer, credit bureau, money services business, or payment processor. At no time does WealthSync hold, transmit, receive, or take custody of user funds. All financial numbers and metrics shown in the application represent manual entries and calculations for personal planning.
             </p>
           </section>
 
@@ -67,19 +67,19 @@ export default function TermsConditions() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">02.</span>
-              No Financial or Investment Advice
+              No Financial, Investment, or Legal Advice
             </h2>
             <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 flex items-start gap-3">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-bold text-xs text-white">Mathematical Simulation Disclaimer</p>
                 <p className="text-[11px] text-zinc-300">
-                  Calculations including Safe-to-Spend Runway, Loan Amortization, and Goal Allocation Rules are strictly deterministic mathematical formulas executed against user-supplied variables. WealthSync does not offer investment, tax, legal, or wealth management advice.
+                  Calculations such as Safe-to-Spend runway, budget utilization percentages, loan amortization schedules, and financial health scores are automated mathematical models based on user-entered values. They do not constitute financial, investment, tax, or legal advice.
                 </p>
               </div>
             </div>
             <p>
-              You are advised to consult a qualified Certified Financial Planner (CFP) or legal counsel before making substantial financial, borrowing, or investment decisions.
+              You should consult a licensed financial advisor, accountant, or legal professional before making substantial financial or debt commitments.
             </p>
           </section>
 
@@ -87,15 +87,15 @@ export default function TermsConditions() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">03.</span>
-              Account Security & User Obligations
+              Bookkeeping Only (No Real-World Fund Transfers)
             </h2>
             <p>
-              When establishing an account on WealthSync, you agree to:
+              WealthSync operates as an internal ledger for organizing personal cash flow. You acknowledge and understand that:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
-              <li>Maintain the confidentiality of your authentication credentials and session tokens.</li>
-              <li>Notify the system administrators immediately upon identifying any unauthorized access.</li>
-              <li>Refrain from attempting denial-of-service exploits, unauthorized reverse proxying, or circumvention of rate-limiting protections.</li>
+              <li>Marking an obligation, utility bill, loan EMI, or subscription as paid updates internal bookkeeping records only. It does not execute a bank wire, card charge, or real-world monetary settlement.</li>
+              <li>You are solely responsible for initiating and verifying any actual bill or debt payments through your external banking, utility, or payment provider.</li>
+              <li>WealthSync is not responsible for utility disconnections, late payment penalties, interest accruals, or third-party fee assessments.</li>
             </ul>
           </section>
 
@@ -103,15 +103,15 @@ export default function TermsConditions() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">04.</span>
-              Utility Bill and External Verification Services
+              User Responsibilities and Accuracy of Inputs
             </h2>
             <p>
-              WealthSync includes modules enabling connectivity with public utility portals and payment gateways. You acknowledge that:
+              When using WealthSync, you agree to:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
-              <li>Utility bill data availability is contingent upon uptime of state electricity DISCOM servers.</li>
-              <li>WealthSync is not responsible for utility disconnections, tariff penalty assessments, or billing discrepancies instituted by power boards.</li>
-              <li>Marking a bill as paid within WealthSync updates internal ledger records and does not execute real-world fund transfers unless explicitly dispatched through external banking gateways.</li>
+              <li>Maintain the confidentiality of your account login credentials and session tokens.</li>
+              <li>Ensure the accuracy of the income, transaction, loan, and obligation data you enter, recognizing that all analytical outputs depend on your inputted data.</li>
+              <li>Refrain from attempting to disrupt application services, bypass rate limits, probe vulnerabilities, or engage in unauthorized access to other user accounts.</li>
             </ul>
           </section>
 
@@ -119,10 +119,10 @@ export default function TermsConditions() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">05.</span>
-              Limitation of Liability
+              Service Availability and Changes
             </h2>
             <p>
-              To the maximum extent permitted by applicable law, WealthSync and its maintainers shall not be liable for any indirect, punitive, incidental, special, or consequential damages resulting from ledger calculation errors, service interruptions, or reliance on projected cash runway figures.
+              WealthSync is provided on an "as is" and "as available" basis. While we strive to maintain high service availability, access may occasionally be interrupted for scheduled updates, maintenance, or infrastructure downtime. We reserve the right to refine calculations, modify interface features, or update system configurations.
             </p>
           </section>
 
@@ -130,11 +130,27 @@ export default function TermsConditions() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">06.</span>
-              Modifications to Agreement
+              Limitation of Liability
             </h2>
             <p>
-              We reserve the right to amend these Terms and Conditions to reflect statutory updates or algorithmic enhancements. Continued utilization of WealthSync following published changes constitutes binding acceptance of the updated terms.
+              To the maximum extent permitted by applicable law, WealthSync and its maintainers shall not be liable for any indirect, incidental, punitive, or consequential damages resulting from your use of the application, including calculation inaccuracies, reliance on displayed runway metrics, or any errors arising from manual data input.
             </p>
+          </section>
+
+          {/* Section 7 */}
+          <section className="space-y-3">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <span className="font-mono text-zinc-500 text-xs">07.</span>
+              Contact and Inquiries
+            </h2>
+            <p>
+              If you have questions regarding these Terms and Conditions, you can reach out via the official project repository:
+            </p>
+            <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs text-zinc-300">
+              WealthSync Governance<br />
+              Email: <a href="mailto:satyateja671@gmail.com" className="text-emerald-400 hover:underline">satyateja671@gmail.com</a><br />
+              Project Repository: <a href="https://github.com/SatyaTejaChukka/wealth_sync" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">github.com/SatyaTejaChukka/wealth_sync</a>
+            </div>
           </section>
         </div>
       </main>

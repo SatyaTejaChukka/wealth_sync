@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, ArrowLeft, Lock, FileText, CheckCircle2, Server, Database } from 'lucide-react';
+import { Shield, ArrowLeft, Lock, Database, Server } from 'lucide-react';
 import { Button } from '../components/ui/Button.jsx';
 
 export default function PrivacyPolicy() {
@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
               variant="outline"
               size="sm"
               onClick={() => navigate('/login')}
-              className="h-8 px-3 text-xs font-semibold border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
+              className="h-8 px-3 text-xs font-semibold border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 rounded-md"
             >
               Sign In
             </Button>
@@ -47,7 +47,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-2">
-            Effective Date: October 1, 2026. Version 2.4.0
+            Effective Date: October 2026. Version 2.4.0
           </p>
         </div>
 
@@ -56,26 +56,26 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">01.</span>
-              Core Privacy Architecture
+              Core Privacy Principles
             </h2>
             <p>
-              WealthSync is engineered around a zero-surveillance architecture. We operate on the foundational premise that personal financial data belongs exclusively to the user. We do not monetize personal data, we do not sell financial metrics to advertising networks, and we do not maintain tracking pixels or behavioral telemetry.
+              WealthSync is a personal financial ledger and cash flow tracking application. We operate on the principle that financial records belong strictly to the individual user. We do not sell user data, we do not display commercial advertisements, and we do not include third-party marketing tracking pixels or behavioral profile brokers.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
               <div className="p-3.5 rounded-lg bg-zinc-900/60 border border-zinc-800">
                 <Lock className="w-4 h-4 text-emerald-400 mb-2" />
                 <h3 className="font-bold text-white text-xs mb-1">Zero Advertising</h3>
-                <p className="text-[11px] text-zinc-400">No ad networks, tracker SDKs, or marketing profile brokers.</p>
+                <p className="text-[11px] text-zinc-400">No ad networks, marketing cookies, or tracking pixels.</p>
               </div>
               <div className="p-3.5 rounded-lg bg-zinc-900/60 border border-zinc-800">
                 <Database className="w-4 h-4 text-emerald-400 mb-2" />
-                <h3 className="font-bold text-white text-xs mb-1">Isolated Data Storage</h3>
-                <p className="text-[11px] text-zinc-400">Tenant-isolated relational storage with strict row-level authorization.</p>
+                <h3 className="font-bold text-white text-xs mb-1">User-Scoped Records</h3>
+                <p className="text-[11px] text-zinc-400">All financial entries are bound to your account and protected by user authentication.</p>
               </div>
               <div className="p-3.5 rounded-lg bg-zinc-900/60 border border-zinc-800">
                 <Server className="w-4 h-4 text-emerald-400 mb-2" />
-                <h3 className="font-bold text-white text-xs mb-1">Self-Hostable</h3>
-                <p className="text-[11px] text-zinc-400">Complete code deployable within private infrastructure or personal servers.</p>
+                <h3 className="font-bold text-white text-xs mb-1">No Banking Aggregators</h3>
+                <p className="text-[11px] text-zinc-400">No external bank scraping or account aggregator credentials required.</p>
               </div>
             </div>
           </section>
@@ -84,16 +84,18 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">02.</span>
-              Information Collected and Processed
+              Information Collected and Stored
             </h2>
             <p>
-              To execute arithmetic calculations, ledger balancing, and bill schedules, WealthSync processes only the data you explicitly supply:
+              WealthSync collects and stores only the information necessary to provide personal budgeting, transaction logging, and schedule tracking:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
-              <li><strong className="text-zinc-200">Account Credentials:</strong> Email address and salted, hashed cryptographic password representation. Passwords are never stored in plaintext.</li>
-              <li><strong className="text-zinc-200">Financial Ledger Entries:</strong> Transaction records, custom category tags, income sources, and discretionary spending logs entered manually or via import.</li>
-              <li><strong className="text-zinc-200">Commitment Vault Records:</strong> Recurring expenses, rent milestones, savings goal thresholds, and loan amortization principal amounts.</li>
-              <li><strong className="text-zinc-200">Utility Provider References:</strong> State electricity consumer identification numbers supplied to track bill amounts and scheduled payment dates.</li>
+              <li><strong className="text-zinc-200">Account Credentials:</strong> Email address, display name, and authentication tokens managed via Firebase Authentication (including Google Sign-In) or salted and hashed passwords for direct email logins.</li>
+              <li><strong className="text-zinc-200">Financial Ledger Entries:</strong> Income and expense transactions, custom category assignments, payment method labels, transaction dates, and descriptions inputted by you.</li>
+              <li><strong className="text-zinc-200">Budget and Goal Targets:</strong> Category budget thresholds, target savings goals, milestone dates, and contribution allocations.</li>
+              <li><strong className="text-zinc-200">Commitments and Recurring Items:</strong> Recurring bills, digital subscription details (renewal intervals, amounts), and consumer reference identifiers entered for bill reminders.</li>
+              <li><strong className="text-zinc-200">Loan and Peer Lending Records:</strong> Loan principals, interest rates, tenure, EMI schedules, and bilateral lent or borrowed balances (counterpart name, amount, due dates).</li>
+              <li><strong className="text-zinc-200">Technical Data:</strong> Basic HTTP request headers, IP address for security rate-limiting, and client error logs when diagnosing application health.</li>
             </ul>
           </section>
 
@@ -101,25 +103,33 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">03.</span>
-              Data Security and Encryption
+              How Information is Used
             </h2>
             <p>
-              All communication between your client device and the backend occurs over TLS 1.3 cryptographic transport. Session management utilizes stateless, signed JSON Web Tokens (JWT) configured with expiration cycles and secure cookie storage. In native mobile environments (Android / iOS via Capacitor), secure hardware-backed storage sandboxing isolates offline session states.
+              Data entered into WealthSync is utilized exclusively for internal application operations:
             </p>
+            <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
+              <li>Calculating your True Safe-to-Spend balance and liquidity runway.</li>
+              <li>Aggregating upcoming obligations onto the unified commitment calendar.</li>
+              <li>Computing deterministic loan amortization schedules and peer balance totals.</li>
+              <li>Generating in-app reminders for upcoming bill due dates and budget thresholds.</li>
+              <li>Maintaining authenticated user sessions across web browsers and mobile application environments.</li>
+            </ul>
           </section>
 
           {/* Section 4 */}
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">04.</span>
-              Third-Party Services and Aggregators
+              Third-Party Infrastructure and Services
             </h2>
             <p>
-              WealthSync does not initiate background transfers to third parties without direct user invocation:
+              WealthSync relies on a limited set of service providers to operate the application:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
-              <li><strong className="text-zinc-200">Authentication:</strong> When signing in through Google Identity, only your verified email and name are retrieved to establish the local profile.</li>
-              <li><strong className="text-zinc-200">Utility Bill Fetching:</strong> When querying state power boards or public BBPS biller endpoints, only the user-specified consumer identifier is submitted to determine current payable balance.</li>
+              <li><strong className="text-zinc-200">Firebase Authentication (Google):</strong> Provides secure authentication infrastructure and token verification for email/password and Google Sign-In.</li>
+              <li><strong className="text-zinc-200">Cloud Hosting & Database:</strong> The backend API and relational database run on secure cloud infrastructure (Render / PostgreSQL) with encrypted connections.</li>
+              <li><strong className="text-zinc-200">No Payment or Banking Gateways:</strong> WealthSync does not process monetary payments, does not initiate bank transfers, and does not connect to live banking clearinghouse networks or live government utility bill payment gateways.</li>
             </ul>
           </section>
 
@@ -127,30 +137,43 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">05.</span>
-              Data Portability and Right to Deletion
+              Data Security and Retention
             </h2>
             <p>
-              Users maintain full sovereignty over their records:
+              All communication between your client device and our servers is encrypted in transit using standard HTTPS and TLS transport. Database records are logically partitioned by user identity, ensuring your financial information is inaccessible to other users.
             </p>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-400 text-xs">
-              <li><strong className="text-zinc-200">Export:</strong> You may export transactions and ledgers in structured JSON or CSV format at any time from Account Settings.</li>
-              <li><strong className="text-zinc-200">Permanent Deletion:</strong> Initiating account deletion permanently purges all ledger entries, categories, commitment vaults, and credentials from the relational database without ghost retention.</li>
-            </ul>
+            <p className="mt-2">
+              Data is retained as long as your account remains active so you can review historical balances and trend reports over time.
+            </p>
           </section>
 
           {/* Section 6 */}
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               <span className="font-mono text-zinc-500 text-xs">06.</span>
-              Contact Information
+              User Rights and Account Management
             </h2>
             <p>
-              For privacy verification, security vulnerability disclosures, or infrastructure questions, contact:
+              You maintain complete control over the financial entries stored in your account. You can add, edit, or delete individual transactions, budgets, goals, bills, and peer ledger records at any time directly through the workspace interface.
+            </p>
+            <p className="mt-2">
+              If you wish to close your account or request the removal of your profile and associated records, you may submit a request using the contact details below.
+            </p>
+          </section>
+
+          {/* Section 7 */}
+          <section className="space-y-3">
+            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <span className="font-mono text-zinc-500 text-xs">07.</span>
+              Contact and Inquiries
+            </h2>
+            <p>
+              For questions regarding this Privacy Policy or application data practices, contact:
             </p>
             <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs text-zinc-300">
-              WealthSync Security & Governance<br />
-              Email: security@wealthsync.internal<br />
-              Repository: https://github.com/SatyaTejaChukka/wealth_sync
+              WealthSync Administration<br />
+              Email: <a href="mailto:satyateja671@gmail.com" className="text-emerald-400 hover:underline">satyateja671@gmail.com</a><br />
+              Project Repository: <a href="https://github.com/SatyaTejaChukka/wealth_sync" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">github.com/SatyaTejaChukka/wealth_sync</a>
             </div>
           </section>
         </div>
