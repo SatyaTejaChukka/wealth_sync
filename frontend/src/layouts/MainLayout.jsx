@@ -2,10 +2,12 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar.jsx';
 import { MobileBottomNav } from '../components/layout/MobileBottomNav.jsx';
+import { OfflineBanner } from '../components/common/OfflineBanner.jsx';
 
 export default function MainLayout() {
   return (
     <div className="min-h-screen bg-[#09090b] text-foreground relative overflow-hidden selection:bg-zinc-800 selection:text-white">
+      <OfflineBanner />
       {/* Subtle precision background */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px]" />
