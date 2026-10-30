@@ -8,6 +8,7 @@ import { User, Shield, Bell } from 'lucide-react';
 import { userService } from '../../services/user.js';
 import { useAuth } from '../../lib/auth.jsx';
 import { API_ORIGIN } from '../../lib/api.js';
+import { AppUpdateCard } from '../../components/common/AppUpdateCard.jsx';
 
 export default function Settings() {
   const { refreshUser } = useAuth();
@@ -107,6 +108,8 @@ export default function Settings() {
               {message.text}
           </div>
       )}
+
+      <AppUpdateCard />
 
       <Tabs tabs={tabs} defaultTab="profile">
         {(activeTab) => (

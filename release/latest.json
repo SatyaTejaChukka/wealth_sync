@@ -1,0 +1,9 @@
+{
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "downloadUrl": "https://github.com/SatyaTejaChukka/wealth_sync/releases/download/v1.0.0/WealthSync-v1.0.0.apk",
+  "fileSizeBytes": 15000000,
+  "sha256": "",
+  "releaseNotes": "Initial production release of WealthSync with Capgo OTA and In-App native updates.",
+  "publishedAt": "2026-10-30T18:00:00Z"
+}

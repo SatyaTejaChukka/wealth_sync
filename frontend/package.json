@@ -24,6 +24,7 @@
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@capawesome/capacitor-google-sign-in": "^0.1.4",
+    "@capgo/capacitor-updater": "^8.54.0",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.4",
     "clsx": "^2.1.1",

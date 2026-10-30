@@ -16,6 +16,11 @@
       "launchAutoHide": true,
       "backgroundColor": "#09090b",
       "androidScaleType": "CENTER_CROP"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": "atBackground",
+      "updateUrl": "https://api.capgo.app/updates",
+      "statsUrl": "https://api.capgo.app/stats"
     }
   }
 }
