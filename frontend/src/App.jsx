@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import Landing from './pages/Landing.jsx';
@@ -75,11 +76,40 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-      StatusBar.setBackgroundColor({ color: '#09090b' }).catch(() => {});
-      SplashScreen.hide().catch(() => {});
-    }
+    if (!Capacitor.isNativePlatform()) return;
+
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#09090b' }).catch(() => {});
+    SplashScreen.hide().catch(() => {});
+
+    let backHandle = null;
+
+    CapApp.addListener('backButton', ({ canGoBack }) => {
+      // 1. If an open modal/drawer has a close button, dismiss it first
+      const activeModalClose = document.querySelector('[data-modal-close-btn="true"]');
+      if (activeModalClose) {
+        activeModalClose.click();
+        return;
+      }
+
+      // 2. If inside a nested route, navigate back in browser history
+      const currentPath = window.location.pathname;
+      if (canGoBack && currentPath !== '/dashboard' && currentPath !== '/' && currentPath !== '/preview-gateway') {
+        window.history.back();
+        return;
+      }
+
+      // 3. At root view, gracefully minimize app instead of hard killing the process
+      CapApp.minimizeApp().catch(() => {});
+    }).then((handle) => {
+      backHandle = handle;
+    }).catch(() => {});
+
+    return () => {
+      if (backHandle) {
+        backHandle.remove();
+      }
+    };
   }, []);
 
   return (

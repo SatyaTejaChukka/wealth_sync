@@ -100,6 +100,7 @@ export function MobileDetailDrawer({
           <button
             type="button"
             onClick={onClose}
+            data-modal-close-btn="true"
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0 touch-press"
             aria-label="Close drawer"
           >
