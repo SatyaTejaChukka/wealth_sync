@@ -2,6 +2,19 @@
 @import "tailwindcss";
 
 @layer base {
+  *, ::before, ::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {
     display: none;
