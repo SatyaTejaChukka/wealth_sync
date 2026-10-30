@@ -5,8 +5,8 @@ import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Alert } from '../components/ui/Alert.jsx';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton.jsx';
-import { ServerConnectionModal } from '../components/common/ServerConnectionModal.jsx';
-import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, User, Server } from 'lucide-react';
+import { BackendLiveStatus } from '../components/common/BackendLiveStatus.jsx';
+import { TrendingUp, Mail, Lock, ArrowRight, Eye, EyeOff, User } from 'lucide-react';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -22,7 +22,6 @@ export default function Signup() {
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
   const { signupWithEmail, loginWithGoogle, isFirebaseConfigured } = useAuth();
   const hasConfirmPasswordValue = confirmPassword.length > 0;
@@ -256,23 +255,10 @@ export default function Signup() {
           </p>
 
           <div className="flex justify-center pt-1">
-            <button
-              type="button"
-              onClick={() => setIsServerModalOpen(true)}
-              className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 py-1 px-3 rounded-md border border-zinc-800 bg-zinc-900/60 transition-colors cursor-pointer"
-            >
-              <Server size={12} className="text-zinc-400" />
-              <span>Server Connection</span>
-            </button>
+            <BackendLiveStatus />
           </div>
         </div>
       </div>
-
-      {/* Server Connection Modal for Mobile & Custom Environments */}
-      <ServerConnectionModal
-        isOpen={isServerModalOpen}
-        onClose={() => setIsServerModalOpen(false)}
-      />
     </div>
   );
 }

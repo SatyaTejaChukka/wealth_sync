@@ -5,21 +5,10 @@ import { auth } from './firebase.js';
 
 const getInitialBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    const custom = localStorage.getItem('custom_api_base_url');
-    if (custom) {
-      // On mobile native, localhost is unreachable; purge it and use production HTTPS
-      if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && (custom.includes('localhost') || custom.includes('127.0.0.1'))) {
-        localStorage.removeItem('custom_api_base_url');
-      } else {
-        return custom;
-      }
-    }
+    // Purge any legacy manual overrides so users cannot be misrouted to localhost or arbitrary endpoints
+    localStorage.removeItem('custom_api_base_url');
   }
-  // On native mobile builds, fallback to production HTTPS endpoint rather than unreachable host localhost
-  if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
-    return import.meta.env.VITE_API_BASE_URL || 'https://wealth-sync.onrender.com/api/v1';
-  }
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+  return import.meta.env.VITE_API_BASE_URL || 'https://wealth-sync.onrender.com/api/v1';
 };
 
 export const API_BASE_URL = getInitialBaseUrl();
@@ -40,17 +29,6 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  if (typeof window !== 'undefined') {
-    const customUrl = localStorage.getItem('custom_api_base_url');
-    if (customUrl) {
-      if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && (customUrl.includes('localhost') || customUrl.includes('127.0.0.1'))) {
-        localStorage.removeItem('custom_api_base_url');
-      } else {
-        config.baseURL = customUrl;
-      }
-    }
-  }
-
   let token = null;
   // If Firebase user is active, ensure we have a fresh valid token (refreshes if within 5m of expiry)
   if (auth?.currentUser) {
