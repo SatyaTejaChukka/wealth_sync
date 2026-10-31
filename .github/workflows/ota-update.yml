@@ -50,6 +50,15 @@ jobs:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
           if [ -n "$CAPGO_TOKEN" ]; then
+            # Generate a unique OTA version: base version + build timestamp
+            BASE_VERSION=$(node -p "require('./package.json').version")
+            BUILD_NUMBER=$(date -u +%Y%m%d%H%M%S)
+            OTA_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
+
+            # Temporarily set the unique version in package.json for the upload
+            node -e "const p=require('./package.json'); p.version='${OTA_VERSION}'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n');"
+
+            echo "Uploading OTA bundle version: ${OTA_VERSION}"
             npx @capgo/cli@latest bundle upload --channel=production
           else
             echo "::warning ::CAPGO_TOKEN secret is not set. Bundle upload skipped. Add CAPGO_TOKEN to GitHub repository secrets to enable OTA deployment."
