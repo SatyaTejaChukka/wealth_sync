@@ -2,6 +2,7 @@ package com.wealthsync.app;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -25,11 +26,22 @@ public class UpdateManagerPlugin extends Plugin {
 
     @PluginMethod
     public void getAppVersion(PluginCall call) {
-        JSObject ret = new JSObject();
-        ret.put("versionCode", BuildConfig.VERSION_CODE);
-        ret.put("versionName", BuildConfig.VERSION_NAME);
-        ret.put("packageName", getContext().getPackageName());
-        call.resolve(ret);
+        try {
+            Context context = getContext();
+            PackageInfo pInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            long versionCode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                ? pInfo.getLongVersionCode()
+                : (long) pInfo.versionCode;
+            String versionName = pInfo.versionName != null ? pInfo.versionName : "1.0.0";
+
+            JSObject ret = new JSObject();
+            ret.put("versionCode", versionCode);
+            ret.put("versionName", versionName);
+            ret.put("packageName", context.getPackageName());
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Failed to retrieve package info: " + e.getMessage(), e);
+        }
     }
 
     @PluginMethod
