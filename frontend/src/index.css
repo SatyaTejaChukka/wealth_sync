@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+/* Offline local typography loaded via @fontsource in main.jsx */
 @import "tailwindcss";
 
 @layer base {
@@ -9,6 +9,14 @@
   html, body {
     overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Native touch hardening: allow selection only in text fields and explicitly selectable elements */
+  input, textarea, [contenteditable="true"], .selectable, pre, code {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   button, a, input, select, textarea {
