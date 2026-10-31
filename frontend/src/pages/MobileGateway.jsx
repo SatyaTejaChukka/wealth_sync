@@ -6,7 +6,7 @@ import {
   CalendarClock, 
   Lock, 
   ArrowRight, 
-  Sparkles,
+  UserPlus,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -329,7 +329,7 @@ export default function MobileGateway() {
           onClick={() => navigate('/signup')}
           className="w-full h-12 rounded-xl bg-zinc-900/90 hover:bg-zinc-800/90 border border-zinc-800 hover:border-zinc-700 active:scale-[0.98] text-zinc-200 hover:text-white font-semibold text-sm sm:text-base flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
-          <Sparkles size={15} className="text-emerald-400" />
+          <UserPlus size={15} className="text-emerald-400" />
           <span>Create Account</span>
         </button>
 

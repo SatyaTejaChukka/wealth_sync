@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Download, RefreshCw, CheckCircle2, AlertCircle, ShieldCheck, Sparkles, ExternalLink } from 'lucide-react';
+import { Download, RefreshCw, CheckCircle2, AlertCircle, ShieldCheck, ArrowUpCircle, ExternalLink } from 'lucide-react';
 import { appUpdater } from '../../services/appUpdater.js';
 
 export function AppUpdateCard({ className = '', onDismiss }) {
@@ -108,7 +108,7 @@ export function AppUpdateCard({ className = '', onDismiss }) {
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shrink-0">
-            <Sparkles size={16} />
+            <ArrowUpCircle size={16} />
           </span>
           <div>
             <h3 className="text-sm font-bold text-white tracking-tight">Native Update Available</h3>
