@@ -46,3 +46,9 @@ Thumbs.db
 .agent/
 .gemini/
 .antigravity/
+
+# Keystores
+*.keystore
+!frontend/android/debug.keystore
+*.jks
+keystore-base64.txt
