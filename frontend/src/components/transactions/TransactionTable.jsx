@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog.jsx';
 import { TransactionForm } from './TransactionForm.jsx';
 import { useToast } from '../ui/Toast.jsx';
 import { formatCurrency } from '../../lib/format.js';
+import { offlineStorage } from '../../lib/offlineStorage.js';
 
 const STATUS_META = {
   pending: {
@@ -78,7 +79,10 @@ function getLinkedSource(transaction, billMap, subscriptionMap) {
 }
 
 export function TransactionTable({ refreshTrigger }) {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(() => {
+    const cached = offlineStorage.get('transactions_cache');
+    return cached ? cached.data : [];
+  });
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -143,6 +147,9 @@ export function TransactionTable({ refreshTrigger }) {
       const res = await transactionService.getAll(params);
       setHasMore(res.length >= 10);
       setData(res);
+      if (page === 1 && !debouncedSearch && typeFilter === 'all' && statusFilter === 'all') {
+        offlineStorage.set('transactions_cache', res);
+      }
     } catch (err) {
       console.error(err);
     } finally {

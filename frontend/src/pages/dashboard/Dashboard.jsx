@@ -31,6 +31,8 @@ import { formatCurrency, MoneyValue } from '../../lib/format.js';
 import { calculateSafeBudgetSignal } from '../../lib/safeBudgetSignal.js';
 import { cn } from '../../lib/utils.js';
 import { dashboardService } from '../../services/dashboard.js';
+import { offlineStorage } from '../../lib/offlineStorage.js';
+import { PullToRefresh } from '../../components/mobile/PullToRefresh.jsx';
 
 /* ── Constants & Helpers ───────────────────────────────────── */
 
@@ -120,31 +122,47 @@ export default function Dashboard() {
   const isMobile = useMediaQuery('(max-width: 767px)');
 
   const [chartRange, setChartRange] = useState('week');
-  const [data, setData] = useState(null);
-  const [triage, setTriage] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState(() => {
+    const cached = offlineStorage.get('dashboard_summary_' + chartRange, user?.id);
+    return cached ? cached.data : null;
+  });
+  const [triage, setTriage] = useState(() => {
+    const cached = offlineStorage.get('dashboard_triage', user?.id);
+    return cached ? cached.data : null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    const cached = offlineStorage.get('dashboard_summary_' + chartRange, user?.id);
+    return !cached;
+  });
   const [activeChart, setActiveChart] = useState('sankey'); // 'sankey' | 'trend' | 'categories'
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        const [stats, triageData] = await Promise.all([
-          dashboardService.getSummary(chartRange),
-          dashboardService.getTriage(),
-        ]);
+  const fetchDashboard = useCallback(async (silent = false) => {
+    try {
+      if (!silent && !data) setIsLoading(true);
+      const [stats, triageData] = await Promise.all([
+        dashboardService.getSummary(chartRange),
+        dashboardService.getTriage(),
+      ]);
+      if (stats) {
         setData(stats);
-        setTriage(triageData);
-      } catch (error) {
-        console.error('Failed to fetch dashboard stats', error);
-      } finally {
-        setIsLoading(false);
+        offlineStorage.set('dashboard_summary_' + chartRange, stats, user?.id);
       }
-    };
+      if (triageData) {
+        setTriage(triageData);
+        offlineStorage.set('dashboard_triage', triageData, user?.id);
+      }
+    } catch (error) {
+      console.warn('[Dashboard] Network fetch offline fallback', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [chartRange, data, user?.id]);
+
+  useEffect(() => {
     fetchDashboard();
 
     const onSyncChanged = () => {
-      fetchDashboard();
+      fetchDashboard(true);
     };
     window.addEventListener('transactions:changed', onSyncChanged);
     window.addEventListener('bills:changed', onSyncChanged);
@@ -156,7 +174,7 @@ export default function Dashboard() {
       window.removeEventListener('loans:changed', onSyncChanged);
       window.removeEventListener('subscriptions:changed', onSyncChanged);
     };
-  }, [chartRange]);
+  }, [fetchDashboard]);
 
   const summary = useMemo(() => data || EMPTY_SUMMARY, [data]);
 
@@ -206,7 +224,8 @@ export default function Dashboard() {
   /* ── Render ───────────────────────────────────────────────── */
 
   return (
-    <div className="relative isolate space-y-6 md:space-y-8 animate-fade-in pb-16 overflow-x-hidden">
+    <PullToRefresh onRefresh={() => fetchDashboard(true)}>
+      <div className="relative isolate space-y-6 md:space-y-8 animate-fade-in pb-16 overflow-x-hidden">
       {/* Ambient Financial Climate Backdrop */}
       <MoneyWeatherBackdrop stats={summary.safe_to_spend_stats} />
 
@@ -511,5 +530,6 @@ export default function Dashboard() {
 
       </div>
     </div>
+    </PullToRefresh>
   );
 }

@@ -13,6 +13,8 @@ import {
 } from 'firebase/auth';
 import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import { Capacitor } from '@capacitor/core';
+import { Network } from '@capacitor/network';
+import { offlineStorage } from './offlineStorage.js';
 import { auth, googleProvider, isFirebaseConfigured } from './firebase.js';
 import api from './api.js';
 
@@ -93,7 +95,14 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wealthsync_cached_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [isLoading, setIsLoading] = useState(() => (isFirebaseConfigured && Boolean(auth)) || Boolean(localStorage.getItem('token')));
 
@@ -120,29 +129,65 @@ export function AuthProvider({ children }) {
         try {
           const idToken = await fbUser.getIdToken();
           localStorage.setItem('token', idToken);
+
+          // Fast-fail offline check: prevent 60-second splash hang on airplane mode
+          let isConnected = true;
+          try {
+            const net = await Network.getStatus();
+            isConnected = net.connected;
+          } catch {
+            isConnected = typeof navigator !== 'undefined' ? navigator.onLine : true;
+          }
+
+          if (!isConnected) {
+            const cached = offlineStorage.get('user_profile', fbUser.uid)?.data;
+            if (cached) {
+              setUser({ ...cached, is_backend_unavailable: true });
+            } else {
+              setUser({
+                id: fbUser.uid,
+                email: fbUser.email,
+                full_name: fbUser.displayName || fbUser.email?.split('@')[0],
+                avatar_url: fbUser.photoURL,
+                is_backend_unavailable: true
+              });
+            }
+            setIsLoading(false);
+            return;
+          }
+
           const res = await api.get('/auth/me');
           setUser(res.data);
+          offlineStorage.set('user_profile', res.data, fbUser.uid);
+          localStorage.setItem('wealthsync_cached_user', JSON.stringify(res.data));
         } catch (err) {
           console.error('Failed to sync user profile from backend', err);
           const status = err?.response?.status;
           if (status === 401 || status === 403) {
             // Backend definitively rejected the credentials or disabled user
             localStorage.removeItem('token');
+            localStorage.removeItem('wealthsync_cached_user');
             setUser(null);
           } else {
             // Backend connectivity issue (cold start, offline, timeout)
-            // Preserve basic Firebase profile with explicit offline indicator
-            setUser({
-              id: fbUser.uid,
-              email: fbUser.email,
-              full_name: fbUser.displayName || fbUser.email?.split('@')[0],
-              avatar_url: fbUser.photoURL,
-              is_backend_unavailable: true
-            });
+            // Hydrate from offline cache if available, otherwise preserve basic Firebase profile
+            const cached = offlineStorage.get('user_profile', fbUser.uid)?.data;
+            if (cached) {
+              setUser({ ...cached, is_backend_unavailable: true });
+            } else {
+              setUser({
+                id: fbUser.uid,
+                email: fbUser.email,
+                full_name: fbUser.displayName || fbUser.email?.split('@')[0],
+                avatar_url: fbUser.photoURL,
+                is_backend_unavailable: true
+              });
+            }
           }
         }
       } else {
         localStorage.removeItem('token');
+        localStorage.removeItem('wealthsync_cached_user');
         setUser(null);
       }
       setIsLoading(false);
@@ -332,7 +377,11 @@ export function AuthProvider({ children }) {
 
   // 4. Logout
   const logout = useCallback(async () => {
+    if (user?.id) {
+      offlineStorage.clearUser(user.id);
+    }
     localStorage.removeItem('token');
+    localStorage.removeItem('wealthsync_cached_user');
     setUser(null);
     if (Capacitor.isNativePlatform()) {
       try {
@@ -349,7 +398,7 @@ export function AuthProvider({ children }) {
       }
     }
     navigate('/login', { replace: true });
-  }, [navigate]);
+  }, [navigate, user?.id]);
 
   // 5. Refresh User
   const refreshUser = useCallback(async () => {

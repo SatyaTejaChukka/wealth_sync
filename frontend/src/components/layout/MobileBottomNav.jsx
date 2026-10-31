@@ -20,6 +20,7 @@ import {
 
 import { useAuth } from '../../lib/auth.jsx';
 import { cn } from '../../lib/utils.js';
+import { haptics } from '../../lib/haptics.js';
 
 const primaryItems = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard, end: true },
@@ -80,7 +81,7 @@ export function MobileBottomNav() {
             aria-label="Close more menu"
             data-modal-close-btn="true"
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setMoreOpen(false)}
+            onClick={() => { haptics.impactLight(); setMoreOpen(false); }}
           />
           <div className="absolute inset-x-0 bottom-0 rounded-t-[1.75rem] border-t border-white/10 bg-[#09090b]/95 px-4 pb-6 pt-4 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
@@ -91,7 +92,7 @@ export function MobileBottomNav() {
               <button
                 type="button"
                 data-modal-close-btn="true"
-                onClick={() => setMoreOpen(false)}
+                onClick={() => { haptics.impactLight(); setMoreOpen(false); }}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
               >
                 <X size={18} />
@@ -160,6 +161,7 @@ export function MobileBottomNav() {
                 key={item.href}
                 to={item.href}
                 end={item.end}
+                onClick={() => haptics.impactLight()}
                 className={({ isActive }) =>
                   cn(
                     'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors',
@@ -181,7 +183,7 @@ export function MobileBottomNav() {
 
           <button
             type="button"
-            onClick={() => setMoreOpen(true)}
+            onClick={() => { haptics.impactMedium(); setMoreOpen(true); }}
             className={cn(
               'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 text-[11px] font-medium transition-colors',
               moreActive

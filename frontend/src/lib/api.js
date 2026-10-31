@@ -29,6 +29,12 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
+  // Fail fast if client is explicitly offline (prevents 60-second hang on airplane mode)
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const offlineErr = new Error('Network offline');
+    offlineErr.isOffline = true;
+    return Promise.reject(offlineErr);
+  }
   let token = null;
   // If Firebase user is active, ensure we have a fresh valid token (refreshes if within 5m of expiry)
   if (auth?.currentUser) {
